@@ -51,30 +51,44 @@ def union_length(intervals: list[tuple[float, float]]) -> float:
     return total
 
 
-def _to_minutes(ts) -> float:
-    """timestamp (datetime veya ISO str veya float dakika) -> dakika ekseni.
-
-    Birim testler float dakika geçer; gerçek veride datetime gelir ve en erken
-    olaya göre göreli dakikaya çevrilir (çağıran tarafta normalize edilir)."""
+def _norm(ts):
+    """timestamp'i karşılaştırılabilir tipe getirir: float dakika ya da datetime.
+    ISO str -> datetime. Epoch'a çevirmez (DST/saat-dilimi güvenli)."""
     if isinstance(ts, (int, float)):
-        return float(ts)
+        return ts
     if isinstance(ts, str):
-        ts = datetime.fromisoformat(ts)
-    return ts.timestamp() / 60.0
+        return datetime.fromisoformat(ts)
+    return ts
+
+
+def _minute_offsets(events: list[dict]) -> list[float]:
+    """Her olayın başlangıç dakikasını en erken olaya göre döndürür.
+
+    datetime'larda fark doğrudan datetime üzerinden alınır (`total_seconds`),
+    yerel epoch dönüşümü yapılmaz; böylece çok-günlük/DST geçişli pencerede
+    span bozulmaz. float dakika (birim testler) aynen kullanılır."""
+    raw = [_norm(e["timestamp"]) for e in events]
+    base = min(raw)
+    offsets: list[float] = []
+    for r in raw:
+        if isinstance(r, (int, float)):
+            offsets.append(float(r) - float(base))
+        else:
+            offsets.append((r - base).total_seconds() / 60.0)
+    return offsets
 
 
 def availability_from_events(events: list[dict]) -> tuple[float, float, float]:
     """(availability, span_min, downtime_union_min). events: timestamp(min/datetime),
-    duration(dk), event_type."""
+    duration(dk), event_type. Süreler en erken olaya göre dakika eksenine taşınır."""
     if not events:
         return 0.0, 0.0, 0.0
-    starts = [_to_minutes(e["timestamp"]) for e in events]
+    starts = _minute_offsets(events)
     ends = [s + e["duration"] for s, e in zip(starts, events)]
-    base = min(starts)
-    span = max(ends) - base
+    span = max(ends) - min(starts)
     downtime = union_length([
-        (_to_minutes(e["timestamp"]) - base, _to_minutes(e["timestamp"]) - base + e["duration"])
-        for e in events
+        (s, s + e["duration"])
+        for s, e in zip(starts, events)
         if e["event_type"] in _DOWNTIME_TYPES
     ])
     avail = _clamp01((span - downtime) / span) if span > 0 else 0.0

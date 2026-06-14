@@ -39,6 +39,8 @@ def _is_ground_truth(name: str) -> bool:
 
 def load_csv_dir(path: str | Path, repo: Repository) -> LoadReport:
     d = Path(path)
+    if not d.is_dir():
+        raise NotADirectoryError(f"ingest yolu bir dizin değil ya da yok: {d}")
     report = LoadReport()
 
     # Firewall: ground_truth dosyalarını açmadan atla.
