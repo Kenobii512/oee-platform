@@ -1,0 +1,92 @@
+# Kaplama hattı tanımı. Tüm süreler dakika cinsindendir.
+# Yeni hat = yeni YAML; kod değişmez.
+line:
+  id: LINE-01
+  name: "Kaplama Hattı 1"
+
+# Simülasyonun başlangıç tarih-saati. Tüm olay timestamp'leri buna göre
+# ISO datetime olarak üretilir (iç hesap dakika cinsinden kalır).
+start_datetime: "2026-01-05 06:00"   # Pazartesi, sabah vardiyası başı
+
+# Tanklar sıralıdır: askı bu sırayla geçer.
+# time_min/time_max: kayıpsız normal işlem süresi aralığı (uniform örneklenir).
+# capacity: aynı anda tanktaki azami askı sayısı.
+# max_hold_min: işlem bitince vinç gelene kadar tolere edilen azami bekleme.
+tanks:
+  - id: yagsizlandirma
+    name: "Yağsızlandırma"
+    time_min: 3.0
+    time_max: 4.0
+    capacity: 1
+    max_hold_min: 3.0
+  - id: durulama_1
+    name: "Durulama 1"
+    time_min: 1.0
+    time_max: 1.5
+    capacity: 1
+    max_hold_min: 2.0
+  - id: asitleme
+    name: "Asitleme / Aktivasyon"
+    time_min: 2.0
+    time_max: 3.0
+    capacity: 1
+    max_hold_min: 3.0
+  - id: durulama_2
+    name: "Durulama 2"
+    time_min: 1.0
+    time_max: 1.5
+    capacity: 1
+    max_hold_min: 2.0
+  - id: kaplama
+    name: "Kaplama Banyosu"
+    time_min: 20.0
+    time_max: 25.0
+    capacity: 1
+    bottleneck: true
+    max_hold_min: 2.0
+  - id: durulama_3
+    name: "Durulama 3"
+    time_min: 1.0
+    time_max: 1.5
+    capacity: 1
+    max_hold_min: 2.0
+  - id: kurutma
+    name: "Kurutma"
+    time_min: 4.0
+    time_max: 5.0
+    capacity: 1
+    max_hold_min: 3.0
+
+# Tek vinç: her transfer (yükleme, tanklar arası, boşaltma) bu kadar dakika sürer.
+hoist:
+  move_min: 0.5
+
+# Yükleme takvimi: yalnızca yeni askı salmayı kısıtlar (hattaki iş tamamlanır).
+calendar:
+  workdays: [Mon, Tue, Wed, Thu, Fri]
+  shifts:
+    - start: "06:00"
+      end: "14:00"
+    - start: "14:00"
+      end: "22:00"
+  breaks:
+    - start: "10:00"
+      duration_min: 15
+    - start: "18:00"
+      duration_min: 15
+  planned_maintenance:
+    - start_datetime: "2026-01-07 22:00"
+      duration_min: 120
+
+# İş emirleri. Her order -> ceil(planned_qty / carrier_qty) askı.
+orders:
+  - order_id: ORD-0001
+    product_id: PRD-A
+    planned_qty: 4000
+    target_cycle_min: 40.0
+    carrier_qty: 100   # askı başına parça (kayıpsız: tamamı sağlam)
+  - order_id: ORD-0002
+    product_id: PRD-B
+    planned_qty: 2000
+    target_cycle_min: 40.0
+    carrier_qty: 100
