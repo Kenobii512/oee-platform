@@ -3,6 +3,9 @@
 Kaplama hattı için OEE/verimlilik platformu. Genel CSV'leri (events/production/orders)
 DuckDB'ye yükler ve OEE'yi yalnızca genel veriden hesaplar.
 
+> **Proje durumu / planlama özeti:** [`docs/STATUS.md`](docs/STATUS.md) — tamamlanan görevler
+> (G1–G5), API yüzeyi, mimari kararlar, bilinen sınırlamalar ve sıradaki yol haritası.
+
 ## Çalıştırma
 
     docker-compose up --build
