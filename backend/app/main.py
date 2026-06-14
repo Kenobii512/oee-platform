@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.ingest_routes import router as ingest_router
+from app.api.oee_routes import router as oee_router
 from app.config import load_app_config
 from app.store.duckdb_repo import DuckDBRepository
 
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="OEE Platform", lifespan=lifespan)
 app.include_router(ingest_router)
+app.include_router(oee_router)
 
 
 @app.get("/health")

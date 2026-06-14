@@ -19,3 +19,11 @@ DuckDB'ye yükler ve OEE'yi yalnızca genel veriden hesaplar.
 - Şema kutsaldır; platform verinin kaynağını bilmez.
 - `ground_truth.csv` ASLA yüklenmez (firewall).
 - OEE mantığı tek serviste (`app/analytics/oee.py`).
+
+## OEE
+
+    POST /ingest   {"path": "/abs/path/to/csv_dir"}   -> LoadReport
+    GET  /oee?from=...&to=...                          -> {availability, performance, quality, oee, utilization, planned_downtime_min}
+
+OEE yalnız genel veriden (events/production + hat tanımı) hesaplanır; tanımlar
+simülatör `metrics.py` ile birebir. `ground_truth.csv` asla kullanılmaz.
