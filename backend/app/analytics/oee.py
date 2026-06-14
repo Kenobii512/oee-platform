@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
+from app.analytics.nominal import inferred_nominal_per_order, nominal_full_pass
 from app.models.contract import LineDefinition
 
 _DOWNTIME_TYPES = {"DOWNTIME", "MICROSTOP"}
@@ -96,8 +97,7 @@ def availability_from_events(events: list[dict]) -> tuple[float, float, float]:
 
 
 def _performance(events: list[dict], num_carriers: int, line: LineDefinition) -> float:
-    nominal_full_pass = sum((t.time_min + t.time_max) / 2.0 for t in line.tanks)
-    ideal = num_carriers * nominal_full_pass
+    ideal = num_carriers * nominal_full_pass(line)
     actual = sum(e["duration"] for e in events if e["event_type"] == "PROCESS")
     return _clamp01(ideal / actual) if actual > 0 else 0.0
 
@@ -116,9 +116,7 @@ def _quality(production: list[dict], line: LineDefinition) -> float:
 def _inferred_intended(production: list[dict]) -> int:
     """Fallback (accuracy.py deseni): iş emri başına gözlenen en büyük loaded_qty
     nominal kabul edilir; intended = Σ nominal."""
-    nominal: dict[str, int] = {}
-    for p in production:
-        nominal[p["order_id"]] = max(nominal.get(p["order_id"], 0), p["loaded_qty"])
+    nominal = inferred_nominal_per_order(production)
     return sum(nominal[p["order_id"]] for p in production)
 
 
