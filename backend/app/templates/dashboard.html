@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OEE Panosu</title>
+  <link rel="stylesheet" href="/static/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>OEE Panosu</h1>
+    <div class="controls">
+      <div class="tabs">
+        <button class="tab active" data-view="manager">Müdür (dönemsel)</button>
+        <button class="tab" data-view="supervisor">Amir (anlık)</button>
+      </div>
+      <label>Başlangıç <input type="datetime-local" id="from"></label>
+      <label>Bitiş <input type="datetime-local" id="to"></label>
+      <button id="apply">Uygula</button>
+    </div>
+  </header>
+
+  <div id="empty-state" class="empty hidden">
+    Veri yüklü değil. Önce <code>POST /ingest</code> ile bir CSV klasörü yükleyin
+    (ör. <code>{"path": "/app/tests/fixtures/baseline"}</code>), sonra sayfayı yenileyin.
+  </div>
+
+  <main id="dashboard" class="grid">
+    <section class="card kpis">
+      <div class="kpi kpi-oee"><span class="label">OEE</span><span class="value" id="kpi-oee">–</span></div>
+      <div class="kpi"><span class="label">Kullanılabilirlik (A)</span><span class="value" id="kpi-a">–</span></div>
+      <div class="kpi"><span class="label">Performans (P)</span><span class="value" id="kpi-p">–</span></div>
+      <div class="kpi"><span class="label">Kalite (Q)</span><span class="value" id="kpi-q">–</span></div>
+      <div class="kpi"><span class="label">Veri güvenilirliği</span><span class="value small" id="kpi-dq">–</span></div>
+    </section>
+
+    <section class="card">
+      <h2>OEE Şelalesi</h2>
+      <canvas id="waterfall"></canvas>
+    </section>
+
+    <section class="card" data-role="period">
+      <h2>OEE Trendi (gün)</h2>
+      <canvas id="trend"></canvas>
+    </section>
+
+    <section class="card">
+      <h2>Kayıp Ağacı — Zaman (dakika)</h2>
+      <canvas id="loss-time"></canvas>
+    </section>
+
+    <section class="card">
+      <h2>Kayıp Ağacı — Malzeme (parça)</h2>
+      <canvas id="loss-parts"></canvas>
+    </section>
+
+    <section class="card legend-note" data-role="period">
+      <h2>Veri güvenilirliği</h2>
+      <div id="dq-detail">–</div>
+      <p class="muted">Taralı çubuklar <strong>çıkarım</strong> kanallarıdır (gerçek veride yok,
+      genel veriden kestirilir). Farklı eksenler (dakika vs parça) olduğundan tek Pareto yapılmaz;
+      ortak birim (TL) sonraki sürümde.</p>
+    </section>
+  </main>
+
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

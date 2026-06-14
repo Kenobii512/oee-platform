@@ -29,6 +29,20 @@ DuckDB'ye yükler ve OEE'yi yalnızca genel veriden hesaplar.
 OEE yalnız genel veriden (events/production + hat tanımı) hesaplanır; tanımlar
 simülatör `metrics.py` ile birebir. `ground_truth.csv` asla kullanılmaz.
 
+## Pano (dashboard)
+
+`GET /` sunucu-taraflı bir HTML pano döndürür (FastAPI + Jinja2 + Chart.js CDN, ayrı
+build yok). Tüm veri tarayıcıdan API ile çekilir. Dört bileşen: KPI başlığı (OEE/A/P/Q),
+OEE şelalesi, kayıp ağacı (zaman/malzeme iki grup; çıkarım kanalları işaretli), OEE trendi
+(gün). Ayrıca veri güvenilirliği göstergesi (operatör giriş kapsamı).
+
+    GET /oee/trend?bucket=day|week    -> [{period, availability, performance, quality, oee}, ...]
+    GET /data-quality/summary         -> {downtime_entry_coverage, microstop_entry_coverage}
+
+Demo: `SAMPLE_DATA_DIR` env değişkeni bir CSV klasörüne ayarlanırsa konteyner açılışında
+otomatik ingest edilir (pano dolu gelir). Veri yoksa pano "önce ingest" mesajı gösterir.
+Aynı Docker imajı laptopta `localhost:8000` ve uzak VM'de link ile çalışır.
+
 ## Kayıp ağacı (loss tree)
 
 `GET /loss-tree` 6 kategori döndürür: DOWNTIME/MICROSTOP (dakika, görünür),

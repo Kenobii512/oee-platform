@@ -1,0 +1,50 @@
+from pathlib import Path
+
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+FIX = Path(__file__).resolve().parent / "fixtures" / "baseline"
+
+
+def test_dashboard_returns_html(tmp_path, monkeypatch):
+    monkeypatch.setenv("OEE_DUCKDB_PATH", str(tmp_path / "api.duckdb"))
+    with TestClient(app) as client:
+        r = client.get("/")
+        assert r.status_code == 200
+        assert "text/html" in r.headers["content-type"]
+        assert "OEE" in r.text
+        assert "/static/dashboard.js" in r.text
+
+
+def test_trend_endpoint(tmp_path, monkeypatch):
+    monkeypatch.setenv("OEE_DUCKDB_PATH", str(tmp_path / "api.duckdb"))
+    with TestClient(app) as client:
+        client.post("/ingest", json={"path": str(FIX)})
+        r = client.get("/oee/trend?bucket=day")
+        assert r.status_code == 200
+        series = r.json()
+        assert len(series) == 2
+        assert {"period", "availability", "performance", "quality", "oee"} <= set(series[0])
+        assert all(0.0 <= s["oee"] <= 1.0 for s in series)
+
+
+def test_data_quality_endpoint(tmp_path, monkeypatch):
+    monkeypatch.setenv("OEE_DUCKDB_PATH", str(tmp_path / "api.duckdb"))
+    with TestClient(app) as client:
+        client.post("/ingest", json={"path": str(FIX)})
+        r = client.get("/data-quality/summary")
+        assert r.status_code == 200
+        body = r.json()
+        assert set(body) == {"downtime_entry_coverage", "microstop_entry_coverage"}
+        assert abs(body["downtime_entry_coverage"] - 0.875) < 1e-9
+
+
+def test_sample_data_dir_autoingest(tmp_path, monkeypatch):
+    # SAMPLE_DATA_DIR verilirse açılışta otomatik ingest (manuel /ingest yok).
+    monkeypatch.setenv("OEE_DUCKDB_PATH", str(tmp_path / "api.duckdb"))
+    monkeypatch.setenv("SAMPLE_DATA_DIR", str(FIX))
+    with TestClient(app) as client:
+        r = client.get("/oee")
+        assert r.status_code == 200
+        assert r.json()["oee"] > 0

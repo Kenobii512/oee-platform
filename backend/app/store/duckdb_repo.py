@@ -1,5 +1,13 @@
-"""DuckDB tabanlı Repository. G1'de yalnız bağlantı kabuğu."""
+"""DuckDB tabanlı Repository.
+
+Tek bağlantı; tüm DB erişimi bir kilitle serileştirilir. FastAPI sync endpoint'leri
+ayrı thread'lerde çalışır ve pano endpoint'leri paralel istek atar — tek DuckDB
+bağlantısı eşzamanlı erişimde güvenli olmadığından (segfault), erişim kilitle korunur.
+Bu ölçekte (gömülü, küçük veri) performans etkisi ihmal edilebilir.
+"""
 from __future__ import annotations
+
+import threading
 
 import duckdb
 
@@ -8,6 +16,7 @@ class DuckDBRepository:
     def __init__(self, path: str) -> None:
         self.path = path
         self.con: duckdb.DuckDBPyConnection | None = None
+        self._lock = threading.RLock()
 
     def connect(self) -> None:
         if self.con is None:
@@ -19,6 +28,11 @@ class DuckDBRepository:
             self.con = None
 
     def init_schema(self) -> None:
+        assert self.con is not None
+        with self._lock:
+            self._create_tables()
+
+    def _create_tables(self) -> None:
         assert self.con is not None
         self.con.execute("""
             CREATE TABLE IF NOT EXISTS events (
@@ -65,10 +79,11 @@ class DuckDBRepository:
             )
             for r in rows
         ]
-        self.con.executemany(
-            "INSERT INTO events VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
-            params,
-        )
+        with self._lock:
+            self.con.executemany(
+                "INSERT INTO events VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
+                params,
+            )
         return len(params)
 
     def upsert_production(self, rows: list[dict]) -> int:
@@ -78,14 +93,15 @@ class DuckDBRepository:
              r["good_count"], r["redo_count"], r["scrap_count"])
             for r in rows
         ]
-        self.con.executemany(
-            """INSERT INTO production VALUES (?,?,?,?,?,?)
-               ON CONFLICT (carrier_id) DO UPDATE SET
-                 order_id=excluded.order_id, loaded_qty=excluded.loaded_qty,
-                 good_count=excluded.good_count, redo_count=excluded.redo_count,
-                 scrap_count=excluded.scrap_count""",
-            params,
-        )
+        with self._lock:
+            self.con.executemany(
+                """INSERT INTO production VALUES (?,?,?,?,?,?)
+                   ON CONFLICT (carrier_id) DO UPDATE SET
+                     order_id=excluded.order_id, loaded_qty=excluded.loaded_qty,
+                     good_count=excluded.good_count, redo_count=excluded.redo_count,
+                     scrap_count=excluded.scrap_count""",
+                params,
+            )
         return len(params)
 
     def upsert_orders(self, rows: list[dict]) -> int:
@@ -94,24 +110,27 @@ class DuckDBRepository:
             (r["order_id"], r["product_id"], r["target_cycle"], r["planned_qty"])
             for r in rows
         ]
-        self.con.executemany(
-            """INSERT INTO orders VALUES (?,?,?,?)
-               ON CONFLICT (order_id) DO UPDATE SET
-                 product_id=excluded.product_id, target_cycle=excluded.target_cycle,
-                 planned_qty=excluded.planned_qty""",
-            params,
-        )
+        with self._lock:
+            self.con.executemany(
+                """INSERT INTO orders VALUES (?,?,?,?)
+                   ON CONFLICT (order_id) DO UPDATE SET
+                     product_id=excluded.product_id, target_cycle=excluded.target_cycle,
+                     planned_qty=excluded.planned_qty""",
+                params,
+            )
         return len(params)
 
     def count(self, table: str) -> int:
         assert self.con is not None
         if table not in ("events", "production", "orders"):
             raise ValueError(f"bilinmeyen tablo: {table}")
-        return self.con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+        with self._lock:
+            return self.con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
 
     def fetch_events(self, frm: str | None = None, to: str | None = None) -> list[dict]:
         assert self.con is not None
-        sql = ("SELECT timestamp, station_id, event_type, duration "
+        sql = ("SELECT timestamp, station_id, event_type, duration, "
+               "reason_code, operator_entered_reason "
                "FROM events WHERE 1=1")
         args: list = []
         if frm is not None:
@@ -120,15 +139,17 @@ class DuckDBRepository:
         if to is not None:
             sql += " AND timestamp <= ?"
             args.append(to)
-        cur = self.con.execute(sql, args)
-        cols = [d[0] for d in cur.description]
-        return [dict(zip(cols, row)) for row in cur.fetchall()]
+        with self._lock:
+            cur = self.con.execute(sql, args)
+            cols = [d[0] for d in cur.description]
+            return [dict(zip(cols, row)) for row in cur.fetchall()]
 
     def fetch_production(self) -> list[dict]:
         assert self.con is not None
-        cur = self.con.execute(
-            "SELECT carrier_id, order_id, loaded_qty, good_count, redo_count, scrap_count "
-            "FROM production"
-        )
-        cols = [d[0] for d in cur.description]
-        return [dict(zip(cols, row)) for row in cur.fetchall()]
+        with self._lock:
+            cur = self.con.execute(
+                "SELECT carrier_id, order_id, loaded_qty, good_count, redo_count, scrap_count "
+                "FROM production"
+            )
+            cols = [d[0] for d in cur.description]
+            return [dict(zip(cols, row)) for row in cur.fetchall()]
