@@ -1,11 +1,19 @@
 "use strict";
 
-const COLORS = {
-  base: "#39424e", loss: "#f85149", lossSoft: "#d29922",
-  oee: "#4ea1ff", visible: "#3fb950", inferred: "#b07cff",
+const C = {
+  ink: "#eef2f6", muted: "#8b94a3", grid: "rgba(255,255,255,0.05)",
+  base: "#3a434f", oee: "#6ea8fe", good: "#34d399", inferred: "#a78bfa", loss: "#fb7185",
 };
+
+// Chart.js premium varsayılanları
+Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif";
+Chart.defaults.font.weight = 500;
+Chart.defaults.color = C.muted;
+
 const charts = {};
 const pct = (x) => (x * 100).toFixed(1) + "%";
+const grid = { color: C.grid, drawTicks: false };
+const bar = { borderRadius: 6, borderSkipped: false, barPercentage: 0.62, categoryPercentage: 0.7 };
 
 function qs() {
   const f = document.getElementById("from").value;
@@ -48,15 +56,15 @@ function renderWaterfall(oee) {
       labels: ["Başlangıç", "−Kullanılabilirlik", "−Performans", "−Kalite", "OEE"],
       datasets: [{
         data: [[0, 100], [a100, 100], [ap100, a100], [apq, ap100], [0, apq]],
-        backgroundColor: [COLORS.base, COLORS.loss, COLORS.loss, COLORS.loss, COLORS.oee],
+        backgroundColor: [C.base, C.loss, C.loss, C.loss, C.oee],
+        ...bar,
       }],
     },
     options: {
       plugins: { legend: { display: false },
-        tooltip: { callbacks: { label: (c) => {
-          const v = c.raw; return (Math.abs(v[1] - v[0])).toFixed(1) + "%"; } } } },
-      scales: { y: { min: 0, max: 100, ticks: { color: "#93a1b1" } },
-                x: { ticks: { color: "#93a1b1" } } },
+        tooltip: { callbacks: { label: (c) => (Math.abs(c.raw[1] - c.raw[0])).toFixed(1) + "%" } } },
+      scales: { y: { min: 0, max: 100, grid, ticks: { callback: (v) => v + "%" } },
+                x: { grid: { display: false } } },
     },
   });
 }
@@ -66,26 +74,25 @@ function lossChart(id, cats) {
   charts[id] = new Chart(document.getElementById(id), {
     type: "bar",
     data: {
-      labels: cats.map((c) => c.category + (c.kind === "inferred" ? " (çıkarım)" : "")),
+      labels: cats.map((c) => c.category + (c.kind === "inferred" ? " · çıkarım" : "")),
       datasets: [{
         data: cats.map((c) => c.value),
-        backgroundColor: cats.map((c) => c.kind === "inferred" ? COLORS.inferred : COLORS.visible),
+        backgroundColor: cats.map((c) => c.kind === "inferred" ? C.inferred : C.good),
+        ...bar,
       }],
     },
     options: {
       indexAxis: "y",
       plugins: { legend: { display: false } },
-      scales: { x: { ticks: { color: "#93a1b1" } }, y: { ticks: { color: "#93a1b1" } } },
+      scales: { x: { grid, beginAtZero: true }, y: { grid: { display: false } } },
     },
   });
 }
 
 function renderLossTree(tree) {
   const cats = tree.categories;
-  const timeCats = cats.filter((c) => c.axis === "minutes");
-  const partCats = cats.filter((c) => c.axis === "parts");
-  lossChart("loss-time", timeCats);
-  lossChart("loss-parts", partCats);
+  lossChart("loss-time", cats.filter((c) => c.axis === "minutes"));
+  lossChart("loss-parts", cats.filter((c) => c.axis === "parts"));
 }
 
 function renderTrend(series) {
@@ -95,14 +102,18 @@ function renderTrend(series) {
     data: {
       labels: series.map((s) => s.period),
       datasets: [
-        { label: "OEE", data: series.map((s) => s.oee * 100), borderColor: COLORS.oee, tension: 0.2 },
-        { label: "Kullanılabilirlik", data: series.map((s) => s.availability * 100), borderColor: COLORS.visible, tension: 0.2 },
+        { label: "OEE", data: series.map((s) => s.oee * 100), borderColor: C.oee,
+          backgroundColor: "rgba(110,168,254,0.12)", fill: true, tension: 0.35,
+          borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: C.oee },
+        { label: "Kullanılabilirlik", data: series.map((s) => s.availability * 100),
+          borderColor: C.good, tension: 0.35, borderWidth: 2, pointRadius: 2,
+          borderDash: [5, 4], pointBackgroundColor: C.good },
       ],
     },
     options: {
-      plugins: { legend: { labels: { color: "#93a1b1" } } },
-      scales: { y: { min: 0, max: 100, ticks: { color: "#93a1b1" } },
-                x: { ticks: { color: "#93a1b1" } } },
+      plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 16 } } },
+      scales: { y: { min: 0, max: 100, grid, ticks: { callback: (v) => v + "%" } },
+                x: { grid: { display: false } } },
     },
   });
 }

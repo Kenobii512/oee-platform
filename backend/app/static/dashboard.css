@@ -1,50 +1,149 @@
+/* OEE Panosu — premium "Ethereal Glass" tema (veri panosuna uyarlanmış).
+   İlkeler: double-bezel kartlar, hairline kenarlar, yumuşak/tonlu gölgeler,
+   özel cubic-bezier geçişler, tabular rakamlar, makro boşluk. GPU-güvenli motion. */
+
 :root {
-  --bg: #0f1419;
-  --card: #1b2430;
-  --ink: #e6edf3;
-  --muted: #93a1b1;
-  --accent: #4ea1ff;
-  --good: #3fb950;
-  --warn: #d29922;
-  --bad: #f85149;
-  --inferred: #b07cff;
+  --bg: #070809;
+  --bg-2: #0b0d10;
+  --ink: #eef2f6;
+  --muted: #8b94a3;
+  --faint: #5b6573;
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.12);
+  --accent: #6ea8fe;
+  --good: #34d399;     /* görünür kanallar / iyi */
+  --inferred: #a78bfa; /* çıkarım kanalları */
+  --loss: #fb7185;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --r-shell: 24px;
+  --r-core: 18px;
 }
+
 * { box-sizing: border-box; }
+
+html { color-scheme: dark; }
+
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   background: var(--bg);
   color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
+
+/* Arka plan: çok hafif, sabit radyal mesh orblar (pointer-events yok). */
+.aurora {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  background:
+    radial-gradient(48rem 32rem at 12% -8%, rgba(110, 168, 254, 0.10), transparent 60%),
+    radial-gradient(40rem 30rem at 105% 8%, rgba(167, 139, 250, 0.08), transparent 60%),
+    radial-gradient(50rem 40rem at 50% 120%, rgba(52, 211, 153, 0.05), transparent 60%);
+}
+
+/* ---- Üst bar ---- */
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 1rem; padding: 0.8rem 1.2rem; background: var(--card);
-  border-bottom: 1px solid #2a3441; flex-wrap: wrap;
+  gap: 1rem; padding: 1.4rem clamp(1rem, 4vw, 2.4rem) 0.4rem; flex-wrap: wrap;
 }
-.topbar h1 { font-size: 1.2rem; margin: 0; }
-.controls { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.controls label { font-size: 0.8rem; color: var(--muted); display: flex; flex-direction: column; }
-.controls input { background: #0f1419; color: var(--ink); border: 1px solid #2a3441; border-radius: 6px; padding: 4px 6px; }
-button { background: var(--accent); color: #04101f; border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: 600; }
-.tabs { display: flex; gap: 4px; }
-.tab { background: #243040; color: var(--muted); }
-.tab.active { background: var(--accent); color: #04101f; }
-.empty { margin: 2rem; padding: 1.5rem; background: var(--card); border: 1px dashed var(--warn); border-radius: 10px; color: var(--muted); }
-.empty code { color: var(--ink); }
+.brand .eyebrow {
+  display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.24em;
+  text-transform: uppercase; color: var(--faint); margin-bottom: 2px;
+}
+.brand h1 { font-size: 1.25rem; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
+
+.controls { display: flex; align-items: flex-end; gap: 0.6rem; flex-wrap: wrap; }
+.controls label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+.controls input {
+  background: var(--bg-2); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 10px; padding: 7px 9px; font: inherit; font-size: 0.8rem;
+  transition: border-color 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+.controls input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(110, 168, 254, 0.18); }
+
+button {
+  font: inherit; font-weight: 600; font-size: 0.82rem; cursor: pointer;
+  border: 1px solid transparent; border-radius: 999px; padding: 8px 16px;
+  background: var(--accent); color: #061122;
+  transition: transform 0.4s var(--ease), filter 0.4s var(--ease), background 0.4s var(--ease), color 0.4s var(--ease), border-color 0.4s var(--ease);
+}
+button:hover { filter: brightness(1.08); }
+button:active { transform: scale(0.97); }
+
+.tabs { display: flex; gap: 4px; padding: 3px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 999px; }
+.tab { background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 999px; }
+.tab.active { background: rgba(255, 255, 255, 0.06); color: var(--ink); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+
+/* ---- Boş durum ---- */
+.empty {
+  margin: clamp(1rem, 4vw, 2.4rem); padding: 2rem; border-radius: var(--r-shell);
+  background: var(--bg-2); border: 1px solid var(--line); color: var(--muted); line-height: 1.7;
+}
+.empty code { color: var(--accent); background: rgba(110, 168, 254, 0.08); padding: 1px 6px; border-radius: 6px; }
 .hidden { display: none !important; }
+
+/* ---- Izgara ---- */
 .grid {
-  display: grid; gap: 1rem; padding: 1.2rem;
+  display: grid; gap: 1.1rem; padding: 1.1rem clamp(1rem, 4vw, 2.4rem) 2.6rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 1320px; margin: 0 auto;
 }
-.card { background: var(--card); border: 1px solid #2a3441; border-radius: 12px; padding: 1rem; min-height: 60px; }
-.card h2 { font-size: 0.95rem; margin: 0 0 0.6rem; color: var(--muted); font-weight: 600; }
-.kpis { grid-column: 1 / -1; display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center; }
-.kpi { display: flex; flex-direction: column; }
-.kpi .label { font-size: 0.75rem; color: var(--muted); }
-.kpi .value { font-size: 2rem; font-weight: 700; }
-.kpi .value.small { font-size: 1rem; font-weight: 500; }
-.kpi-oee .value { color: var(--accent); }
-.muted { color: var(--muted); font-size: 0.78rem; }
-#dq-detail { font-size: 0.9rem; line-height: 1.6; }
-canvas { max-height: 280px; }
-@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+
+/* ---- Double-bezel kart (dış kabuk + iç çekirdek) ---- */
+.shell {
+  background: rgba(255, 255, 255, 0.022);
+  border: 1px solid var(--line);
+  border-radius: var(--r-shell);
+  padding: 6px;
+  box-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.8);
+  opacity: 0; transform: translateY(14px);
+  animation: rise 0.7s var(--ease) forwards;
+  transition: transform 0.5s var(--ease), border-color 0.5s var(--ease);
+}
+.shell:hover { transform: translateY(-3px); border-color: var(--line-strong); }
+.shell .core {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(0, 0, 0, 0.12)), var(--bg-2);
+  border-radius: var(--r-core);
+  padding: 1.15rem 1.25rem 1.25rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  height: 100%;
+}
+.shell:nth-child(1) { animation-delay: 0.02s; }
+.shell:nth-child(2) { animation-delay: 0.08s; }
+.shell:nth-child(3) { animation-delay: 0.14s; }
+.shell:nth-child(4) { animation-delay: 0.20s; }
+.shell:nth-child(5) { animation-delay: 0.26s; }
+.shell:nth-child(6) { animation-delay: 0.32s; }
+
+@keyframes rise { to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .shell { animation: none; opacity: 1; transform: none; }
+  .shell:hover { transform: none; }
+}
+
+.eyebrow {
+  display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--faint); margin-bottom: 0.85rem;
+}
+canvas { max-height: 268px; }
+
+/* ---- KPI başlığı ---- */
+.kpis { grid-column: 1 / -1; }
+.kpis .core { display: flex; gap: clamp(1rem, 3vw, 2.6rem); flex-wrap: wrap; align-items: center; }
+.kpi { display: flex; flex-direction: column; gap: 2px; }
+.kpi .label { font-size: 11px; letter-spacing: 0.06em; color: var(--muted); text-transform: uppercase; }
+.kpi .value { font-size: clamp(1.7rem, 4vw, 2.5rem); font-weight: 700; line-height: 1; letter-spacing: -0.03em; }
+.kpi .value.small { font-size: 0.95rem; font-weight: 500; letter-spacing: 0; color: var(--ink); }
+.kpi-oee { padding-right: clamp(1rem, 3vw, 2.4rem); border-right: 1px solid var(--line); }
+.kpi-oee .value { font-size: clamp(2.4rem, 6vw, 3.6rem); color: var(--accent); text-shadow: 0 0 38px rgba(110, 168, 254, 0.35); }
+
+/* ---- Veri güvenilirliği detayı ---- */
+.muted { color: var(--muted); font-size: 0.76rem; line-height: 1.6; }
+#dq-detail { font-size: 0.9rem; line-height: 1.85; margin-bottom: 0.6rem; }
+#dq-detail strong { color: var(--ink); }
+
+@media (max-width: 760px) {
+  .grid { grid-template-columns: 1fr; }
+  .kpi-oee { border-right: 0; }
+}
