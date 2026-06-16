@@ -39,6 +39,16 @@ def baseline_truth_value(category: str) -> float:
     return minutes if category in _MINUTES else parts
 
 
+def baseline_truth_cost(category: str) -> float:
+    """ground_truth.csv `est_cost_tl` toplamı (kategori bazında). Yalnız doğrulamada."""
+    total = 0.0
+    with open(FIXTURES / "baseline" / "ground_truth.csv", encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            if r["event_type"] == category:
+                total += float(r["est_cost_tl"])
+    return total
+
+
 @pytest.fixture
 def line_def():
     return load_line_definition(LINE_CONFIG)
