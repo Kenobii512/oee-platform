@@ -1,4 +1,4 @@
-from app.analytics.loss_tree import extract_loss_tree, VISIBLE
+from app.analytics.loss_tree import VISIBLE, extract_loss_tree
 from tests.conftest import FIXTURES, baseline_truth_value, load_fixture_into_repo
 
 

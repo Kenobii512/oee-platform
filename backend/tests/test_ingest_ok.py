@@ -14,7 +14,8 @@ def _count_csv_rows(path):
 
 def test_baseline_loads_and_row_counts_match(tmp_path):
     repo = DuckDBRepository(str(tmp_path / "t.duckdb"))
-    repo.connect(); repo.init_schema()
+    repo.connect()
+    repo.init_schema()
     report = load_csv_dir(FIX, repo)
     assert repo.count("events") == _count_csv_rows(FIX / "events.csv")
     assert repo.count("production") == _count_csv_rows(FIX / "production.csv")

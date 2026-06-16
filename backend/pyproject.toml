@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# Mevcut kodu kırmayacak makul taban: pyflakes (F), pycodestyle (E/W), import sırası (I).
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]  # satır uzunluğu uyarısını kapıda zorlamıyoruz (mevcut kod uzun satırlar içeriyor)
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "regression: parite/doğruluk eşiklerini kilitleyen sözleşme testleri (G6 kapısı)",
+]

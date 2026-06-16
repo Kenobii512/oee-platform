@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from app.ingest.loader import load_csv_dir
 from app.store.duckdb_repo import DuckDBRepository
@@ -18,7 +17,8 @@ def test_bad_rows_rejected_good_rows_loaded(tmp_path):
         "CAR-2,ORD-1,100,90,0,5\n"
     )
     repo = DuckDBRepository(str(tmp_path / "t.duckdb"))
-    repo.connect(); repo.init_schema()
+    repo.connect()
+    repo.init_schema()
     report = load_csv_dir(d, repo)
     assert repo.count("events") == 1
     assert repo.count("production") == 1

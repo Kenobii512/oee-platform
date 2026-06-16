@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.analytics.oee import union_length, availability_from_events
+from app.analytics.oee import availability_from_events, union_length
 
 
 def test_union_length_disjoint():

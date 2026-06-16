@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.models.contract import EventRow, ProductionRow, OrderRow, EventType
+from app.models.contract import EventRow, EventType, OrderRow, ProductionRow
 
 
 def test_valid_event_row():

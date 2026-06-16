@@ -1,4 +1,3 @@
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,7 +9,8 @@ from app.store.duckdb_repo import DuckDBRepository
 
 def test_loader_raises_on_missing_dir(tmp_path):
     repo = DuckDBRepository(str(tmp_path / "t.duckdb"))
-    repo.connect(); repo.init_schema()
+    repo.connect()
+    repo.init_schema()
     with pytest.raises(NotADirectoryError):
         load_csv_dir(tmp_path / "no_such_dir", repo)
     repo.close()

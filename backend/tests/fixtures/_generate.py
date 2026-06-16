@@ -15,10 +15,10 @@ from pathlib import Path
 SIM = Path(__file__).resolve().parents[4] / "simulator"
 sys.path.insert(0, str(SIM))
 
-from src.config import load_config            # noqa: E402
-from src.line import run_simulation           # noqa: E402
-from src.losses import load_scenario          # noqa: E402
-from src.metrics import compute_oee           # noqa: E402
+from src.config import load_config  # noqa: E402
+from src.line import run_simulation  # noqa: E402
+from src.losses import load_scenario  # noqa: E402
+from src.metrics import compute_oee  # noqa: E402
 
 OUT = Path(__file__).resolve().parent
 CONFIG = SIM / "config" / "line_default.yaml"
