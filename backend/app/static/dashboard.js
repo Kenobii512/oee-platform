@@ -197,6 +197,20 @@ async function load() {
   renderTrend(trend);
 }
 
+async function setupScenarios() {
+  const sel = document.getElementById("scenario");
+  try {
+    const { scenarios } = await getJSON("/scenarios");
+    sel.innerHTML = scenarios
+      .map((s) => `<option value="${s.id}" title="${s.description}">${s.title}</option>`)
+      .join("");
+    sel.addEventListener("change", async () => {
+      await fetch(`/scenarios/${sel.value}/activate`, { method: "POST" });
+      await load();
+    });
+  } catch (e) { /* katalog yoksa seçici gizli kalır */ }
+}
+
 function setupTabs() {
   document.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -211,4 +225,5 @@ function setupTabs() {
 
 document.getElementById("apply").addEventListener("click", load);
 setupTabs();
+setupScenarios();
 load();
