@@ -166,7 +166,21 @@ canvas { max-height: 268px; }
 .rec-meta { margin: 0; }
 .rec-meta strong { color: var(--ink); }
 
+/* ---- Görünüm geçişi (Pano / Replay) ---- */
+.viewnav {
+  position: fixed; top: 1.4rem; left: 50%; transform: translateX(-50%); z-index: 20;
+  display: flex; gap: 4px; padding: 3px;
+  background: rgba(11, 13, 16, 0.7); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); border-radius: 999px;
+}
+.viewnav button {
+  background: transparent; color: var(--muted); padding: 6px 16px; border-radius: 999px;
+  border: 1px solid transparent;
+}
+.viewnav button.active { background: var(--accent); color: #061122; }
+
 @media (max-width: 760px) {
   .grid { grid-template-columns: 1fr; }
   .kpi-oee { border-right: 0; }
+  .viewnav { position: static; transform: none; margin: 0.8rem auto 0; width: fit-content; }
 }

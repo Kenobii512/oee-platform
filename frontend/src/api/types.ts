@@ -83,3 +83,12 @@ export interface Range {
   from?: string
   to?: string
 }
+
+/** G7 replay snapshot'ı (SSE /replay/stream — büyüyen 'şimdiye kadar' penceresi). */
+export interface ReplaySnapshot {
+  to: string | null
+  oee: { oee: number; availability: number; performance: number; quality: number }
+  cost: CostTree
+  total_estimated_gain_tl: number
+  event_count: number
+}
