@@ -1,13 +1,15 @@
 services:
   oee-platform:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
     environment:
       - OEE_DUCKDB_PATH=/data/oee.duckdb
-      - OEE_LINE_CONFIG=/app/config/line_default.yaml
+      # Demo: açılışta baseline senaryosunu otomatik yükle (dolu pano).
+      - SAMPLE_DATA_DIR=/app/tests/fixtures/scenarios/baseline
     volumes:
-      - ./config:/app/config:ro
       - oee-data:/data
 volumes:
   oee-data:

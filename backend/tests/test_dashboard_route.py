@@ -7,10 +7,20 @@ from app.main import app
 FIX = Path(__file__).resolve().parent / "fixtures" / "baseline"
 
 
-def test_dashboard_returns_html(tmp_path, monkeypatch):
+def test_root_returns_html(tmp_path, monkeypatch):
+    # '/' SPA varsa React, yoksa Jinja sunar; her iki durumda 200 HTML.
     monkeypatch.setenv("OEE_DUCKDB_PATH", str(tmp_path / "api.duckdb"))
     with TestClient(app) as client:
         r = client.get("/")
+        assert r.status_code == 200
+        assert "text/html" in r.headers["content-type"]
+
+
+def test_legacy_dashboard_returns_jinja(tmp_path, monkeypatch):
+    # Jinja panosu daima '/legacy'de (SPA fallback).
+    monkeypatch.setenv("OEE_DUCKDB_PATH", str(tmp_path / "api.duckdb"))
+    with TestClient(app) as client:
+        r = client.get("/legacy")
         assert r.status_code == 200
         assert "text/html" in r.headers["content-type"]
         assert "OEE" in r.text

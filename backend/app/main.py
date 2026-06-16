@@ -5,10 +5,12 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.cost_routes import router as cost_router
+from app.api.dashboard_routes import render_dashboard
 from app.api.dashboard_routes import router as dashboard_router
 from app.api.data_quality_routes import router as data_quality_router
 from app.api.ingest_routes import router as ingest_router
@@ -59,3 +61,16 @@ app.include_router(dashboard_router)
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+# SPA servisi: React build (frontend_dist) varsa kök '/' onu sunar (Jinja '/legacy'de).
+# Build yoksa (dev/test) Jinja panosu '/'ta fallback kalır. Mount EN SONA eklenir ki
+# /health ve API route'larını gölgelemesin (Starlette sıra-bazlı eşler).
+_FRONTEND_DIST = _BASE / "frontend_dist"
+
+if (_FRONTEND_DIST / "index.html").is_file():
+    app.mount("/", StaticFiles(directory=str(_FRONTEND_DIST), html=True), name="spa")
+else:
+    @app.get("/", response_class=HTMLResponse)
+    def root(request: Request) -> HTMLResponse:
+        return render_dashboard(request)

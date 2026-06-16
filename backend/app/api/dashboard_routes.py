@@ -1,4 +1,7 @@
-"""GET / -> pano HTML şablonu (Jinja2). Tüm veri tarayıcıdan API ile çekilir."""
+"""Jinja panosu (legacy). React SPA varsa kök '/' onu sunar, Jinja '/legacy'de fallback kalır.
+
+Tüm veri tarayıcıdan API ile çekilir. main.py SPA dist'i bulamazsa render_dashboard'u '/'ta sunar.
+"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,6 +17,10 @@ _templates = Jinja2Templates(
 )
 
 
-@router.get("/", response_class=HTMLResponse)
-def dashboard(request: Request) -> HTMLResponse:
+def render_dashboard(request: Request) -> HTMLResponse:
     return _templates.TemplateResponse(request, "dashboard.html")
+
+
+@router.get("/legacy", response_class=HTMLResponse)
+def legacy_dashboard(request: Request) -> HTMLResponse:
+    return render_dashboard(request)
