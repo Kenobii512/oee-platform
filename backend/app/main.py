@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from app.api.cost_routes import router as cost_router
 from app.api.dashboard_routes import router as dashboard_router
 from app.api.data_quality_routes import router as data_quality_router
 from app.api.ingest_routes import router as ingest_router
@@ -45,6 +46,7 @@ app.mount("/static", StaticFiles(directory=str(_BASE / "static")), name="static"
 app.include_router(ingest_router)
 app.include_router(oee_router)
 app.include_router(loss_tree_router)
+app.include_router(cost_router)
 app.include_router(trend_router)
 app.include_router(data_quality_router)
 app.include_router(dashboard_router)
