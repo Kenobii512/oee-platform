@@ -1,14 +1,14 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-06-16 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** 72/72 yeşil
-**Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · (pano) Jinja2 + Chart.js
+**Güncelleme:** 2026-06-16 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 83/83 + frontend vitest 2/2 yeşil
+**Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de)
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
 özetidir. Ayrıntılı tasarım/plan: `docs/superpowers/specs` ve `docs/superpowers/plans`.
 
 ---
 
-## Tamamlanan görevler (G1–G5 · Dalga 1: G6 · G11 · G9)
+## Tamamlanan görevler (G1–G5 · Dalga 1: G6·G11·G9 · Dalga 2: G8·GR)
 
 | Görev | Teslim | Durum |
 |------|--------|-------|
@@ -20,6 +20,8 @@ Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıy
 | **G6** | Regresyon/CI kapısı (GitHub Actions: ruff + pytest), `test_regression_contract.py` açık eşik sabitleri | ✓ |
 | **G11** | TL (maliyet) lensi: `config/costs.yaml` + `analytics/cost.py`, `GET /loss-tree/cost`, pano TL Pareto'su | ✓ |
 | **G9** | Kural tabanlı öneri motoru: `analytics/recommend.py` (modüler `GainEstimator`), `GET /recommendations`, pano "Öneriler" | ✓ |
+| **G8** | Senaryo kütüphanesi: 6 demo senaryosu (golden fixture), `GET /scenarios` + `POST /scenarios/{id}/activate`, pano seçici; **doğal-eksen** kalibrasyon kapısı | ✓ |
+| **GR** | Pano React 19 + Vite'a taşındı (JSON sözleşmesi değişmedi); FastAPI SPA'yı `/`'ta sunar, Jinja `/legacy`'de; çok aşamalı Docker; CI frontend job | ✓ |
 
 ## API yüzeyi (mevcut)
 
@@ -32,7 +34,10 @@ GET  /loss-tree/cost?from=&to=         -> {categories:[{category, axis, value, t
 GET  /recommendations?from=&to=        -> {recommendations:[{category, tl, estimated_gain_tl, title, action, assumption, ...}], total_estimated_gain_tl}
 GET  /oee/trend?bucket=day|week        -> [{period, availability, performance, quality, oee}]
 GET  /data-quality/summary             -> {downtime_entry_coverage, microstop_entry_coverage}
-GET  /                                 -> pano (HTML)
+GET  /scenarios                        -> {scenarios:[{id, title, description, expected_top_loss, data_dir}]}  (6 demo)
+POST /scenarios/{id}/activate          -> {activated, ingest}  (repo.reset() + o senaryoyu ingest)
+GET  /                                 -> React SPA (build varsa) ya da Jinja fallback (HTML)
+GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
 ```
 
 ## Mimari & sabit kararlar
@@ -61,29 +66,35 @@ GET  /                                 -> pano (HTML)
 - **Utilization formülü:** `calendar = span + planned_downtime_min` basit bir MVP; span içine düşen
   planlı bakım çift sayılabilir, vardiya-dışı/molalar hariç. Parite testi yok; G10/takvim modeliyle
   netleşecek.
-- **Pano frontend:** sunucu-taraflı (Jinja2 + Chart.js CDN), build yok. Daha interaktif ekranlar
-  (G7 replay) için React/Vite'a geçiş düşünülebilir.
+- **Pano frontend:** **React 19 + Vite SPA** (GR). FastAPI build çıktısını (`app/frontend_dist/`,
+  gitignore'lu; Docker stage-1 üretir) `/`'ta sunar; eski Jinja `/legacy`'de fallback. Dev'de
+  `frontend/` Vite sunucusu backend'e (8000) proxy'ler. JSON sözleşmesi backend'le aynı.
+- **G8 kalibrasyon kararı (doğal-eksen):** TL ağırlıkları dengesiz (DOWNTIME 50, SCRAP 8 pahalı;
+  SPEED 20, REDO 3, FILL 2 ucuz) → ucuz kanallar TL'de #1 olamaz. Kapı (`test_scenarios_dominant_loss`)
+  her senaryonun adlı kaybını **kendi ekseninde** (zaman→dakika, malzeme→parça) baskın doğrular.
+  Daha gerçekçi senaryolar + okunabilir demo (pano ilgili grafiği gösterir).
 
-## Sıradaki yol haritası (V2 — `OEE_V2_Yol_Haritasi.docx`)
+## Sıradaki yol haritası
 
-- **G6** — Regresyon: doğruluk testlerini CI'da eşikli hale getir (görünür ±%1, gizli ≥%85, OEE parite).
-- **G7** — Hızlandırılmış replay: panoyu canlıymış gibi besle (burada React'e geçiş gündeme gelebilir).
-- **G8** — Senaryo kütüphanesi: farklı kayıp profillerini demo/karşılaştırma için yönet.
-- **G9** — Kural tabanlı öneri: kayıp ağacından en büyük kaybı bulup öneri üret (panoya "Öneriler").
-- **G10** — Tam veri-kalite / operatör atıf paneli (G5'teki tek gösterge bunun habercisi).
-- **G11** — TL lensi: kategorileri ortak birime (TL) çevir → gerçek Pareto + parasal etki.
+**Dalga 2 kalan:** **G7** (hızlandırılmış replay — SSE; React üstünde canlı). Bkz
+`docs/superpowers/plans/2026-06-16-oee-wave2-g8-gr-g7.md`.
+**Dalga 3:** G10 (tam veri-kalite paneli) → G4.1 (dönem-doğru üretim atfı) → Pilot kiti.
 
-## CI (G6)
+## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) her push/PR'da Python 3.11 üzerinde
-`ruff check` + `pytest -q` çalıştırır. Parite eşikleri (OEE ±%1, kayıpsız OEE ≥%95,
-gizli kanal geri kazanımı ≥%85, firewall) `backend/tests/test_regression_contract.py`
-içinde açık sabitlerle kilitlidir (`@pytest.mark.regression`). Yerelde aynı kapı: `make ci`.
+GitHub Actions (`.github/workflows/ci.yml`) her push/PR'da **iki paralel job**:
+- **test** (Python 3.11): `ruff check` + `pytest -q`. Parite eşikleri (OEE ±%1, kayıpsız OEE ≥%95,
+  gizli kanal ≥%85, firewall) `test_regression_contract.py`'de açık sabitlerle (`@pytest.mark.regression`).
+- **frontend** (Node 20): `npm ci` + `npm run lint` + `npm run test` (vitest) + `npm run build`.
+
+Yerelde backend kapısı: `make ci`.
 
 ## Çalıştırma
 
 ```
-docker-compose up --build          # http://localhost:8000  (uzak VM'de link ile aynı imaj)
-# demo: SAMPLE_DATA_DIR=/app/tests/fixtures/baseline ile açılışta otomatik dolu pano
-cd backend && pytest -v            # 49 test
+docker-compose up --build          # http://localhost:8000  (React SPA, açılışta baseline yüklü)
+                                   #   /legacy = eski Jinja pano
+# backend testleri:  cd backend && pytest -q          (83 test)
+# frontend dev:      cd frontend && npm run dev        (Vite, backend'e proxy)
+# frontend testleri: cd frontend && npm run test       (vitest)
 ```
