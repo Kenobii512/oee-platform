@@ -68,6 +68,13 @@ GET  /                                 -> pano (HTML)
 - **G10** — Tam veri-kalite / operatör atıf paneli (G5'teki tek gösterge bunun habercisi).
 - **G11** — TL lensi: kategorileri ortak birime (TL) çevir → gerçek Pareto + parasal etki.
 
+## CI (G6)
+
+GitHub Actions (`.github/workflows/ci.yml`) her push/PR'da Python 3.11 üzerinde
+`ruff check` + `pytest -q` çalıştırır. Parite eşikleri (OEE ±%1, kayıpsız OEE ≥%95,
+gizli kanal geri kazanımı ≥%85, firewall) `backend/tests/test_regression_contract.py`
+içinde açık sabitlerle kilitlidir (`@pytest.mark.regression`). Yerelde aynı kapı: `make ci`.
+
 ## Çalıştırma
 
 ```
