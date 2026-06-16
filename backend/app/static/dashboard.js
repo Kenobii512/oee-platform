@@ -95,6 +95,35 @@ function renderLossTree(tree) {
   lossChart("loss-parts", cats.filter((c) => c.axis === "parts"));
 }
 
+function renderCostPareto(cost) {
+  const cats = cost.categories;  // zaten TL azalan sıralı (backend)
+  document.getElementById("cost-total").textContent =
+    Math.round(cost.total_tl).toLocaleString("tr-TR") + " TL";
+  destroy("cost-pareto");
+  charts["cost-pareto"] = new Chart(document.getElementById("cost-pareto"), {
+    type: "bar",
+    data: {
+      labels: cats.map((c) => c.category + (c.kind === "inferred" ? " · çıkarım" : "")),
+      datasets: [{
+        data: cats.map((c) => Math.round(c.tl)),
+        backgroundColor: cats.map((c) => c.kind === "inferred" ? C.inferred : C.loss),
+        ...bar,
+      }],
+    },
+    options: {
+      indexAxis: "y",
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => ctx.raw.toLocaleString("tr-TR") + " TL" } },
+      },
+      scales: {
+        x: { grid, beginAtZero: true, ticks: { callback: (v) => v.toLocaleString("tr-TR") } },
+        y: { grid: { display: false } },
+      },
+    },
+  });
+}
+
 function renderTrend(series) {
   destroy("trend");
   charts.trend = new Chart(document.getElementById("trend"), {
@@ -131,14 +160,16 @@ async function load() {
   document.getElementById("dashboard").classList.toggle("hidden", empty);
   if (empty) return;
 
-  const [tree, trend, dq] = await Promise.all([
+  const [tree, cost, trend, dq] = await Promise.all([
     getJSON("/loss-tree" + q),
+    getJSON("/loss-tree/cost" + q),
     getJSON("/oee/trend?bucket=day" + (q ? "&" + q.slice(1) : "")),
     getJSON("/data-quality/summary"),
   ]);
   renderKpis(oee, dq);
   renderWaterfall(oee);
   renderLossTree(tree);
+  renderCostPareto(cost);
   renderTrend(trend);
 }
 
