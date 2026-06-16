@@ -25,14 +25,19 @@ class MaintenanceWindow:
 class AppConfig:
     duckdb_path: str
     line_config_path: str
+    cost_config_path: str
 
 
 def load_app_config() -> AppConfig:
     """Env'den uygulama ayarlarını okur (varsayılanlarla)."""
+    config_dir = Path(__file__).resolve().parents[2] / "config"
     return AppConfig(
         duckdb_path=os.environ.get("OEE_DUCKDB_PATH", "oee.duckdb"),
         line_config_path=os.environ.get(
-            "OEE_LINE_CONFIG", str(Path(__file__).resolve().parents[2] / "config" / "line_default.yaml")
+            "OEE_LINE_CONFIG", str(config_dir / "line_default.yaml")
+        ),
+        cost_config_path=os.environ.get(
+            "OEE_COST_CONFIG", str(config_dir / "costs.yaml")
         ),
     )
 
@@ -76,3 +81,28 @@ def load_planned_maintenance(path: str | Path) -> list[MaintenanceWindow]:
             start = datetime.strptime(str(start), "%Y-%m-%d %H:%M")
         out.append(MaintenanceWindow(start=start, duration_min=float(m["duration_min"])))
     return out
+
+
+@dataclass(frozen=True)
+class CostConfig:
+    """Kategori bazında birim maliyetler (TL). Kodda gömülü sayı yok — daima config'ten."""
+
+    downtime_tl_per_min: float
+    microstop_tl_per_min: float
+    speed_tl_per_min: float
+    fill_tl_per_part: float
+    redo_tl_per_part: float
+    scrap_tl_per_part: float
+
+
+def load_cost_config(path: str | Path) -> CostConfig:
+    with open(path, encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+    return CostConfig(
+        downtime_tl_per_min=float(raw["downtime_tl_per_min"]),
+        microstop_tl_per_min=float(raw["microstop_tl_per_min"]),
+        speed_tl_per_min=float(raw["speed_tl_per_min"]),
+        fill_tl_per_part=float(raw["fill_tl_per_part"]),
+        redo_tl_per_part=float(raw["redo_tl_per_part"]),
+        scrap_tl_per_part=float(raw["scrap_tl_per_part"]),
+    )

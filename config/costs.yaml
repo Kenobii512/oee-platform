@@ -1,0 +1,8 @@
+# Birim maliyetler — simülatör scenario_baseline.yaml `costs` bloğuyla hizalı (parite için).
+# Mikro duruş, simülatörde duruş oranıyla maliyetlenir (line.py) -> downtime ile aynı oran.
+downtime_tl_per_min: 50.0
+microstop_tl_per_min: 50.0
+speed_tl_per_min: 20.0
+fill_tl_per_part: 2.0
+redo_tl_per_part: 3.0
+scrap_tl_per_part: 8.0
