@@ -15,6 +15,7 @@ from app.api.ingest_routes import router as ingest_router
 from app.api.loss_tree_routes import router as loss_tree_router
 from app.api.oee_routes import router as oee_router
 from app.api.recommend_routes import router as recommend_router
+from app.api.scenario_routes import router as scenario_router
 from app.api.trend_routes import router as trend_router
 from app.config import load_app_config
 from app.ingest.loader import load_csv_dir
@@ -51,6 +52,7 @@ app.include_router(cost_router)
 app.include_router(recommend_router)
 app.include_router(trend_router)
 app.include_router(data_quality_router)
+app.include_router(scenario_router)
 app.include_router(dashboard_router)
 
 
