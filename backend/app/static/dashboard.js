@@ -124,6 +124,28 @@ function renderCostPareto(cost) {
   });
 }
 
+function renderRecommendations(rec) {
+  const recs = rec.recommendations;  // zaten TL azalan sıralı (backend)
+  document.getElementById("rec-total").textContent =
+    "~" + Math.round(rec.total_estimated_gain_tl).toLocaleString("tr-TR") + " TL";
+  const list = document.getElementById("rec-list");
+  list.innerHTML = "";
+  for (const r of recs) {
+    const li = document.createElement("li");
+    li.className = "rec" + (r.kind === "inferred" ? " inferred" : "");
+    const gain = Math.round(r.estimated_gain_tl).toLocaleString("tr-TR");
+    const tl = Math.round(r.tl).toLocaleString("tr-TR");
+    li.innerHTML =
+      "<div class='rec-head'><span class='rec-title'>" + r.title + "</span>" +
+      "<span class='rec-gain'>~" + gain + " TL/dönem</span></div>" +
+      "<p class='rec-action'>" + r.action + "</p>" +
+      "<p class='muted rec-meta'>Kayıp: <strong>" + tl + " TL</strong>" +
+      (r.kind === "inferred" ? " · çıkarım" : "") +
+      " · " + r.assumption + "</p>";
+    list.appendChild(li);
+  }
+}
+
 function renderTrend(series) {
   destroy("trend");
   charts.trend = new Chart(document.getElementById("trend"), {
@@ -160,9 +182,10 @@ async function load() {
   document.getElementById("dashboard").classList.toggle("hidden", empty);
   if (empty) return;
 
-  const [tree, cost, trend, dq] = await Promise.all([
+  const [tree, cost, rec, trend, dq] = await Promise.all([
     getJSON("/loss-tree" + q),
     getJSON("/loss-tree/cost" + q),
+    getJSON("/recommendations" + q),
     getJSON("/oee/trend?bucket=day" + (q ? "&" + q.slice(1) : "")),
     getJSON("/data-quality/summary"),
   ]);
@@ -170,6 +193,7 @@ async function load() {
   renderWaterfall(oee);
   renderLossTree(tree);
   renderCostPareto(cost);
+  renderRecommendations(rec);
   renderTrend(trend);
 }
 
