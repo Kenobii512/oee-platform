@@ -32,6 +32,13 @@ class DuckDBRepository:
         with self._lock:
             self._create_tables()
 
+    def reset(self) -> None:
+        """Tüm verileri siler (senaryo değişiminde temiz başlangıç için)."""
+        assert self.con is not None
+        with self._lock:
+            for table in ("events", "production", "orders"):
+                self.con.execute(f"DELETE FROM {table}")
+
     def _create_tables(self) -> None:
         assert self.con is not None
         self.con.execute("""

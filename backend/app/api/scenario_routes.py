@@ -32,5 +32,7 @@ def activate_scenario(scenario_id: str, request: Request) -> dict:
     data_dir = (_BACKEND_ROOT / info.data_dir).resolve()
     if not data_dir.is_dir():
         raise HTTPException(status_code=404, detail=f"veri yok: {info.data_dir}")
-    report = load_csv_dir(data_dir, request.app.state.repo)
+    repo = request.app.state.repo
+    repo.reset()  # senaryo değişiminde veri birikmesin (temiz başlangıç)
+    report = load_csv_dir(data_dir, repo)
     return {"activated": scenario_id, "ingest": report.to_dict()}

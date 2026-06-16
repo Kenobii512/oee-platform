@@ -31,3 +31,20 @@ def test_activate_unknown_scenario_404(tmp_path, monkeypatch):
     with TestClient(app) as client:
         r = client.post("/scenarios/yok_boyle/activate")
         assert r.status_code == 404
+
+
+def test_activate_replaces_not_accumulates(tmp_path, monkeypatch):
+    """Senaryo değişiminde veri birikmemeli (reset): ikinci aktivasyon ilkini değiştirir."""
+    monkeypatch.setenv("OEE_DUCKDB_PATH", str(tmp_path / "s.duckdb"))
+    with TestClient(app) as client:
+        client.post("/scenarios/breakdown_storm/activate")
+        downtime_storm = _downtime_minutes(client)
+        client.post("/scenarios/baseline/activate")
+        downtime_base = _downtime_minutes(client)
+        # baseline duruşu storm'dan belirgin küçük olmalı; birikmiş olsaydı ≥ storm olurdu.
+        assert downtime_base < downtime_storm
+
+
+def _downtime_minutes(client) -> float:
+    cats = client.get("/loss-tree").json()["categories"]
+    return next(c["value"] for c in cats if c["category"] == "DOWNTIME")
