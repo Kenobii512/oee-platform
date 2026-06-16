@@ -1,0 +1,13 @@
+# Satır sonlarını normalize et: repoda LF, Windows checkout'ta otomatik CRLF.
+# Cross-platform (Windows<->Linux) mount kaynaklı sahte "modified" gürültüsünü önler.
+* text=auto eol=lf
+
+# Binary dosyalar normalize edilmesin.
+*.png binary
+*.jpg binary
+*.duckdb binary
+*.duckdb.wal binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.pdf binary
