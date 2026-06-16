@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-06-14 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** 49/49 yeşil
+**Güncelleme:** 2026-06-16 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** 72/72 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · (pano) Jinja2 + Chart.js
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -8,7 +8,7 @@ Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıy
 
 ---
 
-## Tamamlanan görevler (G1–G5)
+## Tamamlanan görevler (G1–G5 · Dalga 1: G6 · G11 · G9)
 
 | Görev | Teslim | Durum |
 |------|--------|-------|
@@ -17,6 +17,9 @@ Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıy
 | **G3** | OEE motoru (A/P/Q/OEE) — yalnız public veriden; simülatör `metrics.py` ile **birebir** parite | ✓ |
 | **G4** | Kayıp ağacı (6 kategori, gizli kanal çıkarımı), `GET /loss-tree` | ✓ |
 | **G5** | Minimal pano (KPI, şelale, kayıp ağacı, trend, veri-kalite) + premium redesign | ✓ |
+| **G6** | Regresyon/CI kapısı (GitHub Actions: ruff + pytest), `test_regression_contract.py` açık eşik sabitleri | ✓ |
+| **G11** | TL (maliyet) lensi: `config/costs.yaml` + `analytics/cost.py`, `GET /loss-tree/cost`, pano TL Pareto'su | ✓ |
+| **G9** | Kural tabanlı öneri motoru: `analytics/recommend.py` (modüler `GainEstimator`), `GET /recommendations`, pano "Öneriler" | ✓ |
 
 ## API yüzeyi (mevcut)
 
@@ -25,6 +28,8 @@ GET  /health                          -> {"status":"ok"}
 POST /ingest        {"path": "..."}    -> LoadReport (kabul/ret/atlanan + ilk N hata)
 GET  /oee?from=&to=                    -> {availability, performance, quality, oee, utilization, planned_downtime_min}
 GET  /loss-tree?from=&to=              -> {categories:[{category, axis, value, kind}]}  (6 kategori)
+GET  /loss-tree/cost?from=&to=         -> {categories:[{category, axis, value, tl, kind}], total_tl}  (TL azalan)
+GET  /recommendations?from=&to=        -> {recommendations:[{category, tl, estimated_gain_tl, title, action, assumption, ...}], total_estimated_gain_tl}
 GET  /oee/trend?bucket=day|week        -> [{period, availability, performance, quality, oee}]
 GET  /data-quality/summary             -> {downtime_entry_coverage, microstop_entry_coverage}
 GET  /                                 -> pano (HTML)
