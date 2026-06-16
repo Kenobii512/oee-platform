@@ -27,6 +27,7 @@ class AppConfig:
     line_config_path: str
     cost_config_path: str
     recommend_config_path: str
+    scenario_config_path: str
 
 
 def load_app_config() -> AppConfig:
@@ -42,6 +43,9 @@ def load_app_config() -> AppConfig:
         ),
         recommend_config_path=os.environ.get(
             "OEE_RECOMMEND_CONFIG", str(config_dir / "recommend.yaml")
+        ),
+        scenario_config_path=os.environ.get(
+            "OEE_SCENARIO_CONFIG", str(config_dir / "scenarios.yaml")
         ),
     )
 
@@ -140,3 +144,26 @@ def load_recommend_config(path: str | Path) -> RecommendConfig:
         for cat, r in raw.get("categories", {}).items()
     }
     return RecommendConfig(default_recovery_ratio=default_ratio, rules=rules)
+
+
+@dataclass(frozen=True)
+class ScenarioInfo:
+    """Demo senaryo kataloğu girdisi. expected_top_loss kalibrasyon kapısının hedefidir."""
+
+    id: str
+    title: str
+    description: str
+    expected_top_loss: str
+    data_dir: str
+
+
+def load_scenario_catalog(path: str | Path) -> list[ScenarioInfo]:
+    with open(path, encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+    return [
+        ScenarioInfo(
+            id=s["id"], title=s["title"], description=s["description"],
+            expected_top_loss=s["expected_top_loss"], data_dir=s["data_dir"],
+        )
+        for s in raw.get("scenarios", [])
+    ]

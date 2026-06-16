@@ -1,0 +1,37 @@
+# Demo senaryo kataloğu (koda gömülü senaryo yok — daima config'ten).
+# data_dir backend rootuna görelidir (pytest rootdir = backend).
+# expected_top_loss: kalibrasyon kapısının (test_scenarios_dominant_loss) hedefi.
+#   Doğal-eksen kuralı: adlı kayıp, KENDİ ekseninde (dakika/parça) en yüksek değere sahip.
+#   Zaman kanalları (DOWNTIME/MICROSTOP/SPEED_LOSS) dakika ekseninde; malzeme kanalları
+#   (FILL_LOSS/QUALITY_REDO/QUALITY_SCRAP) parça ekseninde yarışır.
+scenarios:
+  - id: baseline
+    title: "Normal hafta"
+    description: "Tipik bir hafta; en büyük kayıp duruşta."
+    expected_top_loss: DOWNTIME
+    data_dir: tests/fixtures/scenarios/baseline
+  - id: breakdown_storm
+    title: "Arıza fırtınası"
+    description: "Sık ekipman arızası; duruş kaybı patlıyor."
+    expected_top_loss: DOWNTIME
+    data_dir: tests/fixtures/scenarios/breakdown_storm
+  - id: microstop_plague
+    title: "Mikro duruş salgını"
+    description: "Vinçte sürekli kısa duruşlar; operatör çoğunu girmiyor."
+    expected_top_loss: MICROSTOP
+    data_dir: tests/fixtures/scenarios/microstop_plague
+  - id: speed_bottleneck
+    title: "Hız kaybı / darboğaz"
+    description: "Banyo süreleri sapıyor; kimsenin loglamadığı gizli kayıp (dakika ekseninde baskın)."
+    expected_top_loss: SPEED_LOSS
+    data_dir: tests/fixtures/scenarios/speed_bottleneck
+  - id: fill_problem
+    title: "Doluluk problemi"
+    description: "Askılar eksik dolu; parça kaybı büyük, kapasite düşük (parça ekseninde baskın)."
+    expected_top_loss: FILL_LOSS
+    data_dir: tests/fixtures/scenarios/fill_problem
+  - id: redo_crisis
+    title: "Redo / kalite krizi"
+    description: "Kalınlık sapması; yeniden işleme hurdayı geçiyor (parça ekseninde baskın)."
+    expected_top_loss: QUALITY_REDO
+    data_dir: tests/fixtures/scenarios/redo_crisis
