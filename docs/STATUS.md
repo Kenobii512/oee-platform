@@ -1,14 +1,14 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-06-16 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 83/83 + frontend vitest 2/2 yeşil
-**Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de)
+**Güncelleme:** 2026-06-16 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 87/87 + frontend vitest 2/2 yeşil
+**Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
 özetidir. Ayrıntılı tasarım/plan: `docs/superpowers/specs` ve `docs/superpowers/plans`.
 
 ---
 
-## Tamamlanan görevler (G1–G5 · Dalga 1: G6·G11·G9 · Dalga 2: G8·GR)
+## Tamamlanan görevler (G1–G5 · Dalga 1: G6·G11·G9 · Dalga 2: G8·GR·G7)
 
 | Görev | Teslim | Durum |
 |------|--------|-------|
@@ -22,6 +22,7 @@ Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıy
 | **G9** | Kural tabanlı öneri motoru: `analytics/recommend.py` (modüler `GainEstimator`), `GET /recommendations`, pano "Öneriler" | ✓ |
 | **G8** | Senaryo kütüphanesi: 6 demo senaryosu (golden fixture), `GET /scenarios` + `POST /scenarios/{id}/activate`, pano seçici; **doğal-eksen** kalibrasyon kapısı | ✓ |
 | **GR** | Pano React 19 + Vite'a taşındı (JSON sözleşmesi değişmedi); FastAPI SPA'yı `/`'ta sunar, Jinja `/legacy`'de; çok aşamalı Docker; CI frontend job | ✓ |
+| **G7** | Hızlandırılmış replay: `analytics/replay.py` (sanal saat + artımlı snapshot), `GET /replay/stream` (SSE), canlı React Replay görünümü (oynat/duraklat/hız); final snapshot statik ile birebir | ✓ |
 
 ## API yüzeyi (mevcut)
 
@@ -36,6 +37,7 @@ GET  /oee/trend?bucket=day|week        -> [{period, availability, performance, q
 GET  /data-quality/summary             -> {downtime_entry_coverage, microstop_entry_coverage}
 GET  /scenarios                        -> {scenarios:[{id, title, description, expected_top_loss, data_dir}]}  (6 demo)
 POST /scenarios/{id}/activate          -> {activated, ingest}  (repo.reset() + o senaryoyu ingest)
+GET  /replay/stream?scenario=&speed=&steps=  -> SSE: büyüyen 'şimdiye kadar' snapshot'ları (oee, cost, gain, event_count)
 GET  /                                 -> React SPA (build varsa) ya da Jinja fallback (HTML)
 GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
 ```
@@ -76,9 +78,13 @@ GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
 
 ## Sıradaki yol haritası
 
-**Dalga 2 kalan:** **G7** (hızlandırılmış replay — SSE; React üstünde canlı). Bkz
-`docs/superpowers/plans/2026-06-16-oee-wave2-g8-gr-g7.md`.
+**Dalga 2 TAMAM** (G8 · GR · G7). Bkz `docs/superpowers/plans/2026-06-16-oee-wave2-g8-gr-g7.md`.
 **Dalga 3:** G10 (tam veri-kalite paneli) → G4.1 (dönem-doğru üretim atfı) → Pilot kiti.
+
+### G7 replay — dürüst sınır (G4.1)
+Replay penceresi yalnız events'e uygulanır → **Availability + kayıp-zaman + TL ilerledikçe büyür**
+(canlı anlatının özü), **P/Q dönem-geneli** kalır (carrier dönem damgası yok). Dönem-doğru P/Q =
+Dalga 3 G4.1. What-if köprüsü: replay motoru + senaryo parametresi = dijital-ikiz-lite zemini.
 
 ## CI
 
