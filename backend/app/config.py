@@ -26,6 +26,7 @@ class AppConfig:
     duckdb_path: str
     line_config_path: str
     cost_config_path: str
+    recommend_config_path: str
 
 
 def load_app_config() -> AppConfig:
@@ -38,6 +39,9 @@ def load_app_config() -> AppConfig:
         ),
         cost_config_path=os.environ.get(
             "OEE_COST_CONFIG", str(config_dir / "costs.yaml")
+        ),
+        recommend_config_path=os.environ.get(
+            "OEE_RECOMMEND_CONFIG", str(config_dir / "recommend.yaml")
         ),
     )
 
@@ -106,3 +110,33 @@ def load_cost_config(path: str | Path) -> CostConfig:
         redo_tl_per_part=float(raw["redo_tl_per_part"]),
         scrap_tl_per_part=float(raw["scrap_tl_per_part"]),
     )
+
+
+@dataclass(frozen=True)
+class CategoryRule:
+    recovery_ratio: float
+    title: str
+    action: str
+    assumption: str
+
+
+@dataclass(frozen=True)
+class RecommendConfig:
+    default_recovery_ratio: float
+    rules: dict[str, CategoryRule]
+
+
+def load_recommend_config(path: str | Path) -> RecommendConfig:
+    with open(path, encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+    default_ratio = float(raw.get("defaults", {}).get("recovery_ratio", 0.2))
+    rules = {
+        cat: CategoryRule(
+            recovery_ratio=float(r.get("recovery_ratio", default_ratio)),
+            title=r["title"],
+            action=r["action"],
+            assumption=r["assumption"],
+        )
+        for cat, r in raw.get("categories", {}).items()
+    }
+    return RecommendConfig(default_recovery_ratio=default_ratio, rules=rules)

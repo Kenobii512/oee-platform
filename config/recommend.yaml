@@ -1,0 +1,35 @@
+# Kategori başına öneri şablonu + geri-kazanım varsayım oranı (config'te; koda gömülü yok).
+# {detail} alanı DOWNTIME/MICROSTOP'ta events'ten türetilen dağılımla doldurulur.
+defaults:
+  recovery_ratio: 0.20   # genel varsayılan geri-kazanım oranı
+categories:
+  DOWNTIME:
+    recovery_ratio: 0.30
+    title: "Duruşları azalt"
+    action: "En sık duruş nedeni {detail}. MTBF artır: yedek-parça hazırlığı + önleyici bakım planı."
+    assumption: "Duruş TL'sinin ~%{pct} kadarı önleyici bakımla geri kazanılabilir varsayımı."
+  MICROSTOP:
+    recovery_ratio: 0.20
+    title: "Mikro duruşları düşür"
+    action: "Mikro duruşlar {detail} yoğun; çevrim/akış iyileştir. Operatör neden-giriş kapsamı düşük olabilir (/data-quality) — kök-neden için veri kalitesi de ele alınmalı."
+    assumption: "Mikro duruş TL'sinin ~%{pct} kadarı akış iyileştirmesiyle geri kazanılabilir varsayımı."
+  SPEED_LOSS:
+    recovery_ratio: 0.15
+    title: "Hız kaybını azalt"
+    action: "Tank/banyo sürelerinde sapma; darboğaz banyo süresini standartlaştır."
+    assumption: "Hız kaybı TL'sinin ~%{pct} kadarı süre standardizasyonuyla geri kazanılabilir varsayımı."
+  FILL_LOSS:
+    recovery_ratio: 0.20
+    title: "Askı doluluğunu artır"
+    action: "Askı doluluğunu artır (parça olarak büyük kayıp; TL etkisi düşük olsa da kapasite kazancı)."
+    assumption: "Eksik doluluğun ~%{pct} kadarı yükleme disiplini ile geri kazanılabilir varsayımı."
+  QUALITY_REDO:
+    recovery_ratio: 0.25
+    title: "Yeniden işlemeyi azalt"
+    action: "Kalınlık spec sapması; amper-saat/banyo kontrolü. Redo azalınca strip maliyeti de düşer."
+    assumption: "Redo TL'sinin ~%{pct} kadarı proses kontrolüyle geri kazanılabilir varsayımı."
+  QUALITY_SCRAP:
+    recovery_ratio: 0.25
+    title: "Hurdayı azalt"
+    action: "Kalınlık/yüzey spec sapması; banyo kontrolü ve giriş kalite kontrolü."
+    assumption: "Hurda TL'sinin ~%{pct} kadarı proses kontrolüyle geri kazanılabilir varsayımı."
