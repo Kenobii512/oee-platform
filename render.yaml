@@ -1,0 +1,19 @@
+# Render Blueprint — tek Docker web servisi (mevcut çok-aşamalı Dockerfile ile).
+# Kurulum: Render Dashboard → New → Blueprint → bu repoyu seç → Apply.
+# Render $PORT enjekte eder; Dockerfile CMD bunu dinler. DuckDB ephemeral (/app/oee.duckdb),
+# her açılışta SAMPLE_DATA_DIR'den baseline yeniden yüklenir → kalıcı disk gerekmez (demo).
+services:
+  - type: web
+    name: oee-platform
+    runtime: docker
+    repo: https://github.com/Kenobii512/oee-platform
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    region: frankfurt
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: SAMPLE_DATA_DIR
+        value: /app/tests/fixtures/scenarios/baseline

@@ -26,4 +26,6 @@ ENV OEE_LINE_CONFIG=/app/config/line_default.yaml \
     OEE_RECOMMEND_CONFIG=/app/config/recommend.yaml \
     OEE_SCENARIO_CONFIG=/app/config/scenarios.yaml
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Bulut platformları (Render/Railway) dinlenecek portu $PORT ile enjekte eder; yoksa 8000.
+# Shell formu kasıtlı: ${PORT} genişlesin diye (exec/JSON formu env genişletmez).
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

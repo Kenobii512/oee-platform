@@ -1,0 +1,15 @@
+# Build context = oee-platform/ kökü. İmaja gereksiz/ağır dosyaları kopyalama →
+# daha hızlı build, küçük context (özellikle bulut build'inde).
+**/node_modules
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/*.duckdb
+**/*.duckdb.wal
+backend/app/frontend_dist
+frontend/dist
+.git
+.gitignore
+**/.DS_Store
+docs
