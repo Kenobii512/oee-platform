@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-06-18 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 92/92 + frontend vitest 2/2 + simülatör 105/105 yeşil
+**Güncelleme:** 2026-06-18 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 94/94 + frontend vitest 2/2 + simülatör 105/105 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -103,7 +103,7 @@ Yerelde backend kapısı: `make ci`.
 ```
 docker compose up --build          # http://localhost:8000  (React SPA, açılışta baseline yüklü)
                                    #   /legacy = eski Jinja pano
-# backend testleri:  cd backend && pytest -q          (92 test)
+# backend testleri:  cd backend && pytest -q          (94 test)
 # frontend dev:      cd frontend && npm run dev        (Vite, backend'e proxy)
 # frontend testleri: cd frontend && npm run test       (vitest 2)
 ```
@@ -116,4 +116,7 @@ docker compose up --build          # http://localhost:8000  (React SPA, açılı
 - **Render Blueprint** (`render.yaml`): tek Docker web servisi (frankfurt, free, `/health`,
   `$PORT` desteği, açılışta baseline auto-ingest). Render → New → Blueprint → repo → Apply.
   `autoDeploy: true` → `main`'e push otomatik redeploy. Aynı imaj Railway/Fly'da da çalışır.
-- **Güvenlik:** uygulamada login yok; kalıcı public deploy'da basit erişim katmanı (HTTP Basic) eklenebilir.
+- **Erişim katmanı:** form-tabanlı, tema-uyumlu giriş ekranı (`app/auth.py`, imzalı çerez).
+  `OEE_AUTH_PASS` env tanımlıysa pano giriş arkasına alınır (kullanıcı `OEE_AUTH_USER`, vars. `admin`);
+  tanımsızsa kapalı (yerel/test açık). `/health` daima public. Render'da şifre Dashboard'dan girilir
+  (`render.yaml`: `OEE_AUTH_PASS sync:false`, `OEE_AUTH_SECRET generateValue`). Test: `test_auth.py`.

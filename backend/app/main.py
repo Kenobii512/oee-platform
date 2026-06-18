@@ -6,9 +6,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from app import auth
 from app.api.cost_routes import router as cost_router
 from app.api.dashboard_routes import render_dashboard
 from app.api.dashboard_routes import router as dashboard_router
@@ -46,6 +47,48 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="OEE Platform", lifespan=lifespan)
+
+
+# --- Erişim katmanı (form-tabanlı giriş; yalnız OEE_AUTH_PASS tanımlıysa aktif) ---
+@app.middleware("http")
+async def _auth_gate(request: Request, call_next):
+    if (
+        auth.enabled()
+        and not auth.is_public(request.url.path)
+        and not auth.verify(request.cookies.get(auth.COOKIE))
+    ):
+        if "text/html" in request.headers.get("accept", ""):
+            return RedirectResponse("/login", status_code=303)
+        return JSONResponse({"detail": "unauthorized"}, status_code=401)
+    return await call_next(request)
+
+
+@app.get("/login", response_class=HTMLResponse)
+def login_get(error: int = 0) -> HTMLResponse:
+    return HTMLResponse(auth.login_page(error=bool(error)))
+
+
+@app.post("/login")
+async def login_post(request: Request):
+    username, password = auth.parse_login_form(await request.body())
+    if auth.check_credentials(username, password):
+        secure = request.headers.get("x-forwarded-proto", request.url.scheme) == "https"
+        resp = RedirectResponse("/", status_code=303)
+        resp.set_cookie(
+            auth.COOKIE, auth.make_token(), httponly=True, samesite="lax",
+            secure=secure, max_age=60 * 60 * 12,
+        )
+        return resp
+    return RedirectResponse("/login?error=1", status_code=303)
+
+
+@app.get("/logout")
+def logout() -> RedirectResponse:
+    resp = RedirectResponse("/login", status_code=303)
+    resp.delete_cookie(auth.COOKIE)
+    return resp
+
+
 app.mount("/static", StaticFiles(directory=str(_BASE / "static")), name="static")
 
 app.include_router(ingest_router)

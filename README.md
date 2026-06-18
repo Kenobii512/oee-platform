@@ -66,5 +66,10 @@ OEE'nin Q'su **ilk-geçiş kalite** = `(loaded − redo)/loaded` (redo'yu cezala
 
 Çok-aşamalı `backend/Dockerfile` (Vite build + Python backend) ve [`render.yaml`](render.yaml)
 hazırdır. Render: **New → Blueprint → bu repo → Apply** ile tek tıkla deploy (free, frankfurt,
-`$PORT` desteği, `/health` kontrolü). Aynı imaj Railway/Fly/herhangi bir konteyner host'unda
-çalışır. Not: uygulamada kimlik doğrulama yok — public URL'i olan herkes panoyu görür.
+`$PORT` desteği, `/health` kontrolü). Aynı imaj Railway/Fly/herhangi bir konteyner host'unda çalışır.
+
+**Erişim katmanı (opsiyonel):** Form-tabanlı, tema-uyumlu bir giriş ekranı (`app/auth.py`).
+`OEE_AUTH_PASS` env değeri tanımlıysa tüm pano giriş arkasına alınır (kullanıcı: `OEE_AUTH_USER`,
+varsayılan `admin`); tanımsızsa auth kapalıdır (yerel dev/test açık). Render'da şifreyi
+Dashboard → Environment'tan `OEE_AUTH_PASS`'e gir (bkz. `render.yaml`). `/health` her zaman
+public (healthcheck için). Bu basit bir erişim kapısıdır; çok-kullanıcılı kimlik için ileride OAuth/SSO.

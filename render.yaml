@@ -17,3 +17,11 @@ services:
     envVars:
       - key: SAMPLE_DATA_DIR
         value: /app/tests/fixtures/scenarios/baseline
+      # Erişim katmanı (form-tabanlı giriş). OEE_AUTH_PASS Render dashboard'da girilir;
+      # BOŞ bırakılırsa auth KAPALI (pano herkese açık). Doldurulursa giriş ekranı devreye girer.
+      - key: OEE_AUTH_USER
+        value: admin
+      - key: OEE_AUTH_PASS
+        sync: false          # secret — Render Dashboard → Environment'tan gir
+      - key: OEE_AUTH_SECRET
+        generateValue: true  # çerez imza anahtarı (Render otomatik üretir)
