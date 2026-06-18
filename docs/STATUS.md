@@ -101,9 +101,19 @@ Yerelde backend kapısı: `make ci`.
 ## Çalıştırma
 
 ```
-docker-compose up --build          # http://localhost:8000  (React SPA, açılışta baseline yüklü)
+docker compose up --build          # http://localhost:8000  (React SPA, açılışta baseline yüklü)
                                    #   /legacy = eski Jinja pano
-# backend testleri:  cd backend && pytest -q          (83 test)
+# backend testleri:  cd backend && pytest -q          (92 test)
 # frontend dev:      cd frontend && npm run dev        (Vite, backend'e proxy)
-# frontend testleri: cd frontend && npm run test       (vitest)
+# frontend testleri: cd frontend && npm run test       (vitest 2)
 ```
+
+## Deploy (başkalarının erişmesi için)
+
+- **Docker yerelde doğrulandı** (2026-06-18): Docker Desktop 29.5.3; `docker compose up --build`
+  imajı kurup `:8000`'de servis ediyor (pano + Dalga 3 + cyan cilası; OEE 0.601). Gotcha: bu
+  shell oturumunda `docker-credential-desktop` PATH'te değilse build patlar → bin dizinini PATH'e ekle.
+- **Render Blueprint** (`render.yaml`): tek Docker web servisi (frankfurt, free, `/health`,
+  `$PORT` desteği, açılışta baseline auto-ingest). Render → New → Blueprint → repo → Apply.
+  `autoDeploy: true` → `main`'e push otomatik redeploy. Aynı imaj Railway/Fly'da da çalışır.
+- **Güvenlik:** uygulamada login yok; kalıcı public deploy'da basit erişim katmanı (HTTP Basic) eklenebilir.

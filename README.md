@@ -1,56 +1,70 @@
 # OEE Platform
 
 Kaplama hattı için OEE/verimlilik platformu. Genel CSV'leri (events/production/orders)
-DuckDB'ye yükler ve OEE'yi yalnızca genel veriden hesaplar.
+DuckDB'ye yükler ve OEE'yi **yalnızca genel veriden** hesaplar; kaybı bulur, TL'ye çevirir
+ve önceliklendirilmiş öneriler üretir. Pano **React 19 + Vite SPA**; canlı (hızlandırılmış)
+replay dahil.
 
-> **Proje durumu / planlama özeti:** [`docs/STATUS.md`](docs/STATUS.md) — tamamlanan görevler
-> (G1–G5), API yüzeyi, mimari kararlar, bilinen sınırlamalar ve sıradaki yol haritası.
+> **Proje durumu / yol haritası:** [`docs/STATUS.md`](docs/STATUS.md) — tamamlanan görevler
+> (G1–G5 · Dalga 1 G6·G11·G9 · Dalga 2 G8·GR·G7 · Dalga 3 G12·G4.1·G10·Perf-UI), API yüzeyi,
+> mimari kararlar, bilinen sınırlamalar. **Veri sözleşmesi:** [`docs/data-contract.md`](docs/data-contract.md).
 
-## Çalıştırma
+## Çalıştırma (Docker)
 
-    docker-compose up --build
-    # GET http://localhost:8000/health -> {"status":"ok"}
+```bash
+docker compose up --build      # http://localhost:8000  (açılışta baseline senaryo yüklü)
+```
+Aynı imaj laptopta `localhost:8000` ve uzak sunucuda public URL ile çalışır. Açılışta
+`SAMPLE_DATA_DIR` (compose'da ayarlı) baseline senaryoyu otomatik ingest eder → pano dolu gelir.
 
-## Test
+## Geliştirme
 
-    cd backend
-    pip install -r requirements.txt
-    pytest -v
+```bash
+cd backend && pip install -r requirements.txt && pytest -q     # 92 test
+cd frontend && npm install && npm run dev                      # Vite (backend'e :8000 proxy)
+cd frontend && npm run lint && npm run test && npm run build   # vitest + üretim build
+```
 
 ## İlkeler
 
-- Şema kutsaldır; platform verinin kaynağını bilmez.
-- `ground_truth.csv` ASLA yüklenmez (firewall).
-- OEE mantığı tek serviste (`app/analytics/oee.py`).
+- **Şema kutsaldır;** platform verinin simülatörden mi sahadan mı geldiğini bilmez.
+- **Firewall:** `ground_truth.csv` ASLA yüklenmez; gerçek yalnız doğrulama testlerinde.
+- **Tek doğruluk kaynağı:** OEE/kayıp mantığı platformda; simülatör `metrics.py` yalnız parite referansı.
+- **No-scrap modeli (G12):** spec-dışı parça hurdaya gitmez, sıyrılıp iyi olana dek tekrar kaplanır.
 
-## OEE
+## API yüzeyi
 
-    POST /ingest   {"path": "/abs/path/to/csv_dir"}   -> LoadReport
-    GET  /oee?from=...&to=...                          -> {availability, performance, quality, oee, utilization, planned_downtime_min}
-    GET  /loss-tree?from=...&to=...                    -> {categories: [{category, axis, value, kind}, ...]}
+```
+GET  /health                          -> {"status":"ok"}
+POST /ingest        {"path": "..."}    -> LoadReport
+GET  /oee?from=&to=                    -> {availability, performance, quality(=ilk-geçiş), oee,
+                                          utilization, planned_downtime_min, final_yield}
+GET  /loss-tree?from=&to=             -> {categories:[{category, axis, value, kind}]}  (5 kategori)
+GET  /loss-tree/cost?from=&to=        -> {categories:[...,tl], total_tl}  (TL azalan)
+GET  /recommendations?from=&to=       -> {recommendations:[{category, tl, estimated_gain_tl,
+                                          estimated_gain_tl_low/high, title, action, assumption}], ...}
+GET  /oee/trend?bucket=day|week       -> [{period, availability, performance, quality, final_yield, oee}]
+GET  /data-quality/summary            -> {microstop_entry_coverage}   (G10: tek manuel girdi)
+GET  /scenarios                       -> {scenarios:[...]}  (6 demo)
+POST /scenarios/{id}/activate         -> repo.reset() + o senaryoyu ingest
+GET  /replay/stream?scenario=&speed=&steps=  -> SSE: büyüyen 'şimdiye kadar' snapshot'ları
+GET  /                                -> React SPA   ·   GET /legacy -> Jinja fallback
+```
 
-OEE yalnız genel veriden (events/production + hat tanımı) hesaplanır; tanımlar
-simülatör `metrics.py` ile birebir. `ground_truth.csv` asla kullanılmaz.
+## Kayıp ağacı & kalite (Dalga 3)
 
-## Pano (dashboard)
+`GET /loss-tree` **5 kategori** döndürür: DOWNTIME/MICROSTOP (dakika, görünür),
+QUALITY_REDO (parça, görünür), FILL_LOSS (parça, çıkarım), SPEED_LOSS (dakika, çıkarım).
+Görünür kanallar genel veriden doğrudan; gizli kanallar (doluluk/hız) yalnız çıkarımla
+kestirilir. Çıkarım fonksiyonu `ground_truth` almaz (firewall).
 
-`GET /` sunucu-taraflı bir HTML pano döndürür (FastAPI + Jinja2 + Chart.js CDN, ayrı
-build yok). Tüm veri tarayıcıdan API ile çekilir. Dört bileşen: KPI başlığı (OEE/A/P/Q),
-OEE şelalesi, kayıp ağacı (zaman/malzeme iki grup; çıkarım kanalları işaretli), OEE trendi
-(gün). Ayrıca veri güvenilirliği göstergesi (operatör giriş kapsamı).
+OEE'nin Q'su **ilk-geçiş kalite** = `(loaded − redo)/loaded` (redo'yu cezalandırır); ayrıca
+**`final_yield`** = `good/loaded` (≈%100, no-scrap'i görünür kılar). G4.1 ile `events.csv`'ye
+`carrier_id` eklendiğinden trend/replay'de Performance ve Quality **pencere-doğru** değişir.
 
-    GET /oee/trend?bucket=day|week    -> [{period, availability, performance, quality, oee}, ...]
-    GET /data-quality/summary         -> {downtime_entry_coverage, microstop_entry_coverage}
+## Deploy (başkalarının erişmesi için)
 
-Demo: `SAMPLE_DATA_DIR` env değişkeni bir CSV klasörüne ayarlanırsa konteyner açılışında
-otomatik ingest edilir (pano dolu gelir). Veri yoksa pano "önce ingest" mesajı gösterir.
-Aynı Docker imajı laptopta `localhost:8000` ve uzak VM'de link ile çalışır.
-
-## Kayıp ağacı (loss tree)
-
-`GET /loss-tree` 6 kategori döndürür: DOWNTIME/MICROSTOP (dakika, görünür),
-QUALITY_REDO/QUALITY_SCRAP (parça, görünür), FILL_LOSS (parça, çıkarım),
-SPEED_LOSS (dakika, çıkarım). Görünür kanallar genel veriden doğrudan; gizli kanallar
-(doluluk/hız) yalnız çıkarımla kestirilir (`app/analytics/loss_tree.py`). Çıkarım
-fonksiyonu `ground_truth` almaz (firewall). Kategoriler farklı eksende olduğundan
-ortak birime (TL) çevirme ve Pareto sıralaması G11'dedir.
+Çok-aşamalı `backend/Dockerfile` (Vite build + Python backend) ve [`render.yaml`](render.yaml)
+hazırdır. Render: **New → Blueprint → bu repo → Apply** ile tek tıkla deploy (free, frankfurt,
+`$PORT` desteği, `/health` kontrolü). Aynı imaj Railway/Fly/herhangi bir konteyner host'unda
+çalışır. Not: uygulamada kimlik doğrulama yok — public URL'i olan herkes panoyu görür.

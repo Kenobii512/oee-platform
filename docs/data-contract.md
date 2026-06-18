@@ -23,11 +23,14 @@ okunur (G6). Platform verinin simülatörden mi sahadan mı geldiğini bilmez.
 | carrier_id | str | askı |
 | order_id | str | iş emri |
 | loaded_qty | int | yüklenen parça |
-| good_count | int | sağlam |
-| redo_count | int | yeniden işlenen (rework hacmi) |
-| scrap_count | int | hurda |
+| good_count | int | sağlam (no-scrap modeli: nihai dispozisyon daima good) |
+| redo_count | int | redo'dan geçen **ayrık** parça sayısı (döngü hacmi değil) — G12 |
+| scrap_count | int | hurda; **no-scrap modelinde daima 0** (şema kararlılığı için tutulur) |
 
-Değişmez: `good_count + scrap_count == loaded_qty`. `redo_count` ayrı rework hacmidir.
+Değişmez: `good_count + scrap_count == loaded_qty` → no-scrap'te `good_count == loaded_qty`.
+Kalite (G12): OEE'nin Q'su `first_pass = (loaded − redo)/loaded` (redo'yu cezalandırır);
+ayrıca `final_yield = good/loaded` (≈%100, no-scrap'i görünür kılar). Doluluk kaybı Q'da
+değil, ayrı `FILL_LOSS` kanalındadır.
 
 ## orders.csv
 order_id, product_id, target_cycle, planned_qty.
