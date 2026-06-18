@@ -1,8 +1,10 @@
-"""Veri güvenilirliği — operatör neden-giriş kapsamı (yalnız genel veriden).
+"""Veri güvenilirliği — operatörün tek manuel girdisi: mikro duruş kapsamı (G10).
 
-Pano için tek bir "veri güvenilirliği" göstergesi: `operator_entered_reason` DOLU olan
-DOWNTIME/MICROSTOP olaylarının oranı. Mikro duruşlarda düşük çıkması beklenir (operatör
-çoğunu girmez) — bu bir içgörüdür, kusur değil. Tam panel G10. `ground_truth` KULLANMAZ.
+Saha modeli: operatör YALNIZ mikro duruşları elle girer; duruş/hız/doluluk/kalite
+sistemce (PLC/sayaç/kalite istasyonu) otomatik ölçülür. Bu yüzden tek anlamlı veri-kalite
+göstergesi `microstop_entry_coverage` = `operator_entered_reason` DOLU olan MICROSTOP
+olaylarının oranı. Düşük çıkması beklenir (operatör çoğunu girmez) — içgörü, kusur değil;
+ürünün manuel-takibe karşı satış argümanı (neredeyse hiç manuel girdi). `ground_truth` KULLANMAZ.
 """
 from __future__ import annotations
 
@@ -18,8 +20,7 @@ def _coverage(events: list[dict], event_type: str) -> float:
 
 
 def entry_coverage(events: list[dict]) -> dict[str, float]:
-    """DOWNTIME/MICROSTOP için operatör giriş kapsamı oranları."""
+    """Operatörün tek manuel kanalı: mikro duruş giriş kapsamı (G10)."""
     return {
-        "downtime_entry_coverage": _coverage(events, "DOWNTIME"),
         "microstop_entry_coverage": _coverage(events, "MICROSTOP"),
     }

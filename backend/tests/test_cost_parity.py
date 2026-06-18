@@ -4,9 +4,10 @@ Kanal sınıfına göre bant (loss_tree VISIBLE/INFERRED ayrımıyla hizalı):
 - Doğrudan zaman kanalları (DOWNTIME/MICROSTOP) events'ten birebir → ±%2 (sıkı).
 - Çıkarım kanalları (SPEED_LOSS/FILL_LOSS) nominal kestirimle gelir → orta bant
   (native ≥%85 geri kazanım kuralıyla tutarlı; gözlenen ~%6 ve ~%11).
-- Kalite kanalları (REDO/SCRAP): sim REDO maliyetine strip (sıyırma) downtime'ını,
-  SCRAP'a carrier loaded_qty'sini ekler → platformun parça×oran'ı yaklaşık (REDO ~%53) → geniş bant.
-- Toplam makul bant içinde (gözlenen ~%10).
+- Kalite kanalı (REDO, no-scrap): platform parça×oran (ayrık parça) ile hesaplar;
+  sim ground_truth REDO maliyeti döngü-başı (her strip+recoat: parça×oran + strip×downtime)
+  → platform << gerçek → geniş bant (alt sınır kontrolü).
+- Toplam makul bant içinde.
 """
 from app.analytics.cost import to_tl
 from app.analytics.loss_tree import extract_loss_tree
@@ -21,8 +22,8 @@ COSTS_PATH = FIXTURES.parents[2] / "config" / "costs.yaml"
 
 TIME_TOL = 0.02       # doğrudan-gözlenen zaman kanalları ±%2
 INFERRED_TOL = 0.15   # çıkarım kanalları (SPEED/FILL) — native ≥%85 ile tutarlı (gözlenen ~%6/%11)
-QUALITY_TOL = 0.60    # kalite kanalları geniş bant (gözlenen REDO ~%53; sim strip/loaded_qty bookler)
-TOTAL_TOL = 0.15      # toplam makul bant (gözlenen ~%10)
+REDO_MIN = 0.30       # REDO: platform (parça×oran) / gerçek (döngü-başı+strip) alt sınırı
+TOTAL_TOL = 0.20      # toplam makul bant
 
 
 def _platform_tl(tmp_path, line_def):
@@ -50,12 +51,14 @@ def test_inferred_channels_band(tmp_path, line_def):
         assert abs(tl[cat] - truth) <= INFERRED_TOL * truth, (cat, tl[cat], truth)
 
 
-def test_quality_channels_wide_band(tmp_path, line_def):
+def test_redo_channel_wide_band(tmp_path, line_def):
+    # No-scrap: platform REDO (ayrık parça×oran) gerçeğin (döngü-başı + strip downtime)
+    # altında kalır; alt sınır kontrolü (abartılı sapma olmasın).
     tl, _ = _platform_tl(tmp_path, line_def)
-    for cat in ("QUALITY_REDO", "QUALITY_SCRAP"):
-        truth = baseline_truth_cost(cat)
-        assert truth > 0, cat
-        assert abs(tl[cat] - truth) <= QUALITY_TOL * truth, (cat, tl[cat], truth)
+    truth = baseline_truth_cost("QUALITY_REDO")
+    assert truth > 0
+    assert tl["QUALITY_REDO"] <= truth + 1e-6
+    assert tl["QUALITY_REDO"] / truth >= REDO_MIN, (tl["QUALITY_REDO"], truth)
 
 
 def test_total_within_reasonable_band(tmp_path, line_def):
@@ -63,7 +66,7 @@ def test_total_within_reasonable_band(tmp_path, line_def):
     truth_total = sum(
         baseline_truth_cost(c)
         for c in ("DOWNTIME", "MICROSTOP", "SPEED_LOSS",
-                  "FILL_LOSS", "QUALITY_REDO", "QUALITY_SCRAP")
+                  "FILL_LOSS", "QUALITY_REDO")
     )
     assert abs(total - truth_total) <= TOTAL_TOL * truth_total, (total, truth_total)
 

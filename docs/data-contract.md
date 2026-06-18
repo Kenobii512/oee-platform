@@ -9,6 +9,7 @@ okunur (G6). Platform verinin simülatörden mi sahadan mı geldiğini bilmez.
 |------|-----|-----|
 | timestamp | ISO datetime | olay başlangıcı |
 | line_id | str | hat kimliği |
+| carrier_id | str/boş | askıya bağlı olaylarda (LOAD/PROCESS/MOVE/UNLOAD/QC/STRIP) dolu; hat-seviyesi olaylarda (DOWNTIME/MICROSTOP) boş. Dönem-doğru üretim atfı (G4.1) için production'ı askının zaman penceresine bağlar. |
 | station_id | str/boş | tank id / `HOIST` / hat seviyesinde boş |
 | event_type | enum | LOAD, PROCESS, MOVE, UNLOAD, QC, OVER_RESIDENCE, DOWNTIME, MICROSTOP, STRIP |
 | duration | float (dk) | olay süresi |

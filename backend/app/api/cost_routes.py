@@ -25,6 +25,6 @@ def get_loss_tree_cost(
     line = load_line_definition(cfg.line_config_path)
     costs = load_cost_config(cfg.cost_config_path)
     events = repo.fetch_events(frm, to)
-    production = repo.fetch_production()
+    production = repo.fetch_production(frm, to)
     tree = extract_loss_tree(events, production, line)
     return to_tl(tree, costs)

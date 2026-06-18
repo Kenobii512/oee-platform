@@ -10,15 +10,21 @@ export default function Recommendations({ rec }: { rec: RecData }) {
     <Card eyebrow="Öneriler · ne yapmalı" className="recommendations">
       <span className="muted">varsayım: geri-kazanım oranları config/recommend.yaml</span>
       <div className="kpi-line">
-        <span className="muted">Tahmini toplam kazanç:</span>
+        <span className="muted">Tahmini toplam kazanç (üst sınır):</span>
         <strong>~{tl(rec.total_estimated_gain_tl)} TL</strong>
       </div>
+      <span className="muted">
+        Kazançlar üst sınır tahminidir ve kalemler arasında örtüşebilir (toplam, bağımsız
+        kabul eder).
+      </span>
       <ol className="rec-list">
         {recs.map((r) => (
           <li key={r.category} className={`rec${r.kind === 'inferred' ? ' inferred' : ''}`}>
             <div className="rec-head">
               <span className="rec-title">{r.title}</span>
-              <span className="rec-gain">~{tl(r.estimated_gain_tl)} TL/dönem</span>
+              <span className="rec-gain">
+                ~{tl(r.estimated_gain_tl_low)}–{tl(r.estimated_gain_tl_high)} TL/dönem
+              </span>
             </div>
             <p className="rec-action">{r.action}</p>
             <p className="muted rec-meta">

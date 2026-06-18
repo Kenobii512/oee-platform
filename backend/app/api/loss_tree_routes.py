@@ -22,9 +22,9 @@ def get_loss_tree(
     repo = request.app.state.repo
     cfg = request.app.state.config
     line = load_line_definition(cfg.line_config_path)
-    # Dönem (G4 MVP): from/to yalnız events'e uygulanır; production tüm veri.
+    # Dönem-doğru (G4.1): from/to hem events'e hem üretime (carrier zaman atfı) uygulanır.
     events = repo.fetch_events(frm, to)
-    production = repo.fetch_production()
+    production = repo.fetch_production(frm, to)
     tree = extract_loss_tree(events, production, line)
     return {
         "categories": [

@@ -14,10 +14,10 @@ def test_loss_tree_endpoint(tmp_path, monkeypatch):
         r = client.get("/loss-tree")
         assert r.status_code == 200
         cats = r.json()["categories"]
-        assert len(cats) == 6
+        assert len(cats) == 5
         assert {c["category"] for c in cats} == {
             "DOWNTIME", "MICROSTOP", "QUALITY_REDO",
-            "QUALITY_SCRAP", "FILL_LOSS", "SPEED_LOSS",
+            "FILL_LOSS", "SPEED_LOSS",
         }
         for c in cats:
             assert set(c) >= {"category", "axis", "value", "kind"}

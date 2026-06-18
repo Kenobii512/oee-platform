@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-06-16 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 87/87 + frontend vitest 2/2 yeşil
+**Güncelleme:** 2026-06-18 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 92/92 + frontend vitest 2/2 + simülatör 105/105 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -8,7 +8,7 @@ Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıy
 
 ---
 
-## Tamamlanan görevler (G1–G5 · Dalga 1: G6·G11·G9 · Dalga 2: G8·GR·G7)
+## Tamamlanan görevler (G1–G5 · Dalga 1: G6·G11·G9 · Dalga 2: G8·GR·G7 · Dalga 3: G12·G4.1·G10·Perf-UI)
 
 | Görev | Teslim | Durum |
 |------|--------|-------|
@@ -23,18 +23,22 @@ Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıy
 | **G8** | Senaryo kütüphanesi: 6 demo senaryosu (golden fixture), `GET /scenarios` + `POST /scenarios/{id}/activate`, pano seçici; **doğal-eksen** kalibrasyon kapısı | ✓ |
 | **GR** | Pano React 19 + Vite'a taşındı (JSON sözleşmesi değişmedi); FastAPI SPA'yı `/`'ta sunar, Jinja `/legacy`'de; çok aşamalı Docker; CI frontend job | ✓ |
 | **G7** | Hızlandırılmış replay: `analytics/replay.py` (sanal saat + artımlı snapshot), `GET /replay/stream` (SSE), canlı React Replay görünümü (oynat/duraklat/hız); final snapshot statik ile birebir | ✓ |
+| **G12** | Model revizyonu: **no-scrap** (spec-dışı parça sıyrılıp iyi olana dek tekrar kaplanır) + **çift kalite** (OEE Q = ilk-geçiş `(loaded−redo)/loaded`; ayrı `final_yield` = `good/loaded` ≈%100). Kategoriler **6→5** (QUALITY_SCRAP kalktı). `redo_count` = redo'dan geçen ayrık parça. Pano KPI çift kalite. 8 golden yeniden üretildi; parite eşikleri yeniden kalibre (REDO geniş bant: ayrık-parça vs döngü-hacmi) | ✓ |
+| **G4.1** | Dönem-doğru üretim atfı: `events.csv`'ye **`carrier_id`**; `fetch_production(frm,to)` askıyı kendi olaylarının en geç zaman damgasına göre pencereye bağlar → trend/replay'de **P/Q pencere-doğru** değişir (eskiden dönem-sabit) | ✓ |
+| **G10** | Operatör = **yalnız microstop**: senaryo `operator.channels` sadeleşti (DOWNTIME kalktı; duruş nedeni sistemce `reason_code`). `data_quality` yalnız `microstop_entry_coverage`. Pano "tek manuel girdi = mikro duruş; gerisi sistemce" anlatısı (Excel/manuel takibe karşı satış argümanı) | ✓ |
+| **Perf-UI** | Görünürlük: trend grafiğine **Performance + Quality(ilk-geçiş) + nihai verim** çizgileri (G4.1 ile pencere-doğru); replay'e **Performance** KPI; öneri **kazanç aralığı** (`estimated_gain_tl_low/high`) + toplam "üst sınır; örtüşebilir" çekincesi | ✓ |
 
 ## API yüzeyi (mevcut)
 
 ```
 GET  /health                          -> {"status":"ok"}
 POST /ingest        {"path": "..."}    -> LoadReport (kabul/ret/atlanan + ilk N hata)
-GET  /oee?from=&to=                    -> {availability, performance, quality, oee, utilization, planned_downtime_min}
-GET  /loss-tree?from=&to=              -> {categories:[{category, axis, value, kind}]}  (6 kategori)
-GET  /loss-tree/cost?from=&to=         -> {categories:[{category, axis, value, tl, kind}], total_tl}  (TL azalan)
-GET  /recommendations?from=&to=        -> {recommendations:[{category, tl, estimated_gain_tl, title, action, assumption, ...}], total_estimated_gain_tl}
-GET  /oee/trend?bucket=day|week        -> [{period, availability, performance, quality, oee}]
-GET  /data-quality/summary             -> {downtime_entry_coverage, microstop_entry_coverage}
+GET  /oee?from=&to=                    -> {availability, performance, quality(=ilk-geçiş), oee, utilization, planned_downtime_min, final_yield}
+GET  /loss-tree?from=&to=              -> {categories:[{category, axis, value, kind}]}  (5 kategori; no-scrap)
+GET  /loss-tree/cost?from=&to=         -> {categories:[{category, axis, value, tl, kind}], total_tl}  (5 kategori, TL azalan)
+GET  /recommendations?from=&to=        -> {recommendations:[{category, tl, estimated_gain_tl, estimated_gain_tl_low, estimated_gain_tl_high, title, action, assumption, ...}], total_estimated_gain_tl}
+GET  /oee/trend?bucket=day|week        -> [{period, availability, performance, quality, final_yield, oee}]  (P/Q pencere-doğru)
+GET  /data-quality/summary             -> {microstop_entry_coverage}  (G10: tek manuel girdi)
 GET  /scenarios                        -> {scenarios:[{id, title, description, expected_top_loss, data_dir}]}  (6 demo)
 POST /scenarios/{id}/activate          -> {activated, ingest}  (repo.reset() + o senaryoyu ingest)
 GET  /replay/stream?scenario=&speed=&steps=  -> SSE: büyüyen 'şimdiye kadar' snapshot'ları (oee, cost, gain, event_count)
@@ -61,30 +65,29 @@ GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
 
 ## Bilinen sınırlamalar / takip işleri (planlamaya girdi)
 
-- **G4.1 — dönem-doğru üretim atfı:** `events.csv`'de `carrier_id` yok → production zaman
-  pencerelerine bölünemiyor. Bugün `from/to` yalnız events'e uygulanıyor; trend'de P/Q dönem-geneli
-  sabit, yalnız Availability pencere bazında değişiyor. Pencere-doğru P/Q için ingest'te carrier'a
-  dönem damgası gerekir.
+- **G4.1 — dönem-doğru üretim atfı:** ✓ ÇÖZÜLDÜ (Dalga 3). `events.csv`'ye `carrier_id` eklendi;
+  `fetch_production(frm,to)` askıyı kendi olaylarının en geç zaman damgasına göre pencereye bağlar →
+  trend ve replay'de **P/Q pencere bazında doğru** değişir.
 - **Utilization formülü:** `calendar = span + planned_downtime_min` basit bir MVP; span içine düşen
-  planlı bakım çift sayılabilir, vardiya-dışı/molalar hariç. Parite testi yok; G10/takvim modeliyle
-  netleşecek.
+  planlı bakım çift sayılabilir, vardiya-dışı/molalar hariç. Parite testi yok; takvim modeliyle netleşecek.
 - **Pano frontend:** **React 19 + Vite SPA** (GR). FastAPI build çıktısını (`app/frontend_dist/`,
   gitignore'lu; Docker stage-1 üretir) `/`'ta sunar; eski Jinja `/legacy`'de fallback. Dev'de
   `frontend/` Vite sunucusu backend'e (8000) proxy'ler. JSON sözleşmesi backend'le aynı.
-- **G8 kalibrasyon kararı (doğal-eksen):** TL ağırlıkları dengesiz (DOWNTIME 50, SCRAP 8 pahalı;
-  SPEED 20, REDO 3, FILL 2 ucuz) → ucuz kanallar TL'de #1 olamaz. Kapı (`test_scenarios_dominant_loss`)
-  her senaryonun adlı kaybını **kendi ekseninde** (zaman→dakika, malzeme→parça) baskın doğrular.
+- **G8 kalibrasyon kararı (doğal-eksen):** TL ağırlıkları dengesiz (DOWNTIME 50 pahalı; SPEED 20,
+  REDO 3, FILL 2 ucuz) → ucuz kanallar TL'de #1 olamaz. Kapı (`test_scenarios_dominant_loss`) her
+  senaryonun adlı kaybını **kendi ekseninde** (zaman→dakika, malzeme→parça) baskın doğrular.
   Daha gerçekçi senaryolar + okunabilir demo (pano ilgili grafiği gösterir).
 
 ## Sıradaki yol haritası
 
-**Dalga 2 TAMAM** (G8 · GR · G7). Bkz `docs/superpowers/plans/2026-06-16-oee-wave2-g8-gr-g7.md`.
-**Dalga 3:** G10 (tam veri-kalite paneli) → G4.1 (dönem-doğru üretim atfı) → Pilot kiti.
+**Dalga 2 TAMAM** (G8 · GR · G7). **Dalga 3 TAMAM** (G12 · G4.1 · G10 · Perf-UI).
+**Sırada:** pilot kiti / saha denemesi. Olası ileri işler: simülatör destekli what-if (GainEstimator
+arayüzü hazır), utilization/takvim modeli paritesi, çok-hatlı destek.
 
-### G7 replay — dürüst sınır (G4.1)
-Replay penceresi yalnız events'e uygulanır → **Availability + kayıp-zaman + TL ilerledikçe büyür**
-(canlı anlatının özü), **P/Q dönem-geneli** kalır (carrier dönem damgası yok). Dönem-doğru P/Q =
-Dalga 3 G4.1. What-if köprüsü: replay motoru + senaryo parametresi = dijital-ikiz-lite zemini.
+### G7 replay — artık dönem-doğru (G4.1 sonrası)
+Replay penceresi G4.1 ile **üretime de uygulanır** (carrier_id zaman atfı) → Availability + kayıp-zaman +
+TL ile birlikte **P/Q de pencere-doğru büyür**. Final snapshot (to=None) statik `/oee` ile birebir kalır.
+What-if köprüsü: replay motoru + senaryo parametresi = dijital-ikiz-lite zemini.
 
 ## CI
 

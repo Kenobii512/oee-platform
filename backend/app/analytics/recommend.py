@@ -64,8 +64,10 @@ def generate_recommendations(
 ) -> list[dict]:
     """cost_tree'yi (TL azalan) alır, her kategori için config şablonunu doldurur.
 
-    Dönen her öğe: {category, tl, estimated_gain_tl, recovery_ratio, title, action,
-    assumption, axis, value, kind}. Liste TL azalan (cost_tree sırasını korur).
+    Dönen her öğe: {category, tl, estimated_gain_tl, estimated_gain_tl_low,
+    estimated_gain_tl_high, recovery_ratio, title, action, assumption, axis, value, kind}.
+    `estimated_gain_tl` nokta tahmin (üst/iyimser sınır); low/high config bant faktörleriyle
+    bir ARALIK verir (abartılı kesinlik yerine). Liste TL azalan (cost_tree sırasını korur).
     """
     recs: list[dict] = []
     for entry in cost_tree["categories"]:
@@ -80,6 +82,7 @@ def generate_recommendations(
             else ""
         )
         pct = f"{round(ratio * 100)}"
+        gain = estimator.estimate(cat, entry["tl"])
         recs.append(
             {
                 "category": cat,
@@ -87,7 +90,9 @@ def generate_recommendations(
                 "value": entry["value"],
                 "kind": entry["kind"],
                 "tl": entry["tl"],
-                "estimated_gain_tl": estimator.estimate(cat, entry["tl"]),
+                "estimated_gain_tl": gain,
+                "estimated_gain_tl_low": gain * config.recovery_low_factor,
+                "estimated_gain_tl_high": gain * config.recovery_high_factor,
                 "recovery_ratio": ratio,
                 "title": rule.title,
                 "action": rule.action.format(detail=detail, pct=pct),

@@ -47,6 +47,7 @@ class DuckDBRepository:
                 row_ordinal INTEGER,
                 timestamp TIMESTAMP,
                 line_id VARCHAR,
+                carrier_id VARCHAR,
                 station_id VARCHAR,
                 event_type VARCHAR,
                 duration DOUBLE,
@@ -80,15 +81,15 @@ class DuckDBRepository:
         params = [
             (
                 source_file, r["row_ordinal"], r["timestamp"], r["line_id"],
-                r.get("station_id"), r["event_type"], r["duration"],
-                r.get("reason_code"), r.get("operator_entered_reason"),
+                r.get("carrier_id"), r.get("station_id"), r["event_type"],
+                r["duration"], r.get("reason_code"), r.get("operator_entered_reason"),
                 r.get("operator_entry_ts"),
             )
             for r in rows
         ]
         with self._lock:
             self.con.executemany(
-                "INSERT INTO events VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
+                "INSERT INTO events VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
                 params,
             )
         return len(params)
@@ -136,7 +137,7 @@ class DuckDBRepository:
 
     def fetch_events(self, frm: str | None = None, to: str | None = None) -> list[dict]:
         assert self.con is not None
-        sql = ("SELECT timestamp, station_id, event_type, duration, "
+        sql = ("SELECT timestamp, carrier_id, station_id, event_type, duration, "
                "reason_code, operator_entered_reason "
                "FROM events WHERE 1=1")
         args: list = []
@@ -151,12 +152,40 @@ class DuckDBRepository:
             cols = [d[0] for d in cur.description]
             return [dict(zip(cols, row)) for row in cur.fetchall()]
 
-    def fetch_production(self) -> list[dict]:
+    def fetch_production(
+        self, frm: str | None = None, to: str | None = None
+    ) -> list[dict]:
+        """Üretim (askı) sayımları. frm/to verilirse dönem-doğru atıf (G4.1): bir askı,
+        kendisine ait olayların EN GEÇ zaman damgası (hattı terk ettiği an) `[frm,to]`
+        penceresine düşüyorsa dahil edilir. İkisi de None ise tüm üretim (geriye uyumlu).
+
+        NOT: Pencereli sorgu (frm/to verili) events ile INNER JOIN yapar; HİÇ olayı olmayan
+        (orphan) bir production carrier'ı pencere dışı kalır. Geçerli veride her askı olay
+        üretir (LOAD/PROCESS) → orphan = veri-kalite hatasıdır, OEE'ye katılmamalıdır. Bu,
+        final replay snapshot'ının (to=global max) None,None ile birebir kalmasının önkoşulu.
+        """
         assert self.con is not None
-        with self._lock:
-            cur = self.con.execute(
-                "SELECT carrier_id, order_id, loaded_qty, good_count, redo_count, scrap_count "
-                "FROM production"
+        select = ("carrier_id, order_id, loaded_qty, good_count, "
+                  "redo_count, scrap_count")
+        if frm is None and to is None:
+            sql = f"SELECT {select} FROM production"
+            args: list = []
+        else:
+            sql = (
+                f"SELECT p.{select.replace(', ', ', p.')} FROM production p "
+                "JOIN (SELECT carrier_id, max(timestamp) AS ts FROM events "
+                "      WHERE carrier_id IS NOT NULL AND carrier_id <> '' "
+                "      GROUP BY carrier_id) e ON p.carrier_id = e.carrier_id "
+                "WHERE 1=1"
             )
+            args = []
+            if frm is not None:
+                sql += " AND e.ts >= CAST(? AS TIMESTAMP)"
+                args.append(frm)
+            if to is not None:
+                sql += " AND e.ts <= CAST(? AS TIMESTAMP)"
+                args.append(to)
+        with self._lock:
+            cur = self.con.execute(sql, args)
             cols = [d[0] for d in cur.description]
             return [dict(zip(cols, row)) for row in cur.fetchall()]

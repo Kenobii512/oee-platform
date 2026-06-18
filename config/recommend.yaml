@@ -2,6 +2,9 @@
 # {detail} alanı DOWNTIME/MICROSTOP'ta events'ten türetilen dağılımla doldurulur.
 defaults:
   recovery_ratio: 0.20   # genel varsayılan geri-kazanım oranı
+  # Tahmini kazanç aralığı: nokta tahmin üst/iyimser sınırdır; alt sınır = nokta × low_factor.
+  recovery_low_factor: 0.5
+  recovery_high_factor: 1.0
 categories:
   DOWNTIME:
     recovery_ratio: 0.30
@@ -26,10 +29,5 @@ categories:
   QUALITY_REDO:
     recovery_ratio: 0.25
     title: "Yeniden işlemeyi azalt"
-    action: "Kalınlık spec sapması; amper-saat/banyo kontrolü. Redo azalınca strip maliyeti de düşer."
+    action: "Kalınlık spec sapması; amper-saat/banyo kontrolü. Redo azalınca strip+yeniden kaplama süresi de düşer."
     assumption: "Redo TL'sinin ~%{pct} kadarı proses kontrolüyle geri kazanılabilir varsayımı."
-  QUALITY_SCRAP:
-    recovery_ratio: 0.25
-    title: "Hurdayı azalt"
-    action: "Kalınlık/yüzey spec sapması; banyo kontrolü ve giriş kalite kontrolü."
-    assumption: "Hurda TL'sinin ~%{pct} kadarı proses kontrolüyle geri kazanılabilir varsayımı."

@@ -3,6 +3,7 @@ from tests.conftest import FIXTURES, load_fixture_into_repo
 
 
 def test_entry_coverage_synthetic():
+    # G10: yalnız MICROSTOP operatör kapsamı ölçülür (duruş sistemce otomatik).
     events = [
         {"event_type": "DOWNTIME", "operator_entered_reason": "ariza"},
         {"event_type": "DOWNTIME", "operator_entered_reason": None},
@@ -11,19 +12,19 @@ def test_entry_coverage_synthetic():
         {"event_type": "PROCESS", "operator_entered_reason": None},
     ]
     cov = entry_coverage(events)
-    assert cov["downtime_entry_coverage"] == 0.5
-    assert cov["microstop_entry_coverage"] == 0.5
+    assert cov == {"microstop_entry_coverage": 0.5}
 
 
 def test_entry_coverage_empty():
     cov = entry_coverage([])
-    assert cov == {"downtime_entry_coverage": 0.0, "microstop_entry_coverage": 0.0}
+    assert cov == {"microstop_entry_coverage": 0.0}
 
 
 def test_entry_coverage_baseline(tmp_path):
-    # baseline fixture: DOWNTIME 7/8 dolu, MICROSTOP 12/60 dolu (operatör gürültüsü)
+    # baseline fixture: operatör mikro duruşların çoğunu girmez (düşük kapsam) — bu
+    # ürünün satış argümanı (tek manuel girdi). Duruş artık ölçülmez (sistemce bilinir).
     repo = load_fixture_into_repo(FIXTURES / "baseline", str(tmp_path / "b.duckdb"))
     cov = entry_coverage(repo.fetch_events())
-    assert abs(cov["downtime_entry_coverage"] - 0.875) < 1e-9
-    assert abs(cov["microstop_entry_coverage"] - 0.20) < 1e-9
+    assert set(cov) == {"microstop_entry_coverage"}
+    assert 0.0 < cov["microstop_entry_coverage"] < 0.30
     repo.close()

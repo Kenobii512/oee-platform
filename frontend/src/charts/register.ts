@@ -1,4 +1,4 @@
-// Chart.js bileşen kaydı + premium varsayılanlar (Jinja dashboard.js'ten port).
+// Chart.js bileşen kaydı + premium global tema (tek yerde; tüm grafiklere uygulanır).
 // Bir kez import edilir (main.tsx); react-chartjs-2 instance'ları yönetir.
 import {
   BarElement,
@@ -25,6 +25,46 @@ Chart.register(
   Filler,
 )
 
+// ---- Global tipografi / renk ----
 Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif"
+Chart.defaults.font.size = 11.5
 Chart.defaults.font.weight = 500
 Chart.defaults.color = C.muted
+
+// ---- Etkileşim: en yakın noktaya göre, eksen boyunca ----
+Chart.defaults.interaction.mode = 'index'
+Chart.defaults.interaction.intersect = false
+
+// ---- Legend: nokta-stili, ferah ----
+Chart.defaults.plugins.legend.labels.usePointStyle = true
+Chart.defaults.plugins.legend.labels.pointStyle = 'circle'
+Chart.defaults.plugins.legend.labels.boxWidth = 7
+Chart.defaults.plugins.legend.labels.boxHeight = 7
+Chart.defaults.plugins.legend.labels.padding = 16
+Chart.defaults.plugins.legend.labels.color = C.ink
+
+// ---- Tooltip: koyu cam, yuvarlatılmış, ferah (premium) ----
+const t = Chart.defaults.plugins.tooltip
+t.backgroundColor = 'rgba(17, 20, 26, 0.96)'
+t.borderColor = 'rgba(255, 255, 255, 0.12)'
+t.borderWidth = 1
+t.titleColor = C.ink
+t.bodyColor = '#c7ced8'
+t.cornerRadius = 10
+t.padding = { x: 12, y: 10 }
+t.boxPadding = 6
+t.usePointStyle = true
+t.titleFont = { family: "'Plus Jakarta Sans', system-ui, sans-serif", weight: 700, size: 12 }
+t.bodyFont = { family: "'Plus Jakarta Sans', system-ui, sans-serif", size: 12 }
+
+// ---- Ölçek çizgileri: hairline ----
+Chart.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.055)'
+Chart.defaults.scale.grid.drawTicks = false
+Chart.defaults.scale.ticks.padding = 8
+
+// ---- Animasyon: Chart.js varsayılanı korunur; yalnız reduced-motion'da kapatılır (a11y).
+// (animation objesini sıfırdan yazmak iç interpolasyon yapısını bozuyor → varsayılana dokunma.)
+const reduceMotion =
+  typeof window !== 'undefined' &&
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+if (reduceMotion) Chart.defaults.animation = false

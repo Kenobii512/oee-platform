@@ -5,8 +5,8 @@ import type { DataQuality, Oee, Recommendations as RecData } from '../api/types'
 import KpiCards from './KpiCards'
 import Recommendations from './Recommendations'
 
-const OEE: Oee = { oee: 0.62, availability: 0.86, performance: 0.81, quality: 0.88 }
-const DQ: DataQuality = { downtime_entry_coverage: 0.95, microstop_entry_coverage: 0.2 }
+const OEE: Oee = { oee: 0.62, availability: 0.86, performance: 0.81, quality: 0.88, final_yield: 1.0 }
+const DQ: DataQuality = { microstop_entry_coverage: 0.2 }
 
 describe('KpiCards', () => {
   it('OEE ve bileşenlerini yüzde olarak gösterir', () => {
@@ -28,6 +28,8 @@ const REC: RecData = {
       kind: 'visible',
       tl: 11546,
       estimated_gain_tl: 3464,
+      estimated_gain_tl_low: 1732,
+      estimated_gain_tl_high: 3464,
       recovery_ratio: 0.3,
       title: 'Duruşları azalt',
       action: 'En sık duruş nedeni ariza_pompa.',
@@ -37,10 +39,10 @@ const REC: RecData = {
 }
 
 describe('Recommendations', () => {
-  it('öneri başlığını, kazancı ve TL kaybını gösterir', () => {
+  it('öneri başlığını, kazanç aralığını ve TL kaybını gösterir', () => {
     render(<Recommendations rec={REC} />)
     expect(screen.getByText('Duruşları azalt')).toBeInTheDocument()
-    expect(screen.getByText('~3.464 TL/dönem')).toBeInTheDocument()
+    expect(screen.getByText('~1.732–3.464 TL/dönem')).toBeInTheDocument()
     expect(screen.getByText(/11\.546 TL/)).toBeInTheDocument()
   })
 })

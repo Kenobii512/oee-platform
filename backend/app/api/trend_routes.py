@@ -22,5 +22,5 @@ def oee_trend(
     if bucket not in ("day", "week"):
         bucket = "day"
     events = repo.fetch_events(frm, to)
-    production = repo.fetch_production()
+    production = repo.fetch_production(frm, to)
     return bucket_oee_series(events, production, line, bucket)

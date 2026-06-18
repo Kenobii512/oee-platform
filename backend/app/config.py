@@ -100,7 +100,6 @@ class CostConfig:
     speed_tl_per_min: float
     fill_tl_per_part: float
     redo_tl_per_part: float
-    scrap_tl_per_part: float
 
 
 def load_cost_config(path: str | Path) -> CostConfig:
@@ -112,7 +111,6 @@ def load_cost_config(path: str | Path) -> CostConfig:
         speed_tl_per_min=float(raw["speed_tl_per_min"]),
         fill_tl_per_part=float(raw["fill_tl_per_part"]),
         redo_tl_per_part=float(raw["redo_tl_per_part"]),
-        scrap_tl_per_part=float(raw["scrap_tl_per_part"]),
     )
 
 
@@ -127,13 +125,18 @@ class CategoryRule:
 @dataclass(frozen=True)
 class RecommendConfig:
     default_recovery_ratio: float
+    # Tahmini kazanç ARALIĞI faktörleri (nokta tahmin = üst/iyimser sınır): low ≤ 1 ≤ high.
+    # Abartılı kesinlik yerine bir bant gösterilir (Dalga 1/2 izlenecek-notu).
+    recovery_low_factor: float
+    recovery_high_factor: float
     rules: dict[str, CategoryRule]
 
 
 def load_recommend_config(path: str | Path) -> RecommendConfig:
     with open(path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
-    default_ratio = float(raw.get("defaults", {}).get("recovery_ratio", 0.2))
+    defaults = raw.get("defaults", {})
+    default_ratio = float(defaults.get("recovery_ratio", 0.2))
     rules = {
         cat: CategoryRule(
             recovery_ratio=float(r.get("recovery_ratio", default_ratio)),
@@ -143,7 +146,12 @@ def load_recommend_config(path: str | Path) -> RecommendConfig:
         )
         for cat, r in raw.get("categories", {}).items()
     }
-    return RecommendConfig(default_recovery_ratio=default_ratio, rules=rules)
+    return RecommendConfig(
+        default_recovery_ratio=default_ratio,
+        recovery_low_factor=float(defaults.get("recovery_low_factor", 0.5)),
+        recovery_high_factor=float(defaults.get("recovery_high_factor", 1.0)),
+        rules=rules,
+    )
 
 
 @dataclass(frozen=True)

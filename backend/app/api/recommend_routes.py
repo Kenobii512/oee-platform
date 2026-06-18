@@ -32,7 +32,7 @@ def get_recommendations(
     costs = load_cost_config(cfg.cost_config_path)
     rec_cfg = load_recommend_config(cfg.recommend_config_path)
     events = repo.fetch_events(frm, to)
-    production = repo.fetch_production()
+    production = repo.fetch_production(frm, to)
     tree = extract_loss_tree(events, production, line)
     cost_tree = to_tl(tree, costs)
     recommendations = generate_recommendations(

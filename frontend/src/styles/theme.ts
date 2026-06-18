@@ -4,10 +4,20 @@ export const C = {
   muted: '#8b94a3',
   grid: 'rgba(255,255,255,0.05)',
   base: '#3a434f',
-  oee: '#6ea8fe',
+  oee: '#22d3ee',
   good: '#34d399',
   inferred: '#a78bfa',
   loss: '#fb7185',
+} as const
+
+// OEE bileşeni metrik → renk: TEK doğruluk kaynağı. Hem KPI şeridi (legend noktaları)
+// hem OEE trend grafiği bunu kullanır → renkler birebir eşleşir.
+export const METRIC = {
+  oee: C.oee, // mavi
+  availability: C.good, // yeşil
+  performance: C.inferred, // mor
+  quality: C.loss, // mercan (ilk-geçiş kalite)
+  finalYield: C.muted, // gri (nihai verim)
 } as const
 
 /** Oran (0–1) → "%xx.x" (tr biçimi). */

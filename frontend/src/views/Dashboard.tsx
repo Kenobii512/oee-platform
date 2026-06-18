@@ -7,6 +7,7 @@ import { api } from '../api/client'
 import type { Oee, Range } from '../api/types'
 import CostPareto from '../components/CostPareto'
 import DataQualityDetail from '../components/DataQualityDetail'
+import GridSkeleton from '../components/GridSkeleton'
 import KpiCards from '../components/KpiCards'
 import LossTreeChart from '../components/LossTreeChart'
 import Recommendations from '../components/Recommendations'
@@ -51,14 +52,24 @@ export default function Dashboard() {
         onActivateScenario={activateScenario}
       />
 
-      {empty ? (
+      {oeeQ.isLoading ? (
+        <GridSkeleton kpis={5} cards={4} label="Pano yükleniyor" />
+      ) : empty ? (
         <div className="empty">
           Veri yüklü değil. Üst bardan bir <strong>senaryo</strong> seçin ya da{' '}
           <code>POST /ingest</code> ile bir CSV klasörü yükleyin.
         </div>
       ) : (
         <main className="grid">
-          {oeeQ.data && dqQ.data && <KpiCards oee={oeeQ.data} dq={dqQ.data} />}
+          {oeeQ.data && dqQ.data && (
+            <KpiCards
+              oee={oeeQ.data}
+              dq={dqQ.data}
+              redoParts={
+                lossQ.data?.categories.find((c) => c.category === 'QUALITY_REDO')?.value
+              }
+            />
+          )}
           {oeeQ.data && <WaterfallChart oee={oeeQ.data} />}
           {manager && trendQ.data && <TrendChart series={trendQ.data} />}
           {lossQ.data && (

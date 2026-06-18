@@ -3,13 +3,14 @@ from app.config import CategoryRule, RecommendConfig
 
 RC = RecommendConfig(
     default_recovery_ratio=0.2,
+    recovery_low_factor=0.5,
+    recovery_high_factor=1.0,
     rules={
         "DOWNTIME": CategoryRule(0.30, "Duruşları azalt", "neden {detail}", "~%{pct} geri kazanım"),
         "MICROSTOP": CategoryRule(0.20, "Mikro", "yoğun {detail}", "~%{pct}"),
         "SPEED_LOSS": CategoryRule(0.15, "Hız", "standardize et", "~%{pct}"),
         "FILL_LOSS": CategoryRule(0.20, "Doluluk", "artır", "~%{pct}"),
         "QUALITY_REDO": CategoryRule(0.25, "Redo", "kontrol", "~%{pct}"),
-        "QUALITY_SCRAP": CategoryRule(0.25, "Scrap", "kontrol", "~%{pct}"),
     },
 )
 
@@ -19,10 +20,9 @@ COST = {
         {"category": "MICROSTOP", "axis": "minutes", "value": 60.0, "tl": 3000.0, "kind": "visible"},
         {"category": "SPEED_LOSS", "axis": "minutes", "value": 100.0, "tl": 2000.0, "kind": "inferred"},
         {"category": "FILL_LOSS", "axis": "parts", "value": 700.0, "tl": 1400.0, "kind": "inferred"},
-        {"category": "QUALITY_SCRAP", "axis": "parts", "value": 50.0, "tl": 400.0, "kind": "visible"},
         {"category": "QUALITY_REDO", "axis": "parts", "value": 60.0, "tl": 180.0, "kind": "visible"},
     ],
-    "total_tl": 18480.0,
+    "total_tl": 18080.0,
 }
 
 EVENTS = [
@@ -51,6 +51,15 @@ def test_gain_is_tl_times_recovery_ratio():
     by = {r["category"]: r for r in recs}
     assert abs(by["DOWNTIME"]["estimated_gain_tl"] - 11500.0 * 0.30) < 1e-6
     assert abs(by["SPEED_LOSS"]["estimated_gain_tl"] - 2000.0 * 0.15) < 1e-6
+
+
+def test_gain_has_range_around_point_estimate():
+    # Perf-UI: nokta tahmin üst sınır; alt sınır = nokta × low_factor (abartılı kesinlik yok).
+    recs = generate_recommendations(COST, EVENTS, RC, RatioGainEstimator(RC))
+    for r in recs:
+        assert r["estimated_gain_tl_high"] == r["estimated_gain_tl"]
+        assert abs(r["estimated_gain_tl_low"] - r["estimated_gain_tl"] * 0.5) < 1e-6
+        assert r["estimated_gain_tl_low"] <= r["estimated_gain_tl_high"]
 
 
 def test_downtime_detail_embeds_top_reason():

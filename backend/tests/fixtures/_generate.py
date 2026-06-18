@@ -3,7 +3,11 @@
     cd simulator
     .venv/Scripts/python ../oee-platform/backend/tests/fixtures/_generate.py
 
-Çıktı: oee-platform/backend/tests/fixtures/{lossless,baseline}/*.csv + baseline_golden.json
+Çıktı (hepsi seed 42, no-scrap model + events.csv carrier_id'li):
+- oee-platform/backend/tests/fixtures/{lossless,baseline}/*.csv
+- oee-platform/backend/tests/fixtures/baseline_golden.json
+- oee-platform/backend/tests/fixtures/scenarios/<id>/*.csv  (6 demo senaryosu)
+
 Tests bu statik dosyaları okur; simülatöre çalışma-zamanı bağımlılığı yoktur.
 """
 from __future__ import annotations
@@ -23,6 +27,7 @@ from src.metrics import compute_oee  # noqa: E402
 OUT = Path(__file__).resolve().parent
 CONFIG = SIM / "config" / "line_default.yaml"
 SCENARIO = SIM / "config" / "scenario_baseline.yaml"
+SCENARIO_DIR = SIM / "config" / "scenarios"
 SEED = 42
 
 
@@ -36,7 +41,7 @@ def main() -> None:
     res.recorder.write_csvs(OUT / "lossless", res.carriers, cfg.orders)
     (OUT / "lossless" / "ground_truth.csv").unlink(missing_ok=True)
 
-    # Baseline set (with loss scenario)
+    # Baseline set (with loss scenario) + golden OEE
     scn = load_scenario(SCENARIO)
     res_b = run_simulation(cfg, seed=SEED, scenario=scn)
     res_b.recorder.write_csvs(OUT / "baseline", res_b.carriers, cfg.orders)
@@ -47,7 +52,16 @@ def main() -> None:
         "performance": oee.performance,
         "quality": oee.quality,
         "oee": oee.oee,
+        "final_yield": oee.final_yield,
     }, indent=2))
+
+    # Demo senaryo kataloğu (G8): her senaryo kendi dizinine.
+    for path in sorted(SCENARIO_DIR.glob("*.yaml")):
+        sid = path.stem
+        s = load_scenario(path)
+        r = run_simulation(cfg, seed=SEED, scenario=s)
+        r.recorder.write_csvs(OUT / "scenarios" / sid, r.carriers, cfg.orders)
+
     print("fixtures yazıldı:", OUT)
 
 

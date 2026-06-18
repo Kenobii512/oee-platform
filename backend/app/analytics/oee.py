@@ -4,8 +4,12 @@ hat tanımı) Availability/Performance/Quality/OEE hesaplar.
 Tanımlar simülatör `src/metrics.py` ile BİREBİR:
 - Availability = (span − union(DOWNTIME∪MICROSTOP)) / span. Örtüşen duruşlar bir kez.
 - Performance  = (askı × Σ nominal tam-geçiş) / Σ PROCESS süresi.
-- Quality      = Σ good / Σ intended. intended = hat tanımı askı kapasitesi (master-data);
-                 yoksa iş emri başına max(loaded_qty) çıkarımı (accuracy.py deseni).
+- Quality      = ilk-geçiş kalite (first_pass) = (Σ loaded − Σ redo) / Σ loaded. No-scrap
+                 modelinde redo'dan geçen parça (sonunda iyi olsa da) ilk geçişte iyi
+                 sayılmaz → Q'yu düşürür (OEE standardı, rework cezası). Doluluk kaybı
+                 Q'da değil, ayrı FILL_LOSS kanalındadır.
+- final_yield  = Σ good / Σ loaded = nihai verim (no-scrap → ≈%100); OEE'yi etkilemez,
+                 ayrı raporlanır (no-scrap sözünü görünür kılar).
 - OEE = A × P × Q.
 
 Ayrıca utilization (planlı bakım) ayrı raporlanır; OEE'yi etkilemez.
@@ -15,7 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
-from app.analytics.nominal import inferred_nominal_per_order, nominal_full_pass
+from app.analytics.nominal import nominal_full_pass
 from app.models.contract import LineDefinition
 
 _DOWNTIME_TYPES = {"DOWNTIME", "MICROSTOP"}
@@ -25,10 +29,11 @@ _DOWNTIME_TYPES = {"DOWNTIME", "MICROSTOP"}
 class OeeResult:
     availability: float
     performance: float
-    quality: float
+    quality: float       # ilk-geçiş kalite (first_pass) — OEE'nin Q'su
     oee: float
     utilization: float
     planned_downtime_min: float
+    final_yield: float = 1.0  # Σ good / Σ loaded (no-scrap → ≈%100)
 
 
 def _clamp01(x: float) -> float:
@@ -102,22 +107,19 @@ def _performance(events: list[dict], num_carriers: int, line: LineDefinition) ->
     return _clamp01(ideal / actual) if actual > 0 else 0.0
 
 
-def _quality(production: list[dict], line: LineDefinition) -> float:
+def _quality_metrics(production: list[dict]) -> tuple[float, float]:
+    """(first_pass, final_yield) döndürür (no-scrap modeli).
+
+    first_pass = (Σ loaded − Σ redo) / Σ loaded → ilk geçişte iyi oranı (OEE'nin Q'su;
+    redo'dan geçen parça cezalandırılır). final_yield = Σ good / Σ loaded → nihai verim
+    (no-scrap → ≈%100). Doluluk kaybı Q'da değil; ayrı FILL_LOSS kanalındadır.
+    """
+    loaded = sum(p["loaded_qty"] for p in production)
+    redo = sum(p["redo_count"] for p in production)
     good = sum(p["good_count"] for p in production)
-    if line.carrier_capacity:
-        intended = sum(line.carrier_capacity.get(p["order_id"], 0) for p in production)
-        if intended == 0:  # order_id'ler config'te yoksa çıkarıma düş
-            intended = _inferred_intended(production)
-    else:
-        intended = _inferred_intended(production)
-    return _clamp01(good / intended) if intended > 0 else 0.0
-
-
-def _inferred_intended(production: list[dict]) -> int:
-    """Fallback (accuracy.py deseni): iş emri başına gözlenen en büyük loaded_qty
-    nominal kabul edilir; intended = Σ nominal."""
-    nominal = inferred_nominal_per_order(production)
-    return sum(nominal[p["order_id"]] for p in production)
+    if loaded <= 0:
+        return 0.0, 0.0
+    return _clamp01((loaded - redo) / loaded), _clamp01(good / loaded)
 
 
 def compute_oee(
@@ -127,12 +129,14 @@ def compute_oee(
     planned_downtime_min: float = 0.0,
 ) -> OeeResult:
     if not events or not production:
-        return OeeResult(0.0, 0.0, 0.0, 0.0, 0.0, planned_downtime_min)
+        return OeeResult(0.0, 0.0, 0.0, 0.0, 0.0, planned_downtime_min, 0.0)
     avail, span, _dt = availability_from_events(events)
     perf = _performance(events, len(production), line)
-    qual = _quality(production, line)
+    qual, final_yield = _quality_metrics(production)
     oee = avail * perf * qual
     operating = span * avail
     calendar = span + planned_downtime_min
     utilization = _clamp01(operating / calendar) if calendar > 0 else 0.0
-    return OeeResult(avail, perf, qual, oee, utilization, planned_downtime_min)
+    return OeeResult(
+        avail, perf, qual, oee, utilization, planned_downtime_min, final_yield
+    )

@@ -39,7 +39,7 @@ def get_oee(
     cfg = request.app.state.config
     line = load_line_definition(cfg.line_config_path)
     events = repo.fetch_events(frm, to)
-    production = repo.fetch_production()
+    production = repo.fetch_production(frm, to)
     planned = _planned_downtime(cfg.line_config_path, frm, to)
     result = compute_oee(events, production, line, planned_downtime_min=planned)
     return asdict(result)

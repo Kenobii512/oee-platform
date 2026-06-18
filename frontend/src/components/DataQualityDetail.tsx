@@ -7,10 +7,12 @@ export default function DataQualityDetail({ dq }: { dq: DataQuality }) {
   return (
     <Card eyebrow="Veri Güvenilirliği" period>
       <div className="dq-detail">
-        Operatör neden-giriş kapsamı:
-        <br />• DOWNTIME: <strong>{pct(dq.downtime_entry_coverage)}</strong>
-        <br />• MICROSTOP: <strong>{pct(dq.microstop_entry_coverage)}</strong>{' '}
-        <span className="muted">(mikro duruşta düşük olması beklenir — içgörü, kusur değil)</span>
+        Tek manuel girdi: <strong>mikro duruş</strong>. Duruş, hız, doluluk ve kalite
+        sistemce (PLC/sayaç/kalite istasyonu) otomatik ölçülür.
+        <br />• Mikro duruş giriş kapsamı: <strong>{pct(dq.microstop_entry_coverage)}</strong>{' '}
+        <span className="muted">
+          (düşük olması beklenir: operatör çoğunu girmez, Excel/manuel takibe karşı asıl fark)
+        </span>
       </div>
       <p className="muted">
         Mor çubuklar <strong>çıkarım</strong> kanallarıdır (gerçek veride yok, genel veriden

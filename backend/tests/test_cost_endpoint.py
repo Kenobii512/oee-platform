@@ -15,10 +15,10 @@ def test_cost_endpoint(tmp_path, monkeypatch):
         assert r.status_code == 200
         body = r.json()
         cats = body["categories"]
-        assert len(cats) == 6
+        assert len(cats) == 5
         assert {c["category"] for c in cats} == {
             "DOWNTIME", "MICROSTOP", "QUALITY_REDO",
-            "QUALITY_SCRAP", "FILL_LOSS", "SPEED_LOSS",
+            "FILL_LOSS", "SPEED_LOSS",
         }
         for c in cats:
             assert set(c) >= {"category", "axis", "value", "tl", "kind"}

@@ -3,7 +3,7 @@
 Birim maliyetler CostConfig'ten gelir (config/costs.yaml); kodda gömülü sayı YOK.
 Maliyet modeli simülatör `costs` bloğuyla hizalıdır (parite için):
   DOWNTIME/MICROSTOP = dk × downtime/microstop oranı, SPEED_LOSS = dk × speed oranı,
-  FILL/REDO/SCRAP = parça × ilgili parça oranı.
+  FILL/REDO = parça × ilgili parça oranı (no-scrap: hurda kanalı yok).
 FIREWALL: yalnız genel kayıp ağacı + config maliyetleri kullanılır; ground_truth ALMAZ.
 """
 from __future__ import annotations
@@ -11,14 +11,13 @@ from __future__ import annotations
 from app.analytics.loss_tree import CATEGORIES, LossTree, axis_of, kind_of
 from app.config import CostConfig
 
-# Kategori -> CostConfig alanı. Tek doğruluk kaynağı (DRY).
+# Kategori -> CostConfig alanı. Tek doğruluk kaynağı (DRY). No-scrap: hurda yok.
 _RATE_FIELD = {
     "DOWNTIME": "downtime_tl_per_min",
     "MICROSTOP": "microstop_tl_per_min",
     "SPEED_LOSS": "speed_tl_per_min",
     "FILL_LOSS": "fill_tl_per_part",
     "QUALITY_REDO": "redo_tl_per_part",
-    "QUALITY_SCRAP": "scrap_tl_per_part",
 }
 
 

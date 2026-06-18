@@ -27,6 +27,9 @@ class EventType(str, Enum):
 class EventRow(BaseModel):
     timestamp: datetime
     line_id: str
+    # Askıya bağlı olaylarda dolu; hat-seviyesi olaylarda (DOWNTIME/MICROSTOP) boş/None.
+    # Dönem-doğru üretim atfı (G4.1) için: production'ı carrier'ın zaman penceresine bağlar.
+    carrier_id: Optional[str] = None
     station_id: Optional[str] = None
     event_type: EventType
     duration: float

@@ -1,8 +1,15 @@
 """Hızlandırılmış replay: olayları zaman-sıralı 'şimdiye kadar' pencerelerinde özetler.
 
 Mevcut analytics yeniden kullanılır (yeni iş kuralı YOK). FIREWALL: ground_truth ALMAZ.
-G4.1 sınırı: pencere yalnız events'e uygulanır → Availability + kayıp-zaman kanalları + TL
-ilerledikçe BÜYÜR (canlı anlatının özü); P/Q dönem-geneli kalır (carrier dönem damgası yok).
+G4.1 ile pencere artık ÜRETİME de uygulanır (carrier_id zaman atfı): `fetch_production(None, to)`
+ile o ana kadar hattı terk etmiş askılar dahil edilir → Availability + kayıp-zaman + TL ile
+birlikte P/Q de pencere-doğru BÜYÜR.
+
+Final snapshot (son kesim, to = global max ts) statik `/oee` ile birebirdir — ÖNKOŞUL: her
+production carrier'ının en az bir olayı vardır (carrier_id ile). Bu, sahadan/simülatörden gelen
+geçerli veride daima sağlanır (her askı LOAD/PROCESS olayları üretir). Olaysız (orphan) bir carrier
+pencereli üretim sorgusunda kapsam dışı kalır (bkz. duckdb_repo.fetch_production); böyle bir satır
+bir veri-kalite hatasıdır, OEE'ye katılmamalıdır.
 """
 from __future__ import annotations
 
@@ -31,7 +38,7 @@ def time_steps(timestamps: list[Any], n_steps: int) -> list[Any]:
 def snapshot_at(repo, line, costs, rec_cfg, to) -> dict:
     """Tek 'şimdiye kadar' snapshot'ı (to dahil). to=None → tüm veri."""
     events = repo.fetch_events(None, to)
-    production = repo.fetch_production()
+    production = repo.fetch_production(None, to)
     oee = compute_oee(events, production, line)
     tree = extract_loss_tree(events, production, line)
     cost = to_tl(tree, costs)

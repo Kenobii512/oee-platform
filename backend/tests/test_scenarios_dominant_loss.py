@@ -1,10 +1,9 @@
 """G8 kalibrasyon kapısı: her senaryo, kataloğunda beyan ettiği kaybı DOĞAL EKSENİNDE
 baskın göstermeli.
 
-Doğal-eksen kuralı (kullanıcı kararı): TL ağırlıkları dengesiz (DOWNTIME 50, SCRAP 8 pahalı;
-SPEED 20, REDO 3, FILL 2 ucuz), bu yüzden ucuz kanallar TL'de #1 olamaz. Bunun yerine adlı
-kayıp, KENDİ ekseninde (zaman kanalları → dakika; malzeme kanalları → parça) en yüksek değere
-sahip olmalı. Bu hem gerçekçi (FILL'in TL'si küçük kalır) hem okunabilir (pano zaten zaman/parça
+Doğal-eksen kuralı (kullanıcı kararı): TL ağırlıkları dengesiz (DOWNTIME 50 pahalı; SPEED 20,
+REDO 3, FILL 2 ucuz), bu yüzden ucuz kanallar TL'de #1 olamaz. Bunun yerine adlı kayıp, KENDİ
+ekseninde (zaman kanalları → dakika; malzeme kanalları → parça) en yüksek değere sahip olmalı. Bu hem gerçekçi (FILL'in TL'si küçük kalır) hem okunabilir (pano zaten zaman/parça
 kayıplarını ayrı grafiklerde gösterir).
 
 FIREWALL: yalnız platform analitiği (/loss-tree); ground_truth ingest edilmez. Parametreler bu

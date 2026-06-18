@@ -9,13 +9,17 @@ import { api } from '../api/client'
 import type { ReplaySnapshot } from '../api/types'
 import Card from '../components/Card'
 import CostPareto from '../components/CostPareto'
+import GridSkeleton from '../components/GridSkeleton'
 import { C, gridAxis, pct, tl } from '../styles/theme'
 
 const STEPS = 60
 const SPEEDS = [100, 500, 1000]
 
 export default function Replay() {
-  const { data: catalog } = useQuery({ queryKey: ['scenarios'], queryFn: api.scenarios })
+  const { data: catalog, isLoading: catalogLoading } = useQuery({
+    queryKey: ['scenarios'],
+    queryFn: api.scenarios,
+  })
   const esRef = useRef<EventSource | null>(null)
   const [scenario, setScenario] = useState('breakdown_storm')
   const [speed, setSpeed] = useState(500)
@@ -64,7 +68,7 @@ export default function Replay() {
         label: 'OEE',
         data: series,
         borderColor: C.oee,
-        backgroundColor: 'rgba(110,168,254,0.12)',
+        backgroundColor: 'rgba(34,211,238,0.12)',
         fill: true,
         tension: 0.3,
         borderWidth: 2.5,
@@ -112,6 +116,9 @@ export default function Replay() {
         </div>
       </header>
 
+      {catalogLoading || (running && !snap) ? (
+        <GridSkeleton kpis={6} cards={2} label="Replay yükleniyor" />
+      ) : (
       <main className="grid">
         <section className="shell kpis">
           <div className="core">
@@ -122,6 +129,10 @@ export default function Replay() {
             <div className="kpi">
               <span className="label">Kullanılabilirlik</span>
               <span className="value">{snap ? pct(snap.oee.availability) : '–'}</span>
+            </div>
+            <div className="kpi">
+              <span className="label">Performans</span>
+              <span className="value">{snap ? pct(snap.oee.performance) : '–'}</span>
             </div>
             <div className="kpi">
               <span className="label">Biriken kayıp</span>
@@ -148,10 +159,11 @@ export default function Replay() {
           <CostPareto cost={snap.cost} />
         ) : (
           <Card eyebrow="Maliyet Pareto'su (TL)">
-            <p className="muted">Oynat'a basın — kayıplar biriktikçe canlı dolacak.</p>
+            <p className="muted">Oynat'a basın. Kayıplar biriktikçe canlı dolacak.</p>
           </Card>
         )}
       </main>
+      )}
     </>
   )
 }

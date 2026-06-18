@@ -27,3 +27,27 @@ def test_week_bucket_single(tmp_path, line_def):
 
 def test_empty_input_returns_empty(line_def):
     assert bucket_oee_series([], [], line_def, "day") == []
+
+
+def test_performance_quality_are_window_true(tmp_path, line_def):
+    # G4.1: carrier_id zaman atfı ile P ve Q pencere bazında DEĞİŞİR (eskiden dönem-sabitti).
+    repo = load_fixture_into_repo(FIXTURES / "baseline", str(tmp_path / "b.duckdb"))
+    series = bucket_oee_series(
+        repo.fetch_events(), repo.fetch_production(), line_def, "day"
+    )
+    repo.close()
+    assert len(series) >= 2
+    perfs = {round(s["performance"], 6) for s in series}
+    quals = {round(s["quality"], 6) for s in series}
+    assert len(perfs) > 1, perfs   # performans pencereye göre değişir
+    assert len(quals) > 1, quals   # kalite pencereye göre değişir
+
+
+def test_window_production_attribution(tmp_path, line_def):
+    # Bir gün penceresi yalnız o pencerede biten askıların üretimini görür.
+    repo = load_fixture_into_repo(FIXTURES / "baseline", str(tmp_path / "b.duckdb"))
+    all_prod = repo.fetch_production()
+    # 2026-01-05 sonuna kadar biten askılar < tüm askılar (üretim 2 güne yayılı).
+    day1 = repo.fetch_production(None, "2026-01-05 23:59:59")
+    repo.close()
+    assert 0 < len(day1) < len(all_prod)

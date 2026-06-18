@@ -7,7 +7,8 @@ export interface Oee {
   oee: number
   availability: number
   performance: number
-  quality: number
+  quality: number // ilk-geçiş kalite (first_pass) — OEE'nin Q'su
+  final_yield?: number // Σ good / Σ loaded (no-scrap → ≈%100)
   utilization?: number
   planned_downtime_min?: number
 }
@@ -42,7 +43,9 @@ export interface Recommendation {
   value: number
   kind: Kind
   tl: number
-  estimated_gain_tl: number
+  estimated_gain_tl: number // nokta tahmin (üst/iyimser sınır)
+  estimated_gain_tl_low: number // aralık alt sınırı
+  estimated_gain_tl_high: number // aralık üst sınırı (= estimated_gain_tl)
   recovery_ratio: number
   title: string
   action: string
@@ -59,11 +62,12 @@ export interface TrendPoint {
   oee: number
   availability: number
   performance: number
-  quality: number
+  quality: number // ilk-geçiş kalite
+  final_yield: number // nihai verim (no-scrap → ≈%100)
 }
 
 export interface DataQuality {
-  downtime_entry_coverage: number
+  // G10: operatörün tek manuel girdisi mikro duruş (duruş sistemce otomatik bilinir).
   microstop_entry_coverage: number
 }
 

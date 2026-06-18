@@ -35,7 +35,8 @@ def test_trend_endpoint(tmp_path, monkeypatch):
         assert r.status_code == 200
         series = r.json()
         assert len(series) == 2
-        assert {"period", "availability", "performance", "quality", "oee"} <= set(series[0])
+        assert {"period", "availability", "performance", "quality",
+                "final_yield", "oee"} <= set(series[0])
         assert all(0.0 <= s["oee"] <= 1.0 for s in series)
 
 
@@ -46,8 +47,9 @@ def test_data_quality_endpoint(tmp_path, monkeypatch):
         r = client.get("/data-quality/summary")
         assert r.status_code == 200
         body = r.json()
-        assert set(body) == {"downtime_entry_coverage", "microstop_entry_coverage"}
-        assert abs(body["downtime_entry_coverage"] - 0.875) < 1e-9
+        # G10: yalnız mikro duruş kapsamı (duruş sistemce otomatik bilinir).
+        assert set(body) == {"microstop_entry_coverage"}
+        assert 0.0 < body["microstop_entry_coverage"] < 0.30
 
 
 def test_sample_data_dir_autoingest(tmp_path, monkeypatch):

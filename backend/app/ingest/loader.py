@@ -63,6 +63,7 @@ def _load_events(path: Path, repo: Repository, report: LoadReport) -> None:
             row = EventRow(
                 timestamp=raw["timestamp"],
                 line_id=raw["line_id"],
+                carrier_id=_clean(raw.get("carrier_id")),
                 station_id=_clean(raw.get("station_id")),
                 event_type=raw["event_type"],
                 duration=raw["duration"],
@@ -77,6 +78,7 @@ def _load_events(path: Path, repo: Repository, report: LoadReport) -> None:
             "row_ordinal": i,
             "timestamp": row.timestamp,
             "line_id": row.line_id,
+            "carrier_id": row.carrier_id,
             "station_id": row.station_id,
             "event_type": row.event_type.value,
             "duration": row.duration,

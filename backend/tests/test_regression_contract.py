@@ -17,9 +17,14 @@ GOLDEN = json.loads((FIXTURES / "baseline_golden.json").read_text())
 
 # --- Eşikler (sözleşme; değiştirmek = bilinçli karar) ---
 PARITY_TOL = 0.01       # OEE baseline paritesi: ±%1
-VISIBLE_TOL = 0.01      # Görünür kanallar ground_truth ile ±%1
+VISIBLE_TOL = 0.01      # Görünür zaman kanalları (DOWNTIME/MICROSTOP) ground_truth ile ±%1
 LOSSLESS_MIN = 0.95     # Kayıpsız sette OEE >= %95
 INFERRED_MIN = 0.85     # Gizli kanal (FILL/SPEED) geri kazanımı >= %85
+REDO_MIN = 0.70         # No-scrap: REDO (ayrık parça) / gerçek (döngü-hacmi) geri kazanımı >= %70
+
+# No-scrap modeli (G12): görünür zaman kanalları birebir; QUALITY_REDO ayrık-parça olduğu
+# için ground_truth döngü-hacminin altında kalır (geniş bant, ayrı eşik).
+VISIBLE_TIME = ("DOWNTIME", "MICROSTOP")
 
 pytestmark = pytest.mark.regression
 
@@ -31,13 +36,27 @@ def test_firewall_extract_loss_tree_has_no_ground_truth():
     assert "ground_truth" not in sig.parameters
 
 
-def test_visible_channels_within_tolerance(tmp_path, line_def):
+def test_visible_time_channels_within_tolerance(tmp_path, line_def):
     repo = load_fixture_into_repo(FIXTURES / "baseline", str(tmp_path / "b.duckdb"))
     tree = extract_loss_tree(repo.fetch_events(), repo.fetch_production(), line_def)
-    for cat in VISIBLE:
+    for cat in VISIBLE_TIME:
         truth = baseline_truth_value(cat)
         assert truth > 0, cat
         assert abs(tree.value(cat) - truth) <= VISIBLE_TOL * truth, (cat, tree.value(cat), truth)
+    repo.close()
+
+
+def test_redo_channel_recovers_min(tmp_path, line_def):
+    # No-scrap: production redo_count = ayrık parça; ground_truth REDO = döngü-hacmi
+    # (çok-döngülü askılar fazladan). recovered <= truth; geniş bant alt sınırı.
+    repo = load_fixture_into_repo(FIXTURES / "baseline", str(tmp_path / "b.duckdb"))
+    tree = extract_loss_tree(repo.fetch_events(), repo.fetch_production(), line_def)
+    truth = baseline_truth_value("QUALITY_REDO")
+    assert truth > 0
+    recovered = tree.value("QUALITY_REDO")
+    assert recovered <= truth + 1e-6
+    assert recovered / truth >= REDO_MIN, (recovered, truth)
+    assert "QUALITY_REDO" in VISIBLE  # sözleşme: redo görünür kanaldır
     repo.close()
 
 

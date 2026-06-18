@@ -10,18 +10,25 @@ export default function App() {
   return (
     <>
       <nav className="viewnav">
-        <button
-          className={view === 'dashboard' ? 'active' : ''}
-          onClick={() => setView('dashboard')}
-        >
-          Pano
-        </button>
-        <button
-          className={view === 'replay' ? 'active' : ''}
-          onClick={() => setView('replay')}
-        >
-          Canlı Replay
-        </button>
+        <span className="viewnav-brand" aria-hidden="true">OEE</span>
+        <div className="seg" role="tablist" aria-label="Görünüm">
+          <button
+            role="tab"
+            aria-selected={view === 'dashboard'}
+            className={view === 'dashboard' ? 'active' : ''}
+            onClick={() => setView('dashboard')}
+          >
+            Pano
+          </button>
+          <button
+            role="tab"
+            aria-selected={view === 'replay'}
+            className={view === 'replay' ? 'active' : ''}
+            onClick={() => setView('replay')}
+          >
+            Canlı Replay
+          </button>
+        </div>
       </nav>
       {view === 'dashboard' ? <Dashboard /> : <Replay />}
     </>
