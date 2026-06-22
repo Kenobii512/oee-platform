@@ -5,6 +5,12 @@ import { METRIC, tl } from '../styles/theme'
 import Card from './Card'
 import Info from './Info'
 
+// Backend aksiyon metni `kod` (neden/istasyon) içerir; ham backtick yerine mono çip render et.
+// Çift backtick'ler arası (tek-indeksli) parçalar koddur.
+function withCode(text: string) {
+  return text.split('`').map((part, i) => (i % 2 === 1 ? <code key={i}>{part}</code> : part))
+}
+
 export default function Recommendations({ rec }: { rec: RecData }) {
   const recs = rec.recommendations // zaten TL azalan sıralı (backend)
   const maxGain = Math.max(...recs.map((r) => r.estimated_gain_tl_high), 1)
@@ -40,10 +46,10 @@ export default function Recommendations({ rec }: { rec: RecData }) {
                 }}
               />
             </div>
-            <p className="rec-action">{r.action}</p>
+            <p className="rec-action">{withCode(r.action)}</p>
             <p className="muted rec-meta">
               Kayıp: <strong>{tl(r.tl)} TL</strong>
-              {r.kind === 'inferred' ? ' · çıkarımsal' : ''} · {r.assumption}
+              {r.kind === 'inferred' ? ' · çıkarımsal' : ''} · {withCode(r.assumption)}
             </p>
           </li>
         ))}

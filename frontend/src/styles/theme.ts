@@ -21,6 +21,21 @@ export const METRIC = {
   finalYield: C.muted, // gri (nihai verim)
 } as const
 
+// Kayıp/maliyet kategori kodu → Türkçe isim etiketi (TEK doğruluk kaynağı). Backend
+// /loss-tree ve /cost yalnız ham kod döndürür; grafiklerde jargon yerine bunu göster.
+// 5 kanonik kategori (backend analytics/loss_tree.py ile birebir). Öneri başlıkları FİİL
+// ("Duruşları azalt") olduğundan eksen/legend için ayrı İSİM etiketi tutulur.
+export const CATEGORY_LABEL: Record<string, string> = {
+  DOWNTIME: 'Duruş',
+  MICROSTOP: 'Mikro duruş',
+  QUALITY_REDO: 'Yeniden işleme',
+  FILL_LOSS: 'Eksik doluluk',
+  SPEED_LOSS: 'Hız kaybı',
+}
+
+/** Kategori kodunu Türkçe etikete çevir; bilinmeyen kodda ham koda düş (güvenli). */
+export const catLabel = (code: string): string => CATEGORY_LABEL[code] ?? code
+
 /** Tek ondalıklı Türkçe sayı (ondalık virgül): 60.1 → "60,1". */
 export const num1 = (x: number): string =>
   x.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })

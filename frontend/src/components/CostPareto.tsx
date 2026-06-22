@@ -4,7 +4,7 @@ import { Chart } from 'react-chartjs-2'
 import type { ChartData, ChartOptions, Plugin } from 'chart.js'
 
 import type { CostTree } from '../api/types'
-import { barStyle, C, tl } from '../styles/theme'
+import { barStyle, C, catLabel, tl } from '../styles/theme'
 import Card from './Card'
 import Info from './Info'
 
@@ -41,7 +41,7 @@ export default function CostPareto({ cost }: { cost: CostTree }) {
   )
 
   const data: ChartData<'bar' | 'line'> = {
-    labels: cats.map((c) => c.category + (c.kind === 'inferred' ? ' · çıkarımsal' : '')),
+    labels: cats.map((c) => catLabel(c.category) + (c.kind === 'inferred' ? ' · çıkarımsal' : '')),
     datasets: [
       {
         type: 'bar' as const,

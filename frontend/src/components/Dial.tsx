@@ -76,7 +76,7 @@ export default function Dial({ value, live }: { value: number; live?: boolean })
           className="needle"
           style={{ transform: `rotate(${needleDeg}deg)`, transformBox: 'view-box', transformOrigin: '100px 110px' }}
         >
-          <line x1="166" y1="110" x2="190" y2="110" stroke="#16202b" strokeWidth="3" strokeLinecap="round" />
+          <line x1="162" y1="110" x2="192" y2="110" stroke="#16202b" strokeWidth="3.5" strokeLinecap="round" />
         </g>
         <defs>
           <linearGradient id="gz" x1="0" y1="0" x2="1" y2="0">
