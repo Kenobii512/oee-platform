@@ -1,8 +1,9 @@
 """GET /replay/stream?scenario=&speed=&steps= -> snapshot'ları SSE ile yayınlar.
 
-Senaryoyu aktive eder (reset + ingest; firewall: ground_truth ingest edilmez), büyüyen
-'şimdiye kadar' snapshot'larını gerçek-zaman temposuyla (tick = base/speed) push eder.
-Her snapshot to_thread'de üretilir (senkron repo/analytics event loop'u bloklamasın).
+Senaryoyu AYRI bir in-memory DuckDB'ye yükler (paylaşılan pano DB'sine dokunmaz; firewall:
+ground_truth ingest edilmez), büyüyen 'şimdiye kadar' snapshot'larını gerçek-zaman temposuyla
+(tick = base/speed) push eder. Her snapshot to_thread'de üretilir (senkron repo/analytics event
+loop'u bloklamasın). İzolasyon sayesinde replay, /oee panosunun verisini değiştirmez.
 """
 from __future__ import annotations
 
@@ -21,6 +22,7 @@ from app.config import (
     load_scenario_catalog,
 )
 from app.ingest.loader import load_csv_dir
+from app.store.duckdb_repo import DuckDBRepository
 
 router = APIRouter()
 
@@ -43,20 +45,27 @@ async def replay_stream(
     if not data_dir.is_dir():
         raise HTTPException(status_code=404, detail=f"veri yok: {info.data_dir}")
 
-    repo = request.app.state.repo
-    repo.reset()  # senaryo verisini temiz yükle (birikme yok)
-    load_csv_dir(data_dir, repo)
+    # İZOLASYON: replay paylaşılan repo'yu (pano /oee aynı tabloları okur) ASLA değiştirmez.
+    # Her istek için ayrı in-memory DuckDB; akış bitince atılır → pano verisi temiz kalır.
+    # (Eskiden app.state.repo üzerinde reset()+ingest yapıp /oee'yi senaryoya kaydırıyordu.)
+    temp = DuckDBRepository(":memory:")
+    temp.connect()
+    temp.init_schema()
+    load_csv_dir(data_dir, temp)
     line = load_line_definition(cfg.line_config_path)
     costs = load_cost_config(cfg.cost_config_path)
     rc = load_recommend_config(cfg.recommend_config_path)
 
     async def gen():
-        all_events = await asyncio.to_thread(repo.fetch_events, None, None)
-        stamps = [e["timestamp"] for e in all_events if e.get("timestamp") is not None]
-        for cut in time_steps(stamps, steps):
-            snap = await asyncio.to_thread(snapshot_at, repo, line, costs, rc, cut)
-            yield f"data: {json.dumps(snap)}\n\n"
-            await asyncio.sleep(_BASE_TICK / speed)
-        yield "event: done\ndata: {}\n\n"
+        try:
+            all_events = await asyncio.to_thread(temp.fetch_events, None, None)
+            stamps = [e["timestamp"] for e in all_events if e.get("timestamp") is not None]
+            for cut in time_steps(stamps, steps):
+                snap = await asyncio.to_thread(snapshot_at, temp, line, costs, rc, cut)
+                yield f"data: {json.dumps(snap)}\n\n"
+                await asyncio.sleep(_BASE_TICK / speed)
+            yield "event: done\ndata: {}\n\n"
+        finally:
+            temp.close()  # in-memory DB'yi serbest bırak (paylaşılan repo'ya dokunulmadı)
 
     return StreamingResponse(gen(), media_type="text/event-stream")

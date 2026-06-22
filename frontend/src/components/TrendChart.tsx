@@ -92,10 +92,16 @@ export default function TrendChart({ series }: { series: TrendPoint[] }) {
     ],
   }
 
+  // Dinamik alt sınır: tüm hareket 40–95 bandında olunca 0–100 ekseninin alt yarısı boş kalıyordu.
+  // En düşük değerin ~8 puan altından başla (10'a yuvarla), en çok 50'den; max 100 kalır (HEDEF 85 görünür).
+  const allVals = series.flatMap((s) => [s.oee, s.availability, s.performance, s.quality, s.final_yield])
+  const dataMin = Math.min(...allVals) * 100
+  const yMin = Math.min(50, Math.max(0, Math.floor((dataMin - 8) / 10) * 10))
+
   const options: ChartOptions<'line'> = {
     plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 16 } } },
     scales: {
-      y: { min: 0, max: 100, grid: gridAxis, ticks: { callback: (v) => v + '%' } },
+      y: { min: yMin, max: 100, grid: gridAxis, ticks: { callback: (v) => v + '%' } },
       x: { grid: { display: false } },
     },
   }
