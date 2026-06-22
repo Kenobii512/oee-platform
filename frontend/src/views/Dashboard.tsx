@@ -13,7 +13,6 @@ import LossTreeChart from '../components/LossTreeChart'
 import Recommendations from '../components/Recommendations'
 import TopBar, { type View } from '../components/TopBar'
 import TrendChart from '../components/TrendChart'
-import WaterfallChart from '../components/WaterfallChart'
 
 function isEmpty(oee?: Oee): boolean {
   return !oee || (oee.availability === 0 && oee.performance === 0 && oee.quality === 0)
@@ -54,6 +53,14 @@ export default function Dashboard() {
 
       {oeeQ.isLoading ? (
         <GridSkeleton kpis={5} cards={4} label="Pano yükleniyor" />
+      ) : oeeQ.isError ? (
+        <div className="empty error" role="alert">
+          <strong>Veri alınamadı.</strong> Sunucuya ulaşılamıyor olabilir
+          {oeeQ.error instanceof Error ? ` (${oeeQ.error.message})` : ''}.
+          <button className="retry" onClick={() => oeeQ.refetch()}>
+            Yeniden dene
+          </button>
+        </div>
       ) : empty ? (
         <div className="empty">
           Veri yüklü değil. Üst bardan bir <strong>senaryo</strong> seçin ya da{' '}
@@ -65,12 +72,12 @@ export default function Dashboard() {
             <GaugeHero
               oee={oeeQ.data}
               dq={dqQ.data}
+              costTotal={costQ.data?.total_tl}
               redoParts={
                 lossQ.data?.categories.find((c) => c.category === 'QUALITY_REDO')?.value
               }
             />
           )}
-          {oeeQ.data && <WaterfallChart oee={oeeQ.data} />}
           {manager && trendQ.data && <TrendChart series={trendQ.data} />}
           {lossQ.data && (
             <LossTreeChart

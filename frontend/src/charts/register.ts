@@ -62,10 +62,11 @@ t.usePointStyle = true
 t.titleFont = { family: "'Plus Jakarta Sans', system-ui, sans-serif", weight: 700, size: 12 }
 t.bodyFont = { family: "'Plus Jakarta Sans', system-ui, sans-serif", size: 12 }
 
-// ---- Ölçek çizgileri: hairline ----
+// ---- Ölçek çizgileri: hairline + eksen kenarı yok (temiz instrument görünüm) ----
 Chart.defaults.scale.grid.color = 'rgba(22, 32, 43, 0.07)'
 Chart.defaults.scale.grid.drawTicks = false
 Chart.defaults.scale.ticks.padding = 8
+Chart.defaults.scale.ticks.color = '#677080' // faint — etiketler geri planda
 
 // ---- Animasyon: Chart.js varsayılanı korunur; yalnız reduced-motion'da kapatılır (a11y).
 // (animation objesini sıfırdan yazmak iç interpolasyon yapısını bozuyor → varsayılana dokunma.)
