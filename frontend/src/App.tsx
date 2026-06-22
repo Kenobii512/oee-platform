@@ -29,6 +29,10 @@ export default function App() {
             Canlı Replay
           </button>
         </div>
+        <span className="viewnav-status" aria-hidden="true">
+          <span className="led" />
+          CANLI
+        </span>
       </nav>
       {view === 'dashboard' ? <Dashboard /> : <Replay />}
     </>

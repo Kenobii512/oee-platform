@@ -7,8 +7,8 @@ import { api } from '../api/client'
 import type { Oee, Range } from '../api/types'
 import CostPareto from '../components/CostPareto'
 import DataQualityDetail from '../components/DataQualityDetail'
+import GaugeHero from '../components/GaugeHero'
 import GridSkeleton from '../components/GridSkeleton'
-import KpiCards from '../components/KpiCards'
 import LossTreeChart from '../components/LossTreeChart'
 import Recommendations from '../components/Recommendations'
 import TopBar, { type View } from '../components/TopBar'
@@ -62,7 +62,7 @@ export default function Dashboard() {
       ) : (
         <main className="grid">
           {oeeQ.data && dqQ.data && (
-            <KpiCards
+            <GaugeHero
               oee={oeeQ.data}
               dq={dqQ.data}
               redoParts={

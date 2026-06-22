@@ -1,35 +1,40 @@
-/* OEE Panosu — premium koyu analitik tema (Redesign-Preserve rafine geçiş).
-   İlkeler: tek vurgu rengi (mavi) etkileşimde; yeşil/mor/mercan YALNIZ veri-semantiği;
-   hairline kenarlar, tonlu gölgeler, tabular rakamlar, ölçülü GPU-güvenli motion,
-   tutarlı yarıçap sistemi. Neon parıltı yok (yalnız hafif vurgu). */
+/* OEE Panosu — "The Foundry Gauge": açık-temalı, kurumsal endüstriyel gösterge sistemi.
+   İlkeler (DESIGN.md): tek mavi vurgu (etkileşim+OEE); yeşil/indigo/kırmızı YALNIZ veri-kanalı;
+   hairline kenarlar, keskin köşeli çelik paneller, tabular mono rakamlar, parıltı/glow YOK,
+   ölçülü GPU-güvenli motion, WCAG AA kontrast. (Koyu temadan bilinçli sapma.) */
 
 :root {
-  --bg: #070809;
-  --bg-2: #0c0e11;
-  --bg-3: #11141a;          /* yükseltilmiş yüzey (segment, input, rec) */
-  --ink: #eef2f6;
-  --muted: #9099a8;
-  --faint: #626c7a;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.14);
-  --accent: #22d3ee;        /* tek etkileşim vurgusu (elektrik cyan) */
-  --accent-ink: #04232b;    /* vurgu üstü metin (koyu teal — cyan üzerinde AA kontrast) */
-  --good: #34d399;          /* veri: görünür kanal / iyi */
-  --inferred: #a78bfa;      /* veri: çıkarım kanalı */
-  --loss: #fb7185;          /* veri: kayıp */
+  --bg: #edf1f5;            /* soğuk açık gri sayfa (krem değil) */
+  --bg-2: #ffffff;          /* kart / yüzey */
+  --bg-3: #f2f5f8;          /* inset kontrol / öneri zemini */
+  --steel: #eef2f6;         /* endüstriyel panel çerçevesi */
+  --ink: #16202b;           /* gövde metni (~15:1) */
+  --muted: #58626f;         /* ikincil metin / etiket (~6:1) */
+  --faint: #677080;         /* küçük etiket (~5:1) */
+  --line: #e2e7ec;          /* hairline kenar */
+  --line-strong: #cdd4dc;
+  --accent: #1f5da6;        /* tek etkileşim vurgusu (kurumsal mavi, ~6.6:1) */
+  --accent-deep: #1a4f8e;   /* buton hover/active */
+  --accent-soft: #eaf1f8;   /* mavi tonlu açık yüzey */
+  --accent-ink: #ffffff;    /* vurgu üstü metin */
+  --good: #237a5c;          /* veri: kullanılabilirlik / görünür */
+  --inferred: #535f8a;      /* veri: performans / çıkarımsal */
+  --loss: #a8443a;          /* veri: kalite / kayıp */
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
-  /* Sayısal göstergeler için sistem-mono (sıfır indirme) — cockpit/instrument hissi. */
+  /* Sayısal göstergeler için sistem-mono (sıfır indirme) — instrument hissi. */
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  --r-shell: 22px;
-  --r-core: 16px;
-  --r-ctl: 11px;            /* input/küçük kontrol */
+  --display: "Archivo", system-ui, sans-serif;
+  --r-shell: 6px;         /* soft (DESIGN.md) — dış çerçeve */
+  --r-core: 4px;          /* panel — iç çekirdek */
+  --r-ctl: 4px;           /* panel — input/buton (keskin/endüstriyel) */
+  --r-sharp: 2px;         /* sharp — metre/ince öğe */
   --r-pill: 999px;
-  --shadow-card: 0 24px 60px -32px rgba(0, 0, 0, 0.85);
+  --shadow-card: 0 1px 2px rgba(22, 32, 43, 0.05), 0 14px 30px -18px rgba(22, 32, 43, 0.22);
 }
 
 * { box-sizing: border-box; }
 
-html { color-scheme: dark; }
+html { color-scheme: light; }
 
 body {
   margin: 0;
@@ -44,7 +49,7 @@ body {
 
 #root { min-height: 100vh; }
 
-::selection { background: rgba(34, 211, 238, 0.28); color: #fff; }
+::selection { background: rgba(31, 93, 166, 0.18); color: var(--ink); }
 
 /* Klavye odağı (a11y): tutarlı vurgu halkası. */
 :where(button, a, input, select):focus-visible {
@@ -53,13 +58,12 @@ body {
   border-radius: var(--r-ctl);
 }
 
-/* Arka plan: çok hafif, sabit radyal mesh orblar (pointer-events yok). */
+/* Arka plan: çok hafif, sabit kurumsal mavi/indigo wash (pointer-events yok). */
 .aurora {
   position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
   background:
-    radial-gradient(46rem 30rem at 10% -10%, rgba(34, 211, 238, 0.09), transparent 60%),
-    radial-gradient(38rem 28rem at 108% 6%, rgba(167, 139, 250, 0.07), transparent 60%),
-    radial-gradient(52rem 40rem at 50% 122%, rgba(52, 211, 153, 0.045), transparent 60%);
+    radial-gradient(50rem 32rem at 8% -12%, rgba(31, 93, 166, 0.05), transparent 60%),
+    radial-gradient(46rem 30rem at 110% 4%, rgba(83, 95, 138, 0.04), transparent 60%);
 }
 
 /* ---- Global görünüm barı (Pano / Canlı Replay) ---- */
@@ -67,13 +71,14 @@ body {
   position: sticky; top: 0; z-index: 40;
   display: flex; align-items: center; gap: 0.85rem;
   padding: 0.6rem clamp(1rem, 4vw, 2.4rem);
-  background: rgba(7, 8, 9, 0.72);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
   border-bottom: 1px solid var(--line);
 }
 .viewnav-brand {
-  font-size: 12px; font-weight: 800; letter-spacing: 0.16em;
+  font-family: var(--display);
+  font-size: 13px; font-weight: 800; letter-spacing: 0.06em;
   color: var(--accent); user-select: none;
 }
 
@@ -90,8 +95,8 @@ body {
 }
 .seg button:hover, .tab:hover { color: var(--ink); }
 .seg button.active, .tab.active {
-  background: rgba(255, 255, 255, 0.07); color: var(--ink);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: #fff; color: var(--accent); border-color: var(--line);
+  box-shadow: 0 1px 2px rgba(22, 32, 43, 0.08);
 }
 
 /* ---- Sayfa başlığı ---- */
@@ -100,8 +105,9 @@ body {
   gap: 1rem 1.4rem; padding: 1.5rem clamp(1rem, 4vw, 2.4rem) 0.6rem; flex-wrap: wrap;
 }
 .brand .eyebrow {
-  display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.24em;
-  text-transform: uppercase; color: var(--faint); margin-bottom: 3px;
+  display: block; font-family: var(--display);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--faint); margin-bottom: 4px;
 }
 .brand h1 { font-size: 1.3rem; font-weight: 700; margin: 0; letter-spacing: -0.025em; }
 
@@ -117,26 +123,27 @@ body {
 }
 .controls input:hover, .controls select:hover { border-color: var(--line-strong); }
 .controls input:focus, .controls select:focus {
-  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.16);
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31, 93, 166, 0.16);
 }
 
 /* ---- Birincil buton (vurgu) ---- */
 button {
   font: inherit; font-weight: 600; font-size: 0.82rem; cursor: pointer;
-  border: 1px solid transparent; border-radius: var(--r-pill); padding: 9px 18px;
+  border: 1px solid transparent; border-radius: var(--r-ctl); padding: 9px 18px;
   background: var(--accent); color: var(--accent-ink);
-  transition: transform 0.3s var(--ease), filter 0.3s var(--ease), background 0.3s var(--ease);
+  transition: transform 0.3s var(--ease), background 0.3s var(--ease);
 }
-button:hover { filter: brightness(1.07); }
+button:hover { background: var(--accent-deep); }
 button:active { transform: translateY(1px) scale(0.99); }
 
 /* ---- Boş durum ---- */
 .empty {
   margin: clamp(1rem, 4vw, 2.4rem); padding: 2.2rem; border-radius: var(--r-shell);
   background: var(--bg-2); border: 1px solid var(--line); color: var(--muted); line-height: 1.75;
+  box-shadow: var(--shadow-card);
 }
 .empty strong { color: var(--ink); }
-.empty code { color: var(--accent); background: rgba(34, 211, 238, 0.08); padding: 1px 6px; border-radius: 6px; }
+.empty code { color: var(--accent); background: var(--accent-soft); padding: 1px 6px; border-radius: 4px; }
 .hidden { display: none !important; }
 
 /* ---- Izgara ---- */
@@ -146,12 +153,12 @@ button:active { transform: translateY(1px) scale(0.99); }
   max-width: 1340px; margin: 0 auto;
 }
 
-/* ---- Çift-bizel kart (dış kabuk + iç çekirdek) ---- */
+/* ---- Çift-bizel çelik panel (dış çerçeve + iç çekirdek) ---- */
 .shell {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--steel);
   border: 1px solid var(--line);
   border-radius: var(--r-shell);
-  padding: 6px;
+  padding: 5px;
   box-shadow: var(--shadow-card);
   opacity: 0; transform: translateY(14px);
   animation: rise 0.7s var(--ease) forwards;
@@ -160,10 +167,10 @@ button:active { transform: translateY(1px) scale(0.99); }
 .shell:hover { transform: translateY(-3px); border-color: var(--line-strong); }
 .shell .core {
   position: relative;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.14)), var(--bg-2);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
   border-radius: var(--r-core);
   padding: 1.2rem 1.3rem 1.3rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   height: 100%;
 }
 .shell:nth-child(1) { animation-delay: 0.02s; }
@@ -179,15 +186,16 @@ button:active { transform: translateY(1px) scale(0.99); }
   .shell:hover { transform: none; }
 }
 
-/* Kart başlığı: küçük vurgu çentiği + etiket. */
+/* Kart başlığı: Archivo UPPERCASE + küçük vurgu çentiği. */
 .eyebrow {
   display: flex; align-items: center; gap: 7px;
-  font-size: 10px; font-weight: 600; letter-spacing: 0.2em;
+  font-family: var(--display);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
   text-transform: uppercase; color: var(--faint); margin-bottom: 0.95rem;
 }
 .eyebrow::before {
   content: ""; width: 14px; height: 2px; border-radius: 2px;
-  background: var(--accent); opacity: 0.7;
+  background: var(--accent);
 }
 canvas { max-height: 268px; }
 
@@ -218,8 +226,80 @@ canvas { max-height: 268px; }
   font-size: 0.82rem; font-weight: 500; letter-spacing: 0; color: var(--muted); margin-top: 3px;
 }
 .kpi-oee .value {
-  font-size: clamp(2.3rem, 6vw, 3.4rem); font-weight: 700; color: var(--accent);
-  text-shadow: 0 0 22px rgba(34, 211, 238, 0.20);   /* hafif vurgu, neon değil */
+  font-family: var(--display);
+  font-size: clamp(2.3rem, 6vw, 3.4rem); font-weight: 800; color: var(--accent);
+  letter-spacing: -0.01em;   /* parıltı/glow YOK — No-Neon Rule */
+}
+
+/* =====================================================================
+   FOUNDRY GAUGE — imza hero: gauge kadranı + eşikli metre hücreleri.
+   (DESIGN.md: gauge dolumu hep mavi; A/P/Q eşikli metreler; HEDEF 85 işareti.)
+   ===================================================================== */
+.fhero { grid-column: 1 / -1; }
+.fhero .core { padding: 0; background: transparent; border: 0; }
+.fgrid {
+  display: grid; grid-template-columns: 300px 1fr; gap: 1px;
+  background: var(--line); border: 1px solid var(--line); border-radius: var(--r-core); overflow: hidden;
+}
+@media (max-width: 780px) { .fgrid { grid-template-columns: 1fr; } }
+
+/* Gauge paneli */
+.gpanel {
+  background: var(--bg-2); padding: 1.2rem 1.3rem 1.1rem;
+  display: flex; flex-direction: column; align-items: center;
+}
+.gpanel .gcap {
+  align-self: flex-start; font-family: var(--display);
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint);
+}
+.dial { position: relative; width: 200px; height: 118px; margin-top: 0.5rem; }
+.dial svg { display: block; }
+.dial .read { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; }
+.dial .read .n {
+  display: block; font-family: var(--display);
+  font-size: 2.7rem; font-weight: 800; line-height: 1; color: var(--accent); letter-spacing: -0.01em;
+}
+.dial .read .u { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+.gscale {
+  display: flex; justify-content: space-between; width: 200px; margin-top: 0.2rem;
+  font-family: var(--mono); font-size: 0.66rem; color: var(--faint);
+}
+.gdq { margin-top: 0.9rem; font-size: 0.74rem; line-height: 1.5; color: var(--muted); text-align: center; }
+.gdq strong { color: var(--ink); font-family: var(--mono); }
+
+/* Eşikli metre hücreleri (A/P/Q) */
+.mgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); }
+@media (max-width: 560px) { .mgrid { grid-template-columns: 1fr; } }
+.mcell { background: var(--bg-2); padding: 1.15rem 1.25rem; display: flex; flex-direction: column; }
+.mcell .mk {
+  font-family: var(--display);
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--faint);
+  display: flex; align-items: center; gap: 7px;
+}
+.mcell .mk .sq { width: 8px; height: 8px; border-radius: var(--r-sharp); flex: none; }
+.mcell .mn {
+  font-family: var(--display); font-variant-numeric: tabular-nums;
+  font-size: 2.1rem; font-weight: 800; color: var(--ink); margin: 0.45rem 0 0.6rem; letter-spacing: -0.01em;
+}
+.mcell .mn small { font-size: 0.5em; font-weight: 700; color: var(--muted); }
+/* Eşikli metre: yatak + dolum + HEDEF 85 işareti */
+.meter { position: relative; height: 8px; background: #eaeef3; border-radius: var(--r-sharp); overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; border-radius: var(--r-sharp); }
+.meter::after {
+  content: ""; position: absolute; top: -2px; bottom: -2px; width: 2px;
+  background: var(--ink); opacity: 0.45; left: 85%;
+}
+.mcell .msub { margin-top: 0.5rem; font-size: 0.74rem; color: var(--muted); line-height: 1.45; }
+.mcell .msub strong { color: var(--ink); }
+
+/* Üst bar: endüstriyel durum LED'i */
+.viewnav-status {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 0.74rem; color: var(--muted);
+}
+.viewnav-status .led {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--good);
+  box-shadow: 0 0 0 3px rgba(35, 122, 92, 0.16);
 }
 
 /* ---- Veri güvenilirliği detayı ---- */
@@ -234,35 +314,39 @@ canvas { max-height: 268px; }
   font-size: 1.05rem; font-weight: 600; color: var(--ink); letter-spacing: -0.01em;
 }
 
-/* ---- Öneriler ---- */
+/* ---- Öneriler (öncü renkli nokta — yan-şerit YASAK) ---- */
 .recommendations .muted { display: block; margin-bottom: 0.2rem; }
 .rec-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.65rem; }
 .rec {
-  padding: 0.85rem 0.95rem; border-radius: 13px; background: var(--bg-3);
-  border: 1px solid var(--line); border-left: 3px solid var(--good);
+  padding: 0.85rem 0.95rem; border-radius: var(--r-core); background: var(--bg-3);
+  border: 1px solid var(--line);
   transition: border-color 0.35s var(--ease), background 0.35s var(--ease);
 }
-.rec:hover { background: #141821; border-color: var(--line-strong); border-left-color: var(--good); }
-.rec.inferred { border-left-color: var(--inferred); }
-.rec.inferred:hover { border-left-color: var(--inferred); }
+.rec:hover { background: #fff; border-color: var(--line-strong); }
 .rec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
-.rec-title { font-weight: 600; color: var(--ink); font-size: 0.95rem; }
+/* Kanal anlamı (görünür/çıkarımsal) öncü noktayla taşınır — Inferred-Channel Rule. */
+.rec-title { font-weight: 600; color: var(--ink); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.rec-title::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--good);
+}
+.rec.inferred .rec-title::before { background: var(--inferred); }
 .rec-gain {
   font-family: var(--mono); font-variant-numeric: tabular-nums;
   font-weight: 600; color: var(--good); font-size: 0.84rem; white-space: nowrap;
 }
+.rec.inferred .rec-gain { color: var(--inferred); }
 .rec-action { margin: 0.45rem 0 0.4rem; font-size: 0.84rem; line-height: 1.55; color: var(--ink); }
 .rec-meta { margin: 0; }
 .rec-meta strong { color: var(--ink); }
 
 /* ---- Yükleme iskeleti (shimmer) ---- */
 .sk-ph {
-  display: block; border-radius: 8px;
+  display: block; border-radius: 6px;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.04) 25%,
-    rgba(255, 255, 255, 0.09) 37%,
-    rgba(255, 255, 255, 0.04) 63%
+    #eef1f5 25%,
+    #f7f9fb 37%,
+    #eef1f5 63%
   );
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
@@ -275,7 +359,7 @@ canvas { max-height: 268px; }
 .sk-sm { width: 84px; height: 10px; }
 .sk-lg { width: 116px; height: 30px; }
 .sk-eyebrow { width: 132px; height: 10px; margin-bottom: 1rem; }
-.sk-chart { width: 100%; height: 240px; border-radius: 12px; }
+.sk-chart { width: 100%; height: 240px; border-radius: var(--r-core); }
 @media (prefers-reduced-motion: reduce) {
   .sk-ph { animation: none; }
 }

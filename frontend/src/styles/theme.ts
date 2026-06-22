@@ -1,13 +1,14 @@
 // Chart.js paleti ve paylaşılan stil sabitleri (Jinja dashboard.js 'C' objesinden port).
+// "The Foundry Gauge" light/kurumsal palet (DESIGN.md ile birebir).
 export const C = {
-  ink: '#eef2f6',
-  muted: '#8b94a3',
-  grid: 'rgba(255,255,255,0.05)',
-  base: '#3a434f',
-  oee: '#22d3ee',
-  good: '#34d399',
-  inferred: '#a78bfa',
-  loss: '#fb7185',
+  ink: '#16202b',
+  muted: '#58626f',
+  grid: 'rgba(22,32,43,0.07)',
+  base: '#c3ccd6',
+  oee: '#1f5da6', // kurumsal mavi
+  good: '#237a5c', // kullanılabilirlik / görünür
+  inferred: '#535f8a', // performans / çıkarımsal
+  loss: '#a8443a', // kalite / kayıp
 } as const
 
 // OEE bileşeni metrik → renk: TEK doğruluk kaynağı. Hem KPI şeridi (legend noktaları)

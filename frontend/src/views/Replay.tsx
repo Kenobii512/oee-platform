@@ -68,7 +68,7 @@ export default function Replay() {
         label: 'OEE',
         data: series,
         borderColor: C.oee,
-        backgroundColor: 'rgba(34,211,238,0.12)',
+        backgroundColor: 'rgba(31,93,166,0.10)',
         fill: true,
         tension: 0.3,
         borderWidth: 2.5,

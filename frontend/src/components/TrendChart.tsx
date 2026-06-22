@@ -15,7 +15,7 @@ export default function TrendChart({ series }: { series: TrendPoint[] }) {
         label: 'OEE',
         data: series.map((s) => s.oee * 100),
         borderColor: METRIC.oee,
-        backgroundColor: 'rgba(34,211,238,0.12)',
+        backgroundColor: 'rgba(31,93,166,0.10)',
         fill: true,
         tension: 0.35,
         borderWidth: 2.5,

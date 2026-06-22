@@ -43,14 +43,14 @@ Chart.defaults.plugins.legend.labels.boxHeight = 7
 Chart.defaults.plugins.legend.labels.padding = 16
 Chart.defaults.plugins.legend.labels.color = C.ink
 
-// ---- Tooltip: koyu cam, yuvarlatılmış, ferah (premium) ----
+// ---- Tooltip: açık yüzey, hairline kenar, keskin (kurumsal) ----
 const t = Chart.defaults.plugins.tooltip
-t.backgroundColor = 'rgba(17, 20, 26, 0.96)'
-t.borderColor = 'rgba(255, 255, 255, 0.12)'
+t.backgroundColor = 'rgba(255, 255, 255, 0.97)'
+t.borderColor = 'rgba(22, 32, 43, 0.12)'
 t.borderWidth = 1
 t.titleColor = C.ink
-t.bodyColor = '#c7ced8'
-t.cornerRadius = 10
+t.bodyColor = C.muted
+t.cornerRadius = 6
 t.padding = { x: 12, y: 10 }
 t.boxPadding = 6
 t.usePointStyle = true
@@ -58,7 +58,7 @@ t.titleFont = { family: "'Plus Jakarta Sans', system-ui, sans-serif", weight: 70
 t.bodyFont = { family: "'Plus Jakarta Sans', system-ui, sans-serif", size: 12 }
 
 // ---- Ölçek çizgileri: hairline ----
-Chart.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.055)'
+Chart.defaults.scale.grid.color = 'rgba(22, 32, 43, 0.07)'
 Chart.defaults.scale.grid.drawTicks = false
 Chart.defaults.scale.ticks.padding = 8
 

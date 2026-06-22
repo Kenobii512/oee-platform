@@ -2,19 +2,20 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import type { DataQuality, Oee, Recommendations as RecData } from '../api/types'
-import KpiCards from './KpiCards'
+import GaugeHero from './GaugeHero'
 import Recommendations from './Recommendations'
 
 const OEE: Oee = { oee: 0.62, availability: 0.86, performance: 0.81, quality: 0.88, final_yield: 1.0 }
 const DQ: DataQuality = { microstop_entry_coverage: 0.2 }
 
-describe('KpiCards', () => {
-  it('OEE ve bileşenlerini yüzde olarak gösterir', () => {
-    render(<KpiCards oee={OEE} dq={DQ} />)
-    expect(screen.getByText('62.0%')).toBeInTheDocument()
-    expect(screen.getByText('86.0%')).toBeInTheDocument()
-    expect(screen.getByText('81.0%')).toBeInTheDocument()
-    expect(screen.getByText('88.0%')).toBeInTheDocument()
+describe('GaugeHero', () => {
+  it('OEE gauge okumasını ve A/P/Q metre değerlerini gösterir', () => {
+    render(<GaugeHero oee={OEE} dq={DQ} />)
+    // Gauge sayıyı %'siz, "% OEE" etiketiyle; hücreler sayıyı ayrı <small>% ile.
+    expect(screen.getByText('62.0')).toBeInTheDocument()
+    expect(screen.getByText('86.0')).toBeInTheDocument()
+    expect(screen.getByText('81.0')).toBeInTheDocument()
+    expect(screen.getByText('88.0')).toBeInTheDocument()
   })
 })
 
