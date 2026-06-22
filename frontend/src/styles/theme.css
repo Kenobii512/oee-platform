@@ -391,6 +391,26 @@ canvas { max-height: 268px; }
   .cs-dq { text-align: left; }
 }
 
+/* ---- Replay canlı hero: gauge sinematik kayar, metreler yumuşak dolar ---- */
+.dial.live path { transition: stroke-dashoffset 0.45s var(--ease); }
+.replay-hero .meter i { transition: transform 0.45s var(--ease); }
+@media (prefers-reduced-motion: reduce) {
+  .dial.live path, .replay-hero .meter i { transition: none; }
+}
+/* İlerleme barı (simüle haftada ne kadar ilerlendi). */
+.rprog {
+  width: 200px; height: 5px; margin-top: 0.9rem;
+  background: #eaeef3; border-radius: var(--r-sharp); overflow: hidden;
+}
+.rprog i {
+  display: block; height: 100%; width: 100%; background: var(--accent);
+  transform-origin: left center; transition: transform 0.45s var(--ease);
+}
+.rprog-cap {
+  margin-top: 0.5rem; font-family: var(--mono); font-size: 0.72rem; color: var(--muted); text-align: center;
+}
+@media (prefers-reduced-motion: reduce) { .rprog i { transition: none; } }
+
 /* Üst bar: endüstriyel durum LED'i */
 .viewnav-status {
   margin-left: auto; display: flex; align-items: center; gap: 8px;

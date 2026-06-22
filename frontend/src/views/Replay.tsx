@@ -10,8 +10,9 @@ import type { ReplaySnapshot } from '../api/types'
 import Card from '../components/Card'
 import CostPareto from '../components/CostPareto'
 import GridSkeleton from '../components/GridSkeleton'
+import ReplayHero from '../components/ReplayHero'
 import ScenarioDropdown from '../components/ScenarioDropdown'
-import { C, gridAxis, pct, tl } from '../styles/theme'
+import { C, gridAxis } from '../styles/theme'
 
 const STEPS = 60
 const SPEEDS = [100, 500, 1000]
@@ -73,7 +74,11 @@ export default function Replay() {
         fill: true,
         tension: 0.3,
         borderWidth: 2.5,
-        pointRadius: 0,
+        // Canlı uç işareti: yalnız son (en güncel) noktada belirgin nokta.
+        pointRadius: series.map((_, i) => (i === series.length - 1 ? 4 : 0)),
+        pointBackgroundColor: C.oee,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1.5,
       },
     ],
   }
@@ -117,45 +122,18 @@ export default function Replay() {
         <GridSkeleton cards={2} label="Replay yükleniyor" />
       ) : (
       <main className="grid">
-        <section className="shell kpis">
-          <div className="core">
-            <div className="kpi kpi-oee">
-              <span className="label">OEE {done ? '(final)' : running ? '· canlı' : ''}</span>
-              <span className="value">{snap ? pct(snap.oee.oee) : '–'}</span>
-            </div>
-            <div className="kpi">
-              <span className="label">Kullanılabilirlik</span>
-              <span className="value">{snap ? pct(snap.oee.availability) : '–'}</span>
-            </div>
-            <div className="kpi">
-              <span className="label">Performans</span>
-              <span className="value">{snap ? pct(snap.oee.performance) : '–'}</span>
-            </div>
-            <div className="kpi">
-              <span className="label">Biriken kayıp</span>
-              <span className="value">{snap ? tl(snap.cost.total_tl) + ' TL' : '–'}</span>
-            </div>
-            <div className="kpi">
-              <span className="label">Tahmini kazanç</span>
-              <span className="value">{snap ? '~' + tl(snap.total_estimated_gain_tl) + ' TL' : '–'}</span>
-            </div>
-            <div className="kpi">
-              <span className="label">İlerleme</span>
-              <span className="value small">
-                %{progress} · {snap ? snap.event_count : 0} olay {done ? '· tamamlandı' : ''}
-              </span>
-            </div>
-          </div>
-        </section>
+        <div className="zone-head">Canlı Durum</div>
+        <ReplayHero snap={snap} progress={progress} running={running} done={done} />
 
-        <Card eyebrow="OEE · zaman içinde (düşüş)">
+        <div className="zone-head">Biriken Kayıplar</div>
+        <Card eyebrow="OEE · Zaman İçinde (Düşüş)" className="card-wide">
           <Line data={lineData} options={lineOpts} />
         </Card>
 
         {snap ? (
           <CostPareto cost={snap.cost} />
         ) : (
-          <Card eyebrow="Maliyet Pareto'su (TL)">
+          <Card eyebrow="Maliyet Pareto'su (TL)" className="card-wide">
             <p className="muted">Oynat'a basın. Kayıplar biriktikçe canlı dolacak.</p>
           </Card>
         )}
