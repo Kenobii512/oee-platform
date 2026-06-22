@@ -8,11 +8,14 @@ import Card from './Card'
 interface Props {
   eyebrow: string
   cats: LossCat[]
+  /** Alt açıklama notu (görünür/çıkarımsal hatch). İki bitişik kartta tekrar olmasın diye
+   *  yalnız ilkinde true verilir; default true (tek başına kullanımda not görünür). */
+  legend?: boolean
 }
 
 const fmt = (n: number) => Math.round(n).toLocaleString('tr-TR')
 
-export default function LossTreeChart({ eyebrow, cats }: Props) {
+export default function LossTreeChart({ eyebrow, cats, legend = true }: Props) {
   const total = cats.reduce((s, c) => s + c.value, 0)
   const unit = cats[0]?.axis === 'parts' ? 'parça' : 'dakika'
   const color = (c: LossCat) => (c.kind === 'inferred' ? METRIC.performance : METRIC.availability)
@@ -58,10 +61,12 @@ export default function LossTreeChart({ eyebrow, cats }: Props) {
               </li>
             ))}
           </ul>
-          <p className="prop-note">
-            <span className="sw" style={{ background: METRIC.availability }} /> görünür ·{' '}
-            <span className="sw inf" style={{ background: METRIC.performance }} /> çıkarımsal (taranmış)
-          </p>
+          {legend && (
+            <p className="prop-note">
+              <span className="sw" style={{ background: METRIC.availability }} /> görünür ·{' '}
+              <span className="sw inf" style={{ background: METRIC.performance }} /> çıkarımsal (taranmış)
+            </p>
+          )}
         </>
       )}
     </Card>

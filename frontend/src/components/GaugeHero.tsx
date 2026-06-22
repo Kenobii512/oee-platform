@@ -157,7 +157,7 @@ export default function GaugeHero({ oee, dq, costTotal, redoParts, trend }: Prop
 
             <div className="cs-cost">
               <div className="cs-cost-main">
-                <span className="cs-cost-k">Toplam önlenebilir kayıp</span>
+                <span className="cs-cost-k">Toplam kayıp</span>
                 <strong>{costTotal != null ? `${tl(costTotal)} ₺` : '—'}</strong>
                 <span className="cs-cost-u">/ vardiya</span>
               </div>

@@ -17,7 +17,7 @@ export default function DataQualityDetail({ dq }: { dq: DataQuality }) {
       <p className="muted">
         <strong>Çıkarımsal</strong> (taranmış) segmentler gerçek veride yoktur; genel veriden
         kestirilir. Farklı eksenler (dakika ↔ parça) olduğundan tek Pareto yapılmaz; ortak birim
-        (TL) Maliyet Pareto'sundadır.
+        (₺) Maliyet Pareto'sundadır.
       </p>
     </Card>
   )

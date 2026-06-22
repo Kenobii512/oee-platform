@@ -45,7 +45,7 @@ export default function CostPareto({ cost }: { cost: CostTree }) {
     datasets: [
       {
         type: 'bar' as const,
-        label: 'Kayıp (TL)',
+        label: 'Kayıp (₺)',
         data: cats.map((c) => Math.round(c.tl)),
         backgroundColor: cats.map((c) => (c.kind === 'inferred' ? C.inferred : C.loss)),
         yAxisID: 'y',
@@ -76,7 +76,7 @@ export default function CostPareto({ cost }: { cost: CostTree }) {
           label: (ctx) =>
             ctx.dataset.type === 'line'
               ? `Kümülatif %${ctx.raw as number}`
-              : (ctx.raw as number).toLocaleString('tr-TR') + ' TL',
+              : (ctx.raw as number).toLocaleString('tr-TR') + ' ₺',
         },
       },
     },
@@ -97,13 +97,13 @@ export default function CostPareto({ cost }: { cost: CostTree }) {
   }
 
   return (
-    <Card eyebrow="Maliyet Pareto'su (TL)" className="card-wide">
+    <Card eyebrow="Maliyet Pareto'su (₺)" className="card-wide">
       <span className="muted">
         varsayım: birim maliyetler <Info text="Kaynak: config/costs.yaml" />
       </span>
       <div className="kpi-line">
         <span className="muted">Toplam kayıp:</span>
-        <strong>{tl(cost.total_tl)} TL</strong>
+        <strong>{tl(cost.total_tl)} ₺</strong>
       </div>
       <Chart type="bar" data={data} options={options} plugins={[pareto80]} height={220} />
     </Card>

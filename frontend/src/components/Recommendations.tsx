@@ -23,7 +23,7 @@ export default function Recommendations({ rec }: { rec: RecData }) {
       </span>
       <div className="kpi-line">
         <span className="muted">Tahmini toplam kazanç (üst sınır):</span>
-        <strong>~{tl(rec.total_estimated_gain_tl)} TL</strong>
+        <strong>~{tl(rec.total_estimated_gain_tl)} ₺</strong>
       </div>
       <span className="muted">
         Kazançlar üst sınır tahminidir ve kalemler arasında örtüşebilir (toplam, bağımsız kabul eder).
@@ -35,7 +35,7 @@ export default function Recommendations({ rec }: { rec: RecData }) {
               <span className="rec-rank">{i + 1}</span>
               <span className="rec-title">{r.title}</span>
               <span className="rec-gain">
-                ~{tl(r.estimated_gain_tl_low)}–{tl(r.estimated_gain_tl_high)} TL/dönem
+                ~{tl(r.estimated_gain_tl_low)}–{tl(r.estimated_gain_tl_high)} ₺/dönem
               </span>
             </div>
             <div className="rec-impact" aria-hidden="true">
@@ -48,7 +48,7 @@ export default function Recommendations({ rec }: { rec: RecData }) {
             </div>
             <p className="rec-action">{withCode(r.action)}</p>
             <p className="muted rec-meta">
-              Kayıp: <strong>{tl(r.tl)} TL</strong>
+              Kayıp: <strong>{tl(r.tl)} ₺</strong>
               {r.kind === 'inferred' ? ' · çıkarımsal' : ''} · {withCode(r.assumption)}
             </p>
           </li>
