@@ -198,17 +198,18 @@ button { font: inherit; cursor: pointer; }
 }
 
 /* ---- Çift-bizel çelik panel (dış çerçeve + iç çekirdek) ---- */
+/* Düz-öncelikli, anında render: vardiyada bir-bakış panosu yüklenmeyi BEKLETMEZ.
+   (Product register: orkestre sayfa-yükleme dizisi yok; kademeli `rise` kaldırıldı.) */
 .shell {
   background: var(--steel);
   border: 1px solid var(--line);
   border-radius: var(--r-shell);
   padding: 5px;
   box-shadow: var(--shadow-card);
-  opacity: 0; transform: translateY(14px);
-  animation: rise 0.7s var(--ease) forwards;
-  transition: transform 0.45s var(--ease), border-color 0.45s var(--ease);
+  transition: border-color 0.3s var(--ease);
 }
-.shell:hover { transform: translateY(-3px); border-color: var(--line-strong); }
+/* Etkileşimsiz panel: hover'da yalnız kenar güçlenir (lift YOK — tıklanabilirlik vaat etmez). */
+.shell:hover { border-color: var(--line-strong); }
 .shell .core {
   position: relative;
   background: var(--bg-2);
@@ -217,20 +218,6 @@ button { font: inherit; cursor: pointer; }
   padding: 1.2rem 1.3rem 1.3rem;
   height: 100%;
 }
-/* nth-of-type (section): araya giren .zone-head <div>'leri saymaz → stagger bozulmaz. */
-.shell:nth-of-type(1) { animation-delay: 0.02s; }
-.shell:nth-of-type(2) { animation-delay: 0.07s; }
-.shell:nth-of-type(3) { animation-delay: 0.12s; }
-.shell:nth-of-type(4) { animation-delay: 0.17s; }
-.shell:nth-of-type(5) { animation-delay: 0.22s; }
-.shell:nth-of-type(6) { animation-delay: 0.27s; }
-
-@keyframes rise { to { opacity: 1; transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) {
-  .shell { animation: none; opacity: 1; transform: none; }
-  .shell:hover { transform: none; }
-}
-
 /* Eyebrow (Archivo UPPERCASE) — satır içi kullanım için temel stil. */
 .eyebrow {
   display: flex; align-items: center; gap: 7px;
@@ -362,9 +349,11 @@ canvas { max-height: 268px; }
 
 /* ---- Replay canlı hero: gauge sinematik kayar, metreler yumuşak dolar ---- */
 .dial.live path { transition: stroke-dashoffset 0.45s var(--ease); }
+/* Anlık-değer ibresi: live'da değerle yumuşak döner (Pano'da count-up yeter, geçiş yok). */
+.dial.live .needle { transition: transform 0.45s var(--ease); }
 .replay-hero .meter i { transition: transform 0.45s var(--ease); }
 @media (prefers-reduced-motion: reduce) {
-  .dial.live path, .replay-hero .meter i { transition: none; }
+  .dial.live path, .dial.live .needle, .replay-hero .meter i { transition: none; }
 }
 /* İlerleme barı (simüle haftada ne kadar ilerlendi). */
 .rprog {
@@ -385,8 +374,13 @@ canvas { max-height: 268px; }
   margin-left: auto; display: flex; align-items: center; gap: 8px;
   font-family: var(--mono); font-size: 0.74rem; color: var(--muted);
 }
+/* Durum LED'i moda bağlı: Pano statik snapshot → nötr nokta (HAZIR); yalnız Replay
+   canlı akış → yeşil nabız (CANLI). Dürüstlük: canlı olmayan veriyi "canlı" göstermez. */
 .viewnav-status .led {
-  width: 9px; height: 9px; border-radius: 50%; background: var(--good);
+  width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong);
+}
+.viewnav-status .led.live {
+  background: var(--good);
   box-shadow: 0 0 0 3px rgba(35, 122, 92, 0.16);
   animation: led-pulse 2.4s var(--ease) infinite;
 }
@@ -395,7 +389,7 @@ canvas { max-height: 268px; }
   50% { box-shadow: 0 0 0 5px rgba(35, 122, 92, 0.05); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .viewnav-status .led { animation: none; }
+  .viewnav-status .led.live { animation: none; }
 }
 
 /* ---- Marka logosu (gauge mark + wordmark) ---- */
@@ -532,7 +526,9 @@ canvas { max-height: 268px; }
 .info:hover, .info:focus-visible { color: var(--accent-deep); outline: none; }
 
 /* ---- Duyarlı ---- */
-@media (max-width: 860px) {
+/* Tablet (≈768px) birincil cihaz: 2 sütun korunur (kayıp kartları yan yana, bir-bakış).
+   Tek sütuna yalnız dar ekranda (≤700px) düşülür. */
+@media (max-width: 700px) {
   .grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {

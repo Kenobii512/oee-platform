@@ -10,6 +10,7 @@ export default function App() {
   return (
     <>
       <div className="blueprint" aria-hidden="true" />
+      <div className="aurora" aria-hidden="true" />
       {/* Birleşik header — üst satır: tek marka + mod sekmeleri + CANLI.
           Görünüme özel kontrol satırı (filtreler) alttan view içinden gelir. */}
       <header className="apphead-top">
@@ -41,8 +42,8 @@ export default function App() {
           </button>
         </div>
         <span className="viewnav-status" aria-hidden="true">
-          <span className="led" />
-          CANLI
+          <span className={`led${mode === 'replay' ? ' live' : ''}`} />
+          {mode === 'replay' ? 'CANLI' : 'HAZIR'}
         </span>
       </header>
       {mode === 'dashboard' ? <Dashboard /> : <Replay />}

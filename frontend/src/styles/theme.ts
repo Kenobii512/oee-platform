@@ -34,7 +34,8 @@ export const tl = (x: number): string => Math.round(x).toLocaleString('tr-TR')
 // Chart.js paylaşılan eksen/bar stilleri.
 export const gridAxis = { color: C.grid, drawTicks: false }
 export const barStyle = {
-  borderRadius: 6,
+  // Endüstriyel keskin köşe (--r-sharp/2px) — yumuşak 6px değil.
+  borderRadius: 2,
   borderSkipped: false as const,
   barPercentage: 0.62,
   categoryPercentage: 0.7,

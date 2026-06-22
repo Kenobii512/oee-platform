@@ -93,7 +93,6 @@ export default function Replay() {
 
   return (
     <>
-      <div className="aurora" />
       <header className="apphead-controls">
         <div className="controls">
           <ScenarioDropdown onSelect={setScenario} value={scenario} disabled={running} />

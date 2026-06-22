@@ -14,6 +14,7 @@ const fmt = (n: number) => Math.round(n).toLocaleString('tr-TR')
 
 export default function LossTreeChart({ eyebrow, cats }: Props) {
   const total = cats.reduce((s, c) => s + c.value, 0)
+  const unit = cats[0]?.axis === 'parts' ? 'parça' : 'dakika'
   const color = (c: LossCat) => (c.kind === 'inferred' ? METRIC.performance : METRIC.availability)
 
   return (
@@ -22,6 +23,12 @@ export default function LossTreeChart({ eyebrow, cats }: Props) {
         <p className="muted">Bu eksende kayıp yok.</p>
       ) : (
         <>
+          <div className="kpi-line">
+            <span className="muted">Toplam kayıp:</span>
+            <strong>
+              {fmt(total)} {unit}
+            </strong>
+          </div>
           <div
             className="proportion"
             role="img"

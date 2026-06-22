@@ -44,7 +44,6 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="aurora" />
       <TopBar
         view={view}
         onViewChange={setView}
