@@ -9,6 +9,14 @@ replay dahil.
 > (G1–G5 · Dalga 1 G6·G11·G9 · Dalga 2 G8·GR·G7 · Dalga 3 G12·G4.1·G10·Perf-UI), API yüzeyi,
 > mimari kararlar, bilinen sınırlamalar. **Veri sözleşmesi:** [`docs/data-contract.md`](docs/data-contract.md).
 
+> **Frontend tasarımı (UI):** Pano "**The Foundry Gauge**" — açık/kurumsal endüstriyel
+> gösterge sistemi. Tasarım dili ve kuralları kök dizindeki `DESIGN.md` + `PRODUCT.md`'de
+> (Stitch formatı + `.impeccable/` sidecar). İmza: **Control Strip hero** (OEE gauge + A×P×Q
+> kanal kaskadı + toplam kayıp), anlatısal bölgeler (Durum/Kayıplar/Aksiyon/Veri), zengin
+> senaryo dropdown'u, birleşik header (Pano/Replay mod + Özet/Detay görünüm). Türkçe ondalık
+> virgül (`theme.ts` `num1`/`pct`). Bu dosyalar `oee-platform/` git deposunun bir üst
+> dizinindedir (ayrı tutulur).
+
 ## Çalıştırma (Docker)
 
 ```bash

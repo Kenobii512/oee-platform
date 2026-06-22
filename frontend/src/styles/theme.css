@@ -256,37 +256,6 @@ canvas { max-height: 268px; }
   .recommendations.card-wide .rec-list { grid-template-columns: 1fr; }
 }
 
-/* ---- KPI başlığı ---- */
-.kpis { grid-column: 1 / -1; }
-.kpis .core {
-  display: flex; flex-wrap: wrap; align-items: stretch; gap: 0;
-}
-.kpi {
-  display: flex; flex-direction: column; justify-content: center; gap: 4px;
-  padding: 0.1rem clamp(1rem, 2.6vw, 2.2rem);
-}
-.kpi:first-child { padding-left: 0.2rem; }
-.kpi + .kpi { border-left: 1px solid var(--line); }
-.kpi .label { font-size: 11px; letter-spacing: 0.06em; color: var(--muted); text-transform: uppercase; }
-/* Legend noktası: KPI'yı OEE trend grafiğinin aynı renkli serisine bağlar (birebir). */
-.kpi .label .dot {
-  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-  margin-right: 7px; vertical-align: middle; flex: none;
-}
-.kpi .value.small .dot { width: 6px; height: 6px; margin-right: 5px; }
-.kpi .value {
-  font-family: var(--mono); font-variant-numeric: tabular-nums;
-  font-size: clamp(1.6rem, 3.8vw, 2.3rem); font-weight: 600; line-height: 1.02; letter-spacing: -0.02em;
-}
-.kpi .value.small {
-  font-family: "Plus Jakarta Sans", system-ui, sans-serif;   /* alt satır metni sans */
-  font-size: 0.82rem; font-weight: 500; letter-spacing: 0; color: var(--muted); margin-top: 3px;
-}
-.kpi-oee .value {
-  font-family: var(--display);
-  font-size: clamp(2.3rem, 6vw, 3.4rem); font-weight: 800; color: var(--accent);
-  letter-spacing: -0.01em;   /* parıltı/glow YOK — No-Neon Rule */
-}
 
 /* =====================================================================
    CONTROL STRIP — cesur hero: solda OEE gauge çapası, sağda A×P×Q kanal
@@ -534,10 +503,6 @@ canvas { max-height: 268px; }
   animation: shimmer 1.4s ease-in-out infinite;
 }
 @keyframes shimmer { to { background-position: -200% 0; } }
-.sk-kpis { display: flex; flex-wrap: wrap; gap: 0; }
-.sk-kpi { display: flex; flex-direction: column; gap: 10px; padding: 0.1rem clamp(1rem, 2.6vw, 2.2rem); }
-.sk-kpi:first-child { padding-left: 0.2rem; }
-.sk-kpi + .sk-kpi { border-left: 1px solid var(--line); }
 .sk-sm { width: 84px; height: 10px; }
 .sk-lg { width: 116px; height: 30px; }
 .sk-eyebrow { width: 132px; height: 10px; margin-bottom: 1rem; }
@@ -575,7 +540,4 @@ canvas { max-height: 268px; }
   .apphead-controls { flex-direction: column; align-items: stretch; }
   .apphead-controls .controls { width: 100%; }
   .dd, .dd-trigger { width: 100%; }
-  .kpis .core { flex-direction: column; align-items: flex-start; gap: 1rem; }
-  .kpi, .kpi:first-child { padding: 0; }
-  .kpi + .kpi { border-left: 0; border-top: 1px solid var(--line); padding-top: 1rem; width: 100%; }
 }
