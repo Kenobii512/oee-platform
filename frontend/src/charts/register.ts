@@ -31,6 +31,11 @@ Chart.defaults.font.size = 11.5
 Chart.defaults.font.weight = 500
 Chart.defaults.color = C.muted
 
+// ---- Keskinlik: grafikleri yüksek-DPI supersampling ile çiz ----
+// Düşük-DPI (1x) ekranlarda bile çizgi/metin keskin kalsın diye en az 2x buffer.
+// (Chart.js varsayılanı ekran DPR'ını kullanır; bunu tabanı 2'ye yükseltiyoruz.)
+Chart.defaults.devicePixelRatio = Math.max(2, window.devicePixelRatio || 1)
+
 // ---- Etkileşim: en yakın noktaya göre, eksen boyunca ----
 Chart.defaults.interaction.mode = 'index'
 Chart.defaults.interaction.intersect = false
