@@ -273,12 +273,20 @@ canvas { max-height: 268px; }
   display: flex; justify-content: space-between; width: 200px; margin-top: 0.2rem;
   font-family: var(--mono); font-size: 0.66rem; color: var(--faint);
 }
+/* Durum çipi: öncü nokta + HEDEF ALTINDA/ÜSTÜ + sapma. */
 .gdelta {
-  margin-top: 0.85rem; font-family: var(--mono); font-size: 0.78rem; font-weight: 600;
-  padding: 4px 10px; border-radius: var(--r-pill);
+  margin-top: 0.7rem; display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--display); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em;
+  padding: 5px 11px; border-radius: var(--r-pill); border: 1px solid transparent;
 }
-.gdelta.neg { color: var(--loss); background: rgba(168, 68, 58, 0.09); }
-.gdelta.pos { color: var(--good); background: rgba(35, 122, 92, 0.09); }
+.gdelta::before { content: ""; width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.gdelta.neg { color: var(--loss); background: rgba(168, 68, 58, 0.08); border-color: rgba(168, 68, 58, 0.2); }
+.gdelta.neg::before { background: var(--loss); }
+.gdelta.pos { color: var(--good); background: rgba(35, 122, 92, 0.08); border-color: rgba(35, 122, 92, 0.2); }
+.gdelta.pos::before { background: var(--good); }
+
+/* Gauge altı OEE sparkline (eğilim). */
+.spark { margin-top: 0.8rem; display: block; opacity: 0.9; }
 
 /* Sağ: kanal kaskadı + toplam kayıp */
 .cs-cascade { background: var(--bg-2); display: flex; flex-direction: column; }
@@ -342,6 +350,59 @@ canvas { max-height: 268px; }
 .viewnav-status .led {
   width: 9px; height: 9px; border-radius: 50%; background: var(--good);
   box-shadow: 0 0 0 3px rgba(35, 122, 92, 0.16);
+  animation: led-pulse 2.4s var(--ease) infinite;
+}
+@keyframes led-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(35, 122, 92, 0.16); }
+  50% { box-shadow: 0 0 0 5px rgba(35, 122, 92, 0.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .viewnav-status .led { animation: none; }
+}
+
+/* ---- Marka logosu (gauge mark + wordmark) ---- */
+.brand-logo { display: inline-flex; align-items: center; gap: 8px; }
+.brand-logo svg { display: block; }
+.brand-logo .wm {
+  font-family: var(--display); font-size: 14px; font-weight: 800; letter-spacing: 0.04em; color: var(--accent);
+}
+
+/* ---- Kayıp ağacı: yığılmış oran çubuğu + taranmış (inferred) + etiketler ---- */
+.proportion {
+  display: flex; height: 16px; border-radius: var(--r-sharp); overflow: hidden;
+  background: #eaeef3; margin: 0.2rem 0 1rem;
+  transform-origin: left center;
+  animation: grow-x 0.9s var(--ease) both;
+}
+@keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .proportion { animation: none; } }
+.prop-seg { height: 100%; box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.55); }
+.prop-seg:last-child { box-shadow: none; }
+/* Çıkarımsal: renge ek diyagonal tarama (renk-körü erişilebilirlik). */
+.prop-seg.inf, .sw.inf {
+  background-image: repeating-linear-gradient(
+    45deg, rgba(255, 255, 255, 0.45) 0 2px, transparent 2px 5px
+  );
+}
+.prop-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.prop-legend li { display: grid; grid-template-columns: 12px 1fr auto auto; align-items: center; gap: 0.6rem; }
+.prop-legend .sw { width: 11px; height: 11px; border-radius: var(--r-sharp); }
+.prop-legend .nm { font-size: 0.84rem; color: var(--ink); }
+.prop-legend .nm em { font-style: normal; color: var(--inferred); font-size: 0.78rem; }
+.prop-legend .vl { font-family: var(--mono); font-size: 0.8rem; color: var(--ink); }
+.prop-legend .pc { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); min-width: 3.2em; text-align: right; }
+.prop-note {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin: 0.9rem 0 0; font-size: 0.72rem; color: var(--faint);
+}
+.prop-note .sw { width: 10px; height: 10px; border-radius: var(--r-sharp); background: var(--muted); }
+
+/* ---- Blueprint dokusu (zemin, neredeyse görünmez teknik ızgara) ---- */
+.blueprint {
+  position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(22, 32, 43, 0.018) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, rgba(22, 32, 43, 0.018) 0 1px, transparent 1px 28px);
 }
 
 /* ---- Veri güvenilirliği detayı ---- */

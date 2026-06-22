@@ -1,11 +1,13 @@
 // Chart.js bileşen kaydı + premium global tema (tek yerde; tüm grafiklere uygulanır).
 // Bir kez import edilir (main.tsx); react-chartjs-2 instance'ları yönetir.
 import {
+  BarController,
   BarElement,
   CategoryScale,
   Chart,
   Filler,
   Legend,
+  LineController,
   LineElement,
   LinearScale,
   PointElement,
@@ -17,6 +19,8 @@ import { C } from '../styles/theme'
 Chart.register(
   CategoryScale,
   LinearScale,
+  BarController, // mixed bar+line (Pareto kümülatif) için controller'lar açık kayıt
+  LineController,
   BarElement,
   PointElement,
   LineElement,

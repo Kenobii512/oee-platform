@@ -73,6 +73,7 @@ export default function Dashboard() {
               oee={oeeQ.data}
               dq={dqQ.data}
               costTotal={costQ.data?.total_tl}
+              trend={trendQ.data}
               redoParts={
                 lossQ.data?.categories.find((c) => c.category === 'QUALITY_REDO')?.value
               }
