@@ -12,6 +12,7 @@ import GridSkeleton from '../components/GridSkeleton'
 import Info from '../components/Info'
 import LossTreeChart from '../components/LossTreeChart'
 import Recommendations from '../components/Recommendations'
+import ShiftSummary from '../components/ShiftSummary'
 import TopBar, { type View } from '../components/TopBar'
 import TrendChart from '../components/TrendChart'
 
@@ -101,9 +102,10 @@ export default function Dashboard() {
           <div className="zone-head">Aksiyon</div>
           {recQ.data && <Recommendations rec={recQ.data} />}
 
-          {detay && dqQ.data && (
+          {detay && dqQ.data && oeeQ.data && (
             <>
               <div className="zone-head">Veri Güvenilirliği</div>
+              <ShiftSummary oee={oeeQ.data} />
               <DataQualityDetail dq={dqQ.data} />
             </>
           )}

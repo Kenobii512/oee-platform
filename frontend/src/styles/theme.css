@@ -438,6 +438,19 @@ canvas { max-height: 268px; }
     repeating-linear-gradient(90deg, rgba(22, 32, 43, 0.018) 0 1px, transparent 1px 28px);
 }
 
+/* ---- Vardiya künyesi: etiket/değer satırları (hairline ayraç, mono değer) ---- */
+.kunye { margin: 0.2rem 0 0; display: flex; flex-direction: column; }
+.kunye-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--line);
+}
+.kunye-row:last-child { border-bottom: 0; }
+.kunye dt { margin: 0; color: var(--muted); font-size: 0.84rem; }
+.kunye dd {
+  margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums;
+  font-size: 0.92rem; color: var(--ink);
+}
+
 /* ---- Veri güvenilirliği detayı ---- */
 .muted { color: var(--muted); font-size: 0.78rem; line-height: 1.65; }
 .dq-detail { font-size: 0.9rem; line-height: 1.8; margin-bottom: 0.7rem; }

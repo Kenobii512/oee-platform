@@ -46,6 +46,15 @@ export const pct = (x: number): string => num1(x * 100) + '%'
 /** TL tam sayı tr biçimi (binlik ayraç). */
 export const tl = (x: number): string => Math.round(x).toLocaleString('tr-TR')
 
+/** Tam sayı tr biçimi (binlik ayraç) — para değil, adet/sayım için (yüklenen/iyi/redo). */
+export const int = (x: number): string => Math.round(x).toLocaleString('tr-TR')
+
+/** Dakika → "8 sa 0 dk" (gözlem penceresi gibi süreler). */
+export const hm = (min: number): string => {
+  const m = Math.max(0, Math.round(min))
+  return `${Math.floor(m / 60)} sa ${m % 60} dk`
+}
+
 // Chart.js paylaşılan eksen/bar stilleri.
 export const gridAxis = { color: C.grid, drawTicks: false }
 export const barStyle = {

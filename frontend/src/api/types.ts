@@ -11,6 +11,12 @@ export interface Oee {
   final_yield?: number // Σ good / Σ loaded (no-scrap → ≈%100)
   utilization?: number
   planned_downtime_min?: number
+  // Bağlam metrikleri (OEE'yi etkilemez): künye + availability detayı.
+  loaded_qty?: number
+  good_count?: number
+  redo_count?: number
+  span_min?: number
+  downtime_union_min?: number // plansız duruş birleşimi (dk)
 }
 
 export interface LossCat {

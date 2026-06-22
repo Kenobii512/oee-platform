@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 
 import type { DataQuality, Oee, TrendPoint } from '../api/types'
-import { METRIC, num1, pct, tl } from '../styles/theme'
+import { int, METRIC, num1, pct, tl } from '../styles/theme'
 import Dial, { TARGET } from './Dial'
 
 /** Küçük OEE sparkline (son N vardiya eğilimi). */
@@ -115,6 +115,14 @@ export default function GaugeHero({ oee, dq, costTotal, redoParts, trend }: Prop
   const lossQ = A * P * (1 - Q) * 100
   const finalYield = oee.final_yield ?? 1
   const redoNote = redoParts != null && redoParts > 0 ? ` · ${Math.round(redoParts)} redo` : ''
+  // Kullanılabilirlik bağlamı: planlı vs plansız duruş (her zaman görünür alt-bilgi).
+  const hasDown = oee.planned_downtime_min != null || oee.downtime_union_min != null
+  const downSub = hasDown ? (
+    <>
+      Planlı <strong>{int(oee.planned_downtime_min ?? 0)} dk</strong> · Plansız{' '}
+      <strong>{int(oee.downtime_union_min ?? 0)} dk</strong>
+    </>
+  ) : undefined
 
   return (
     <section className="shell fhero">
@@ -137,7 +145,13 @@ export default function GaugeHero({ oee, dq, costTotal, redoParts, trend }: Prop
 
           <div className="cs-cascade">
             <div className="cs-channels">
-              <Channel label="Kullanılabilirlik" value={A} loss={lossA} color={METRIC.availability} />
+              <Channel
+                label="Kullanılabilirlik"
+                value={A}
+                loss={lossA}
+                color={METRIC.availability}
+                sub={downSub}
+              />
               <span className="cs-arrow" aria-hidden="true">→</span>
               <Channel label="Performans" value={P} loss={lossP} color={METRIC.performance} />
               <span className="cs-arrow" aria-hidden="true">→</span>
