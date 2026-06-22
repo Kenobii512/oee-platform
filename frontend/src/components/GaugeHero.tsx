@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 
 import type { DataQuality, Oee, TrendPoint } from '../api/types'
-import { METRIC, pct, tl } from '../styles/theme'
+import { METRIC, num1, pct, tl } from '../styles/theme'
 
 const ARC = Math.PI * 84 // yarım daire yay uzunluğu (r=84)
 const TARGET = 0.85 // OEE hedefi (gauge HEDEF işareti)
@@ -96,7 +96,7 @@ function Gauge({ value }: { value: number }) {
         </defs>
       </svg>
       <div className="read">
-        <span className="n">{(v * 100).toFixed(1)}</span>
+        <span className="n">{num1(v * 100)}</span>
         <span className="u">% OEE</span>
       </div>
     </div>
@@ -120,13 +120,13 @@ function Channel({ label, value, loss, color, sub }: ChannelProps) {
         {label}
       </span>
       <div className="cv">
-        {(v * 100).toFixed(1)}
+        {num1(v * 100)}
         <small>%</small>
       </div>
       <div className="meter">
         <i style={{ transform: `scaleX(${Math.min(1, v)})`, background: color }} />
       </div>
-      <div className="closs">−{loss.toFixed(1)} puan</div>
+      <div className="closs">−{num1(loss)} puan</div>
       {sub && <div className="csub">{sub}</div>}
     </div>
   )
@@ -172,7 +172,7 @@ export default function GaugeHero({ oee, dq, costTotal, redoParts, trend }: Prop
             {spark.length > 1 && <Spark data={spark} />}
             <div className={`gdelta${below ? ' neg' : ' pos'}`}>
               {below ? 'HEDEF ALTINDA' : 'HEDEF ÜSTÜ'} · {below ? '−' : '+'}
-              {Math.abs(deltaPP).toFixed(1)} p
+              {num1(Math.abs(deltaPP))} p
             </div>
           </div>
 

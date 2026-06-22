@@ -44,7 +44,7 @@ export default function LossTreeChart({ eyebrow, cats }: Props) {
                 <span className={`sw${c.kind === 'inferred' ? ' inf' : ''}`} style={{ background: color(c) }} />
                 <span className="nm">
                   {c.category}
-                  {c.kind === 'inferred' && <em> · çıkarım</em>}
+                  {c.kind === 'inferred' && <em> · çıkarımsal</em>}
                 </span>
                 <span className="vl">{fmt(c.value)}</span>
                 <span className="pc">%{Math.round((c.value / total) * 100)}</span>

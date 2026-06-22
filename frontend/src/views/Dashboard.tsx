@@ -9,6 +9,7 @@ import CostPareto from '../components/CostPareto'
 import DataQualityDetail from '../components/DataQualityDetail'
 import GaugeHero from '../components/GaugeHero'
 import GridSkeleton from '../components/GridSkeleton'
+import Info from '../components/Info'
 import LossTreeChart from '../components/LossTreeChart'
 import Recommendations from '../components/Recommendations'
 import TopBar, { type View } from '../components/TopBar'
@@ -52,7 +53,7 @@ export default function Dashboard() {
       />
 
       {oeeQ.isLoading ? (
-        <GridSkeleton kpis={5} cards={4} label="Pano yükleniyor" />
+        <GridSkeleton cards={4} label="Pano yükleniyor" />
       ) : oeeQ.isError ? (
         <div className="empty error" role="alert">
           <strong>Veri alınamadı.</strong> Sunucuya ulaşılamıyor olabilir
@@ -63,11 +64,12 @@ export default function Dashboard() {
         </div>
       ) : empty ? (
         <div className="empty">
-          Veri yüklü değil. Üst bardan bir <strong>senaryo</strong> seçin ya da{' '}
-          <code>POST /ingest</code> ile bir CSV klasörü yükleyin.
+          Veri yüklü değil. Üst bardan bir <strong>senaryo</strong> seçin ya da veri kaynağını
+          bağlayın. <Info text="Teknik: POST /ingest ile bir CSV klasörü yükleyin." />
         </div>
       ) : (
         <main className="grid">
+          <div className="zone-head">Durum</div>
           {oeeQ.data && dqQ.data && (
             <GaugeHero
               oee={oeeQ.data}
@@ -80,6 +82,8 @@ export default function Dashboard() {
             />
           )}
           {manager && trendQ.data && <TrendChart series={trendQ.data} />}
+
+          <div className="zone-head">Kayıplar</div>
           {lossQ.data && (
             <LossTreeChart
               eyebrow="Kayıp Ağacı · Zaman (dakika)"
@@ -93,8 +97,16 @@ export default function Dashboard() {
             />
           )}
           {costQ.data && <CostPareto cost={costQ.data} />}
+
+          <div className="zone-head">Aksiyon</div>
           {recQ.data && <Recommendations rec={recQ.data} />}
-          {manager && dqQ.data && <DataQualityDetail dq={dqQ.data} />}
+
+          {manager && dqQ.data && (
+            <>
+              <div className="zone-head">Veri Güvenilirliği</div>
+              <DataQualityDetail dq={dqQ.data} />
+            </>
+          )}
         </main>
       )}
     </>

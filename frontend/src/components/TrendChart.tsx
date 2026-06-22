@@ -101,7 +101,7 @@ export default function TrendChart({ series }: { series: TrendPoint[] }) {
   }
 
   return (
-    <Card eyebrow="OEE Trendi · gün" period className="card-wide">
+    <Card eyebrow="OEE Trendi · Günlük" period className="card-wide">
       <Line data={data} options={options} plugins={[targetBand]} />
     </Card>
   )

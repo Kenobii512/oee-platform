@@ -117,7 +117,7 @@ export default function Replay() {
       </header>
 
       {catalogLoading || (running && !snap) ? (
-        <GridSkeleton kpis={6} cards={2} label="Replay yükleniyor" />
+        <GridSkeleton cards={2} label="Replay yükleniyor" />
       ) : (
       <main className="grid">
         <section className="shell kpis">

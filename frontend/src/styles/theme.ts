@@ -21,8 +21,12 @@ export const METRIC = {
   finalYield: C.muted, // gri (nihai verim)
 } as const
 
-/** Oran (0–1) → "%xx.x" (tr biçimi). */
-export const pct = (x: number): string => (x * 100).toFixed(1) + '%'
+/** Tek ondalıklı Türkçe sayı (ondalık virgül): 60.1 → "60,1". */
+export const num1 = (x: number): string =>
+  x.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+/** Oran (0–1) → "60,1%" (Türkçe ondalık virgül). */
+export const pct = (x: number): string => num1(x * 100) + '%'
 
 /** TL tam sayı tr biçimi (binlik ayraç). */
 export const tl = (x: number): string => Math.round(x).toLocaleString('tr-TR')

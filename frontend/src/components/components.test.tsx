@@ -12,10 +12,10 @@ describe('GaugeHero', () => {
   it('OEE gauge okumasını ve A/P/Q metre değerlerini gösterir', () => {
     render(<GaugeHero oee={OEE} dq={DQ} />)
     // Gauge sayıyı %'siz, "% OEE" etiketiyle; hücreler sayıyı ayrı <small>% ile.
-    expect(screen.getByText('62.0')).toBeInTheDocument()
-    expect(screen.getByText('86.0')).toBeInTheDocument()
-    expect(screen.getByText('81.0')).toBeInTheDocument()
-    expect(screen.getByText('88.0')).toBeInTheDocument()
+    expect(screen.getByText('62,0')).toBeInTheDocument()
+    expect(screen.getByText('86,0')).toBeInTheDocument()
+    expect(screen.getByText('81,0')).toBeInTheDocument()
+    expect(screen.getByText('88,0')).toBeInTheDocument()
   })
 })
 

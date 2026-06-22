@@ -1,11 +1,36 @@
 // Maliyet Pareto'su: dikey TL barları + kümülatif % eğrisi (sağ eksen).
 // "Kayıpların %X'i şu birkaç kalemden" — bir bakışta odak noktası. inferred=indigo, visible=kırmızı.
 import { Chart } from 'react-chartjs-2'
-import type { ChartData, ChartOptions } from 'chart.js'
+import type { ChartData, ChartOptions, Plugin } from 'chart.js'
 
 import type { CostTree } from '../api/types'
 import { barStyle, C, tl } from '../styles/theme'
 import Card from './Card'
+import Info from './Info'
+
+// Klasik 80/20: kümülatif eksende %80 referans çizgisi.
+const pareto80: Plugin<'bar' | 'line'> = {
+  id: 'pareto80',
+  afterDatasetsDraw(chart) {
+    const { ctx, chartArea } = chart
+    const y = chart.scales.yPct?.getPixelForValue(80)
+    if (y == null) return
+    ctx.save()
+    ctx.strokeStyle = 'rgba(22,32,43,0.28)'
+    ctx.lineWidth = 1
+    ctx.setLineDash([4, 4])
+    ctx.beginPath()
+    ctx.moveTo(chartArea.left, y)
+    ctx.lineTo(chartArea.right, y)
+    ctx.stroke()
+    ctx.setLineDash([])
+    ctx.fillStyle = '#58626f'
+    ctx.font = "600 9px 'Plus Jakarta Sans', system-ui, sans-serif"
+    ctx.textAlign = 'left'
+    ctx.fillText('%80', chartArea.left + 4, y - 4)
+    ctx.restore()
+  },
+}
 
 export default function CostPareto({ cost }: { cost: CostTree }) {
   const cats = cost.categories // zaten TL azalan sıralı (backend)
@@ -16,7 +41,7 @@ export default function CostPareto({ cost }: { cost: CostTree }) {
   )
 
   const data: ChartData<'bar' | 'line'> = {
-    labels: cats.map((c) => c.category + (c.kind === 'inferred' ? ' · çıkarım' : '')),
+    labels: cats.map((c) => c.category + (c.kind === 'inferred' ? ' · çıkarımsal' : '')),
     datasets: [
       {
         type: 'bar' as const,
@@ -72,13 +97,15 @@ export default function CostPareto({ cost }: { cost: CostTree }) {
   }
 
   return (
-    <Card eyebrow="Maliyet Pareto'su (TL)">
-      <span className="muted">varsayım: birim maliyetler config/costs.yaml</span>
+    <Card eyebrow="Maliyet Pareto'su (TL)" className="card-wide">
+      <span className="muted">
+        varsayım: birim maliyetler <Info text="Kaynak: config/costs.yaml" />
+      </span>
       <div className="kpi-line">
         <span className="muted">Toplam kayıp:</span>
         <strong>{tl(cost.total_tl)} TL</strong>
       </div>
-      <Chart type="bar" data={data} options={options} height={220} />
+      <Chart type="bar" data={data} options={options} plugins={[pareto80]} height={220} />
     </Card>
   )
 }

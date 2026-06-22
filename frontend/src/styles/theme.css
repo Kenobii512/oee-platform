@@ -176,12 +176,13 @@ button:active { transform: translateY(1px) scale(0.99); }
   padding: 1.2rem 1.3rem 1.3rem;
   height: 100%;
 }
-.shell:nth-child(1) { animation-delay: 0.02s; }
-.shell:nth-child(2) { animation-delay: 0.07s; }
-.shell:nth-child(3) { animation-delay: 0.12s; }
-.shell:nth-child(4) { animation-delay: 0.17s; }
-.shell:nth-child(5) { animation-delay: 0.22s; }
-.shell:nth-child(6) { animation-delay: 0.27s; }
+/* nth-of-type (section): araya giren .zone-head <div>'leri saymaz → stagger bozulmaz. */
+.shell:nth-of-type(1) { animation-delay: 0.02s; }
+.shell:nth-of-type(2) { animation-delay: 0.07s; }
+.shell:nth-of-type(3) { animation-delay: 0.12s; }
+.shell:nth-of-type(4) { animation-delay: 0.17s; }
+.shell:nth-of-type(5) { animation-delay: 0.22s; }
+.shell:nth-of-type(6) { animation-delay: 0.27s; }
 
 @keyframes rise { to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {
@@ -206,6 +207,13 @@ canvas { max-height: 268px; }
 
 /* Kart ritmi: bazı kartlar tam genişlik (aynı-boy ızgara monotonluğunu kırar). */
 .card-wide { grid-column: 1 / -1; }
+/* Geniş öneri kartı: liste 2 sütun → genişliği doldurur, satır uzunluğu okunur kalır. */
+.recommendations.card-wide .rec-list {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; align-items: start;
+}
+@media (max-width: 760px) {
+  .recommendations.card-wide .rec-list { grid-template-columns: 1fr; }
+}
 
 /* ---- KPI başlığı ---- */
 .kpis { grid-column: 1 / -1; }
@@ -426,9 +434,19 @@ canvas { max-height: 268px; }
   transition: border-color 0.35s var(--ease), background 0.35s var(--ease);
 }
 .rec:hover { background: #fff; border-color: var(--line-strong); }
-.rec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+.rec-head { display: flex; align-items: baseline; gap: 0.55rem; }
+/* Sıra no: önceliği gösteren küçük mono çip. */
+.rec-rank {
+  font-family: var(--mono); font-size: 0.72rem; font-weight: 600; color: var(--faint);
+  width: 1.5em; flex: none;
+}
 /* Kanal anlamı (görünür/çıkarımsal) öncü noktayla taşınır — Inferred-Channel Rule. */
 .rec-title { font-weight: 600; color: var(--ink); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.rec-gain { margin-left: auto; }
+/* Kazanca oranlı etki çubuğu (görsel tarama). */
+.rec-impact { height: 4px; border-radius: var(--r-sharp); background: #eaeef3; overflow: hidden; margin: 0.5rem 0 0; }
+.rec-impact i { display: block; height: 100%; transform-origin: left center; animation: grow-x 0.9s var(--ease) both; }
+@media (prefers-reduced-motion: reduce) { .rec-impact i { animation: none; } }
 .rec-title::before {
   content: ""; width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--good);
 }
@@ -463,9 +481,29 @@ canvas { max-height: 268px; }
 .sk-lg { width: 116px; height: 30px; }
 .sk-eyebrow { width: 132px; height: 10px; margin-bottom: 1rem; }
 .sk-chart { width: 100%; height: 240px; border-radius: var(--r-core); }
+/* Control Strip şekilli iskelet parçaları. */
+.sk-gauge { width: 200px; height: 118px; border-radius: var(--r-core); margin: 0.6rem 0; }
+.sk-hero-ch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; padding: 1.3rem 0.4rem 1.1rem; }
 @media (prefers-reduced-motion: reduce) {
   .sk-ph { animation: none; }
 }
+
+/* ---- Anlatısal bölge başlıkları (DURUM / KAYIPLAR / AKSİYON / VERİ) ---- */
+.zone-head {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 0.8rem;
+  font-family: var(--display); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--faint); margin: 0.6rem 0 -0.2rem;
+}
+.zone-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.zone-head:first-child { margin-top: 0; }
+
+/* ---- Bilgi işareti (ⓘ) — sade metin + native tooltip ---- */
+.info {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.82em; color: var(--accent); cursor: help; vertical-align: baseline;
+  border-radius: 50%; transition: color 0.2s var(--ease);
+}
+.info:hover, .info:focus-visible { color: var(--accent-deep); outline: none; }
 
 /* ---- Duyarlı ---- */
 @media (max-width: 860px) {
