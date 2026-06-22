@@ -93,6 +93,7 @@ export default function Dashboard() {
             <LossTreeChart
               eyebrow="Kayıp Ağacı · Malzeme (parça)"
               cats={lossQ.data.categories.filter((c) => c.axis === 'parts')}
+              legend={false}
             />
           )}
           {costQ.data && <CostPareto cost={costQ.data} />}

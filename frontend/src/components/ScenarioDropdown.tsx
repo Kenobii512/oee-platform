@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
 import { api } from '../api/client'
+import { catLabel } from '../styles/theme'
 
 interface Props {
   onSelect: (id: string) => void
@@ -77,7 +78,7 @@ export default function ScenarioDropdown({ onSelect, value, disabled }: Props) {
               >
                 <span className="dd-opt-title">{s.title}</span>
                 <span className="dd-opt-desc">{s.description}</span>
-                <span className="dd-opt-loss">Beklenen baş kayıp: {s.expected_top_loss}</span>
+                <span className="dd-opt-loss">Beklenen baş kayıp: {catLabel(s.expected_top_loss)}</span>
               </button>
             </li>
           ))}

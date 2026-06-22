@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import type { DataQuality, Oee, Recommendations as RecData } from '../api/types'
+import type { DataQuality, LossCat, Oee, Recommendations as RecData } from '../api/types'
+import { catLabel } from '../styles/theme'
 import GaugeHero from './GaugeHero'
+import LossTreeChart from './LossTreeChart'
 import Recommendations from './Recommendations'
 
 const OEE: Oee = { oee: 0.62, availability: 0.86, performance: 0.81, quality: 0.88, final_yield: 1.0 }
@@ -40,10 +42,48 @@ const REC: RecData = {
 }
 
 describe('Recommendations', () => {
-  it('öneri başlığını, kazanç aralığını ve TL kaybını gösterir', () => {
+  it('öneri başlığını, kazanç aralığını ve ₺ kaybını gösterir', () => {
     render(<Recommendations rec={REC} />)
     expect(screen.getByText('Duruşları azalt')).toBeInTheDocument()
-    expect(screen.getByText('~1.732–3.464 TL/dönem')).toBeInTheDocument()
-    expect(screen.getByText(/11\.546 TL/)).toBeInTheDocument()
+    expect(screen.getByText('~1.732–3.464 ₺/dönem')).toBeInTheDocument()
+    expect(screen.getByText(/11\.546 ₺/)).toBeInTheDocument()
+  })
+
+  it('aksiyon metnindeki `kod` token\'ını <code> olarak render eder (ham backtick değil)', () => {
+    const rec: RecData = {
+      ...REC,
+      recommendations: [{ ...REC.recommendations[0], action: 'En sık neden `ariza_pompa`.' }],
+    }
+    const { container } = render(<Recommendations rec={rec} />)
+    const code = container.querySelector('.rec-action code')
+    expect(code).not.toBeNull()
+    expect(code?.textContent).toBe('ariza_pompa')
+    // Ham backtick metinde kalmamalı.
+    expect(container.querySelector('.rec-action')?.textContent).not.toContain('`')
+  })
+})
+
+describe('catLabel', () => {
+  it('kategori kodunu Türkçe isme çevirir, bilinmeyende ham koda düşer', () => {
+    expect(catLabel('DOWNTIME')).toBe('Duruş')
+    expect(catLabel('MICROSTOP')).toBe('Mikro duruş')
+    expect(catLabel('SPEED_LOSS')).toBe('Hız kaybı')
+    expect(catLabel('BILINMEYEN_KOD')).toBe('BILINMEYEN_KOD')
+  })
+})
+
+describe('LossTreeChart', () => {
+  const cats: LossCat[] = [
+    { category: 'DOWNTIME', axis: 'minutes', value: 200, kind: 'visible' },
+    { category: 'SPEED_LOSS', axis: 'minutes', value: 100, kind: 'inferred' },
+  ]
+  it('ham kod yerine Türkçe etiket gösterir', () => {
+    render(<LossTreeChart eyebrow="Kayıp" cats={cats} />)
+    expect(screen.getByText('Duruş')).toBeInTheDocument()
+    expect(screen.queryByText('DOWNTIME')).toBeNull()
+  })
+  it('legend={false} ile alt hatch notunu gizler', () => {
+    const { container } = render(<LossTreeChart eyebrow="Kayıp" cats={cats} legend={false} />)
+    expect(container.querySelector('.prop-note')).toBeNull()
   })
 })

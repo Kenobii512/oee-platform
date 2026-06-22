@@ -132,7 +132,7 @@ export default function Replay() {
         {snap ? (
           <CostPareto cost={snap.cost} />
         ) : (
-          <Card eyebrow="Maliyet Pareto'su (TL)" className="card-wide">
+          <Card eyebrow="Maliyet Pareto'su (₺)" className="card-wide">
             <p className="muted">Oynat'a basın. Kayıplar biriktikçe canlı dolacak.</p>
           </Card>
         )}

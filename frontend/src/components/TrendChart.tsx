@@ -109,6 +109,11 @@ export default function TrendChart({ series }: { series: TrendPoint[] }) {
   return (
     <Card eyebrow="OEE Trendi · Günlük" period className="card-wide">
       <Line data={data} options={options} plugins={[targetBand]} />
+      {series.length < 3 && (
+        <p className="muted">
+          Trend için yeterli geçmiş yok ({series.length} gün); zaman ilerledikçe dolacak.
+        </p>
+      )}
     </Card>
   )
 }
