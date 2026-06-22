@@ -66,50 +66,87 @@ body {
     radial-gradient(46rem 30rem at 110% 4%, rgba(83, 95, 138, 0.04), transparent 60%);
 }
 
-/* ---- Global görünüm barı (Pano / Canlı Replay) ---- */
-.viewnav {
+/* ---- Birleşik header — üst satır (sticky): tek marka + mod sekmeleri + CANLI ---- */
+.apphead-top {
   position: sticky; top: 0; z-index: 40;
-  display: flex; align-items: center; gap: 0.85rem;
-  padding: 0.6rem clamp(1rem, 4vw, 2.4rem);
-  background: rgba(255, 255, 255, 0.85);
+  display: flex; align-items: center; gap: 1.2rem;
+  padding: 0.7rem clamp(1rem, 4vw, 2.4rem);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(14px) saturate(120%);
   -webkit-backdrop-filter: blur(14px) saturate(120%);
   border-bottom: 1px solid var(--line);
 }
-.viewnav-brand {
-  font-family: var(--display);
-  font-size: 13px; font-weight: 800; letter-spacing: 0.06em;
-  color: var(--accent); user-select: none;
+/* Mod sekmeleri (birincil) — alt-çizgi aktif; pill DEĞİL → view-toggle'dan ayrışır. */
+.modetabs { display: inline-flex; gap: 0.4rem; }
+.modetab {
+  background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0;
+  color: var(--muted); font: inherit; font-weight: 600; font-size: 0.9rem; padding: 6px 4px; cursor: pointer;
+  transition: color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+.modetab:hover { color: var(--ink); }
+.modetab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- Kontrol satırı (görünüme özel; header bloğunun parçası, flush) ---- */
+.apphead-controls {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 1rem 1.4rem; flex-wrap: wrap;
+  padding: 0.85rem clamp(1rem, 4vw, 2.4rem);
+  background: var(--bg-2); border-bottom: 1px solid var(--line);
 }
 
-/* ---- Segment kontrolü (Pano/Replay + Müdür/Amir tek stil) ---- */
-.seg, .tabs {
+/* ---- Segment (Görünüm toggle + Hız) — ikincil, etiketli ---- */
+.viewtoggle, .ctl-group { display: flex; flex-direction: column; gap: 5px; }
+.viewtoggle-cap {
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+}
+.vt-seg, .seg {
   display: inline-flex; gap: 3px; padding: 3px;
   background: var(--bg-3); border: 1px solid var(--line); border-radius: var(--r-pill);
 }
-.seg button, .tab {
-  background: transparent; color: var(--muted);
-  padding: 6px 15px; border-radius: var(--r-pill); border: 1px solid transparent;
-  font: inherit; font-weight: 600; font-size: 0.8rem; cursor: pointer;
+.vt, .seg button {
+  background: transparent; color: var(--muted); border: 1px solid transparent; border-radius: var(--r-pill);
+  font: inherit; font-weight: 600; font-size: 0.8rem; padding: 6px 14px; cursor: pointer;
   transition: color 0.3s var(--ease), background 0.3s var(--ease);
 }
-.seg button:hover, .tab:hover { color: var(--ink); }
-.seg button.active, .tab.active {
-  background: #fff; color: var(--accent); border-color: var(--line);
-  box-shadow: 0 1px 2px rgba(22, 32, 43, 0.08);
+.vt:hover, .seg button:hover { color: var(--ink); }
+.vt.active, .seg button.active {
+  background: #fff; color: var(--accent); border-color: var(--line); box-shadow: 0 1px 2px rgba(22, 32, 43, 0.08);
 }
+.seg button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ---- Sayfa başlığı ---- */
-.topbar {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 1rem 1.4rem; padding: 1.5rem clamp(1rem, 4vw, 2.4rem) 0.6rem; flex-wrap: wrap;
+/* ---- Zengin senaryo dropdown ---- */
+.dd { position: relative; display: flex; flex-direction: column; gap: 5px; }
+.dd-cap { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.dd-trigger {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  min-width: 190px; background: var(--bg-3); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 8px 11px;
+  font: inherit; font-weight: 600; font-size: 0.8rem; cursor: pointer;
+  transition: border-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
-.brand .eyebrow {
-  display: block; font-family: var(--display);
-  font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
-  text-transform: uppercase; color: var(--faint); margin-bottom: 4px;
+.dd-trigger:hover { border-color: var(--line-strong); }
+.dd-trigger:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31, 93, 166, 0.16); }
+.dd-trigger:disabled { opacity: 0.55; cursor: not-allowed; }
+.dd-val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-chev { color: var(--faint); flex: none; transition: transform 0.25s var(--ease); }
+.dd-trigger[aria-expanded="true"] .dd-chev { transform: rotate(180deg); }
+.dd-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
+  width: max(300px, 100%); max-height: 360px; overflow-y: auto;
+  list-style: none; margin: 0; padding: 5px;
+  background: var(--bg-2); border: 1px solid var(--line-strong); border-radius: var(--r-core);
+  box-shadow: var(--shadow-card);
 }
-.brand h1 { font-size: 1.3rem; font-weight: 700; margin: 0; letter-spacing: -0.025em; }
+.dd-opt {
+  display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left;
+  background: transparent; border: 0; border-radius: var(--r-ctl); padding: 9px 11px; cursor: pointer;
+  transition: background 0.2s var(--ease);
+}
+.dd-opt:hover, .dd-opt:focus-visible { background: var(--bg-3); outline: none; }
+.dd-opt.sel { background: var(--accent-soft); }
+.dd-opt-title { font-weight: 600; font-size: 0.86rem; color: var(--ink); }
+.dd-opt-desc { font-size: 0.76rem; color: var(--muted); line-height: 1.4; }
+.dd-opt-loss { font-size: 0.72rem; color: var(--faint); font-family: var(--mono); margin-top: 2px; }
 
 .controls { display: flex; align-items: flex-end; gap: 0.6rem; flex-wrap: wrap; }
 .controls label {
@@ -126,15 +163,19 @@ body {
   outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31, 93, 166, 0.16);
 }
 
-/* ---- Birincil buton (vurgu) ---- */
-button {
-  font: inherit; font-weight: 600; font-size: 0.82rem; cursor: pointer;
+/* Taban buton resetı — renk/zemin YOK (segment/sekme/dropdown kendi stilini korur).
+   Eski geniş `button{background:accent}` ikincil butonlara hover'da mavi zemin basıyordu. */
+button { font: inherit; cursor: pointer; }
+
+/* ---- Birincil buton (yalnız Uygula / Oynat / Yeniden dene) ---- */
+.controls > button, .empty .retry {
+  font-weight: 600; font-size: 0.82rem;
   border: 1px solid transparent; border-radius: var(--r-ctl); padding: 9px 18px;
   background: var(--accent); color: var(--accent-ink);
   transition: transform 0.3s var(--ease), background 0.3s var(--ease);
 }
-button:hover { background: var(--accent-deep); }
-button:active { transform: translateY(1px) scale(0.99); }
+.controls > button:hover, .empty .retry:hover { background: var(--accent-deep); }
+.controls > button:active, .empty .retry:active { transform: translateY(1px) scale(0.99); }
 
 /* ---- Boş durum ---- */
 .empty {
@@ -510,7 +551,10 @@ canvas { max-height: 268px; }
   .grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
-  .topbar { align-items: flex-start; }
+  .apphead-top { flex-wrap: wrap; gap: 0.6rem 1rem; }
+  .apphead-controls { flex-direction: column; align-items: stretch; }
+  .apphead-controls .controls { width: 100%; }
+  .dd, .dd-trigger { width: 100%; }
   .kpis .core { flex-direction: column; align-items: flex-start; gap: 1rem; }
   .kpi, .kpi:first-child { padding: 0; }
   .kpi + .kpi { border-left: 0; border-top: 1px solid var(--line); padding-top: 1rem; width: 100%; }

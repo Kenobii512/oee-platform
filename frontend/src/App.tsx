@@ -3,37 +3,39 @@ import { useState } from 'react'
 import Dashboard from './views/Dashboard'
 import Replay from './views/Replay'
 
-type View = 'dashboard' | 'replay'
+type Mode = 'dashboard' | 'replay'
 
 export default function App() {
-  const [view, setView] = useState<View>('dashboard')
+  const [mode, setMode] = useState<Mode>('dashboard')
   return (
     <>
       <div className="blueprint" aria-hidden="true" />
-      <nav className="viewnav">
-        <span className="brand-logo" aria-label="OEE">
+      {/* Birleşik header — üst satır: tek marka + mod sekmeleri + CANLI.
+          Görünüme özel kontrol satırı (filtreler) alttan view içinden gelir. */}
+      <header className="apphead-top">
+        <span className="brand-logo" aria-label="OEE Panosu">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M3 17 A9 9 0 0 1 21 17" stroke="#cdd4dc" strokeWidth="2.5" strokeLinecap="round" />
             <path d="M3 17 A9 9 0 0 1 15.5 8.8" stroke="#1f5da6" strokeWidth="2.5" strokeLinecap="round" />
             <line x1="12" y1="17" x2="15.5" y2="10.5" stroke="#16202b" strokeWidth="2" strokeLinecap="round" />
             <circle cx="12" cy="17" r="1.7" fill="#16202b" />
           </svg>
-          <span className="wm">OEE</span>
+          <span className="wm">OEE Panosu</span>
         </span>
-        <div className="seg" role="tablist" aria-label="Görünüm">
+        <div className="modetabs" role="tablist" aria-label="Mod">
           <button
             role="tab"
-            aria-selected={view === 'dashboard'}
-            className={view === 'dashboard' ? 'active' : ''}
-            onClick={() => setView('dashboard')}
+            aria-selected={mode === 'dashboard'}
+            className={`modetab${mode === 'dashboard' ? ' active' : ''}`}
+            onClick={() => setMode('dashboard')}
           >
             Pano
           </button>
           <button
             role="tab"
-            aria-selected={view === 'replay'}
-            className={view === 'replay' ? 'active' : ''}
-            onClick={() => setView('replay')}
+            aria-selected={mode === 'replay'}
+            className={`modetab${mode === 'replay' ? ' active' : ''}`}
+            onClick={() => setMode('replay')}
           >
             Canlı Replay
           </button>
@@ -42,8 +44,8 @@ export default function App() {
           <span className="led" />
           CANLI
         </span>
-      </nav>
-      {view === 'dashboard' ? <Dashboard /> : <Replay />}
+      </header>
+      {mode === 'dashboard' ? <Dashboard /> : <Replay />}
     </>
   )
 }

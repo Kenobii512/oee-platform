@@ -22,7 +22,7 @@ function isEmpty(oee?: Oee): boolean {
 export default function Dashboard() {
   const qc = useQueryClient()
   const [range, setRange] = useState<Range>({})
-  const [view, setView] = useState<View>('manager')
+  const [view, setView] = useState<View>('detay')
 
   const oeeQ = useQuery({ queryKey: ['oee', range], queryFn: () => api.oee(range) })
   const empty = isEmpty(oeeQ.data)
@@ -40,7 +40,7 @@ export default function Dashboard() {
     await qc.invalidateQueries()
   }
 
-  const manager = view === 'manager'
+  const detay = view === 'detay'
 
   return (
     <>
@@ -81,7 +81,7 @@ export default function Dashboard() {
               }
             />
           )}
-          {manager && trendQ.data && <TrendChart series={trendQ.data} />}
+          {detay && trendQ.data && <TrendChart series={trendQ.data} />}
 
           <div className="zone-head">Kayıplar</div>
           {lossQ.data && (
@@ -101,7 +101,7 @@ export default function Dashboard() {
           <div className="zone-head">Aksiyon</div>
           {recQ.data && <Recommendations rec={recQ.data} />}
 
-          {manager && dqQ.data && (
+          {detay && dqQ.data && (
             <>
               <div className="zone-head">Veri Güvenilirliği</div>
               <DataQualityDetail dq={dqQ.data} />

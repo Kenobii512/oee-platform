@@ -10,13 +10,14 @@ import type { ReplaySnapshot } from '../api/types'
 import Card from '../components/Card'
 import CostPareto from '../components/CostPareto'
 import GridSkeleton from '../components/GridSkeleton'
+import ScenarioDropdown from '../components/ScenarioDropdown'
 import { C, gridAxis, pct, tl } from '../styles/theme'
 
 const STEPS = 60
 const SPEEDS = [100, 500, 1000]
 
 export default function Replay() {
-  const { data: catalog, isLoading: catalogLoading } = useQuery({
+  const { isLoading: catalogLoading } = useQuery({
     queryKey: ['scenarios'],
     queryFn: api.scenarios,
   })
@@ -88,28 +89,24 @@ export default function Replay() {
   return (
     <>
       <div className="aurora" />
-      <header className="topbar">
-        <div className="brand">
-          <span className="eyebrow">Canlı Replay</span>
-          <h1>Bir Haftayı İzle</h1>
-        </div>
+      <header className="apphead-controls">
         <div className="controls">
-          <label>
-            Senaryo
-            <select value={scenario} onChange={(e) => setScenario(e.target.value)} disabled={running}>
-              {catalog?.scenarios.map((s) => (
-                <option key={s.id} value={s.id}>{s.title}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Hız
-            <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))} disabled={running}>
+          <ScenarioDropdown onSelect={setScenario} value={scenario} disabled={running} />
+          <div className="ctl-group">
+            <span className="viewtoggle-cap">Hız</span>
+            <div className="seg" role="group" aria-label="Hız">
               {SPEEDS.map((s) => (
-                <option key={s} value={s}>×{s}</option>
+                <button
+                  key={s}
+                  className={speed === s ? 'active' : ''}
+                  disabled={running}
+                  onClick={() => setSpeed(s)}
+                >
+                  ×{s}
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
+          </div>
           <button onClick={running ? stop : start}>
             {running ? 'Duraklat' : done ? 'Tekrar Oynat' : 'Oynat'}
           </button>
