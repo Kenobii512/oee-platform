@@ -7,13 +7,13 @@ import { api } from '../api/client'
 import type { Oee, Range } from '../api/types'
 import CostPareto from '../components/CostPareto'
 import DataQualityDetail from '../components/DataQualityDetail'
+import GaugeHero from '../components/GaugeHero'
 import GridSkeleton from '../components/GridSkeleton'
-import KpiCards from '../components/KpiCards'
+import Info from '../components/Info'
 import LossTreeChart from '../components/LossTreeChart'
 import Recommendations from '../components/Recommendations'
 import TopBar, { type View } from '../components/TopBar'
 import TrendChart from '../components/TrendChart'
-import WaterfallChart from '../components/WaterfallChart'
 
 function isEmpty(oee?: Oee): boolean {
   return !oee || (oee.availability === 0 && oee.performance === 0 && oee.quality === 0)
@@ -22,7 +22,7 @@ function isEmpty(oee?: Oee): boolean {
 export default function Dashboard() {
   const qc = useQueryClient()
   const [range, setRange] = useState<Range>({})
-  const [view, setView] = useState<View>('manager')
+  const [view, setView] = useState<View>('detay')
 
   const oeeQ = useQuery({ queryKey: ['oee', range], queryFn: () => api.oee(range) })
   const empty = isEmpty(oeeQ.data)
@@ -40,11 +40,10 @@ export default function Dashboard() {
     await qc.invalidateQueries()
   }
 
-  const manager = view === 'manager'
+  const detay = view === 'detay'
 
   return (
     <>
-      <div className="aurora" />
       <TopBar
         view={view}
         onViewChange={setView}
@@ -53,25 +52,37 @@ export default function Dashboard() {
       />
 
       {oeeQ.isLoading ? (
-        <GridSkeleton kpis={5} cards={4} label="Pano yükleniyor" />
+        <GridSkeleton cards={4} label="Pano yükleniyor" />
+      ) : oeeQ.isError ? (
+        <div className="empty error" role="alert">
+          <strong>Veri alınamadı.</strong> Sunucuya ulaşılamıyor olabilir
+          {oeeQ.error instanceof Error ? ` (${oeeQ.error.message})` : ''}.
+          <button className="retry" onClick={() => oeeQ.refetch()}>
+            Yeniden dene
+          </button>
+        </div>
       ) : empty ? (
         <div className="empty">
-          Veri yüklü değil. Üst bardan bir <strong>senaryo</strong> seçin ya da{' '}
-          <code>POST /ingest</code> ile bir CSV klasörü yükleyin.
+          Veri yüklü değil. Üst bardan bir <strong>senaryo</strong> seçin ya da veri kaynağını
+          bağlayın. <Info text="Teknik: POST /ingest ile bir CSV klasörü yükleyin." />
         </div>
       ) : (
         <main className="grid">
+          <div className="zone-head">Durum</div>
           {oeeQ.data && dqQ.data && (
-            <KpiCards
+            <GaugeHero
               oee={oeeQ.data}
               dq={dqQ.data}
+              costTotal={costQ.data?.total_tl}
+              trend={trendQ.data}
               redoParts={
                 lossQ.data?.categories.find((c) => c.category === 'QUALITY_REDO')?.value
               }
             />
           )}
-          {oeeQ.data && <WaterfallChart oee={oeeQ.data} />}
-          {manager && trendQ.data && <TrendChart series={trendQ.data} />}
+          {detay && trendQ.data && <TrendChart series={trendQ.data} />}
+
+          <div className="zone-head">Kayıplar</div>
           {lossQ.data && (
             <LossTreeChart
               eyebrow="Kayıp Ağacı · Zaman (dakika)"
@@ -85,8 +96,16 @@ export default function Dashboard() {
             />
           )}
           {costQ.data && <CostPareto cost={costQ.data} />}
+
+          <div className="zone-head">Aksiyon</div>
           {recQ.data && <Recommendations rec={recQ.data} />}
-          {manager && dqQ.data && <DataQualityDetail dq={dqQ.data} />}
+
+          {detay && dqQ.data && (
+            <>
+              <div className="zone-head">Veri Güvenilirliği</div>
+              <DataQualityDetail dq={dqQ.data} />
+            </>
+          )}
         </main>
       )}
     </>

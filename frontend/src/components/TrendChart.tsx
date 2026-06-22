@@ -1,11 +1,38 @@
 // renderTrend karşılığı: OEE dolu çizgi + A/P/Q bileşen çizgileri (G4.1 ile P/Q artık
 // pencere-doğru değişir) + nihai verim (Perf-UI). y: 0–100%.
 import { Line } from 'react-chartjs-2'
-import type { ChartData, ChartOptions } from 'chart.js'
+import type { ChartData, ChartOptions, Plugin } from 'chart.js'
 
 import type { TrendPoint } from '../api/types'
 import { gridAxis, METRIC } from '../styles/theme'
 import Card from './Card'
+
+// HEDEF 85: hedef bölgesi bandı (üst) + kesik referans çizgisi + etiket.
+const TARGET = 85
+const targetBand: Plugin<'line'> = {
+  id: 'targetBand',
+  beforeDatasetsDraw(chart) {
+    const { ctx, chartArea, scales } = chart
+    const y = scales.y?.getPixelForValue(TARGET)
+    if (y == null) return
+    ctx.save()
+    ctx.fillStyle = 'rgba(35,122,92,0.05)' // hedef bölgesi (good, çok hafif)
+    ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, y - chartArea.top)
+    ctx.strokeStyle = 'rgba(35,122,92,0.5)'
+    ctx.lineWidth = 1
+    ctx.setLineDash([5, 4])
+    ctx.beginPath()
+    ctx.moveTo(chartArea.left, y)
+    ctx.lineTo(chartArea.right, y)
+    ctx.stroke()
+    ctx.setLineDash([])
+    ctx.fillStyle = '#237a5c'
+    ctx.font = "600 10px 'Plus Jakarta Sans', system-ui, sans-serif"
+    ctx.textAlign = 'right'
+    ctx.fillText('HEDEF 85', chartArea.right - 6, y - 5)
+    ctx.restore()
+  },
+}
 
 export default function TrendChart({ series }: { series: TrendPoint[] }) {
   const data: ChartData<'line'> = {
@@ -15,7 +42,7 @@ export default function TrendChart({ series }: { series: TrendPoint[] }) {
         label: 'OEE',
         data: series.map((s) => s.oee * 100),
         borderColor: METRIC.oee,
-        backgroundColor: 'rgba(34,211,238,0.12)',
+        backgroundColor: 'rgba(31,93,166,0.10)',
         fill: true,
         tension: 0.35,
         borderWidth: 2.5,
@@ -74,8 +101,8 @@ export default function TrendChart({ series }: { series: TrendPoint[] }) {
   }
 
   return (
-    <Card eyebrow="OEE Trendi · gün" period>
-      <Line data={data} options={options} />
+    <Card eyebrow="OEE Trendi · Günlük" period className="card-wide">
+      <Line data={data} options={options} plugins={[targetBand]} />
     </Card>
   )
 }

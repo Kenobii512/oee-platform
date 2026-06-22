@@ -1,35 +1,40 @@
-/* OEE Panosu — premium koyu analitik tema (Redesign-Preserve rafine geçiş).
-   İlkeler: tek vurgu rengi (mavi) etkileşimde; yeşil/mor/mercan YALNIZ veri-semantiği;
-   hairline kenarlar, tonlu gölgeler, tabular rakamlar, ölçülü GPU-güvenli motion,
-   tutarlı yarıçap sistemi. Neon parıltı yok (yalnız hafif vurgu). */
+/* OEE Panosu — "The Foundry Gauge": açık-temalı, kurumsal endüstriyel gösterge sistemi.
+   İlkeler (DESIGN.md): tek mavi vurgu (etkileşim+OEE); yeşil/indigo/kırmızı YALNIZ veri-kanalı;
+   hairline kenarlar, keskin köşeli çelik paneller, tabular mono rakamlar, parıltı/glow YOK,
+   ölçülü GPU-güvenli motion, WCAG AA kontrast. (Koyu temadan bilinçli sapma.) */
 
 :root {
-  --bg: #070809;
-  --bg-2: #0c0e11;
-  --bg-3: #11141a;          /* yükseltilmiş yüzey (segment, input, rec) */
-  --ink: #eef2f6;
-  --muted: #9099a8;
-  --faint: #626c7a;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.14);
-  --accent: #22d3ee;        /* tek etkileşim vurgusu (elektrik cyan) */
-  --accent-ink: #04232b;    /* vurgu üstü metin (koyu teal — cyan üzerinde AA kontrast) */
-  --good: #34d399;          /* veri: görünür kanal / iyi */
-  --inferred: #a78bfa;      /* veri: çıkarım kanalı */
-  --loss: #fb7185;          /* veri: kayıp */
+  --bg: #edf1f5;            /* soğuk açık gri sayfa (krem değil) */
+  --bg-2: #ffffff;          /* kart / yüzey */
+  --bg-3: #f2f5f8;          /* inset kontrol / öneri zemini */
+  --steel: #eef2f6;         /* endüstriyel panel çerçevesi */
+  --ink: #16202b;           /* gövde metni (~15:1) */
+  --muted: #58626f;         /* ikincil metin / etiket (~6:1) */
+  --faint: #677080;         /* küçük etiket (~5:1) */
+  --line: #e2e7ec;          /* hairline kenar */
+  --line-strong: #cdd4dc;
+  --accent: #1f5da6;        /* tek etkileşim vurgusu (kurumsal mavi, ~6.6:1) */
+  --accent-deep: #1a4f8e;   /* buton hover/active */
+  --accent-soft: #eaf1f8;   /* mavi tonlu açık yüzey */
+  --accent-ink: #ffffff;    /* vurgu üstü metin */
+  --good: #237a5c;          /* veri: kullanılabilirlik / görünür */
+  --inferred: #535f8a;      /* veri: performans / çıkarımsal */
+  --loss: #a8443a;          /* veri: kalite / kayıp */
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
-  /* Sayısal göstergeler için sistem-mono (sıfır indirme) — cockpit/instrument hissi. */
+  /* Sayısal göstergeler için sistem-mono (sıfır indirme) — instrument hissi. */
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  --r-shell: 22px;
-  --r-core: 16px;
-  --r-ctl: 11px;            /* input/küçük kontrol */
+  --display: "Archivo", system-ui, sans-serif;
+  --r-shell: 6px;         /* soft (DESIGN.md) — dış çerçeve */
+  --r-core: 4px;          /* panel — iç çekirdek */
+  --r-ctl: 4px;           /* panel — input/buton (keskin/endüstriyel) */
+  --r-sharp: 2px;         /* sharp — metre/ince öğe */
   --r-pill: 999px;
-  --shadow-card: 0 24px 60px -32px rgba(0, 0, 0, 0.85);
+  --shadow-card: 0 1px 2px rgba(22, 32, 43, 0.05), 0 14px 30px -18px rgba(22, 32, 43, 0.22);
 }
 
 * { box-sizing: border-box; }
 
-html { color-scheme: dark; }
+html { color-scheme: light; }
 
 body {
   margin: 0;
@@ -44,7 +49,7 @@ body {
 
 #root { min-height: 100vh; }
 
-::selection { background: rgba(34, 211, 238, 0.28); color: #fff; }
+::selection { background: rgba(31, 93, 166, 0.18); color: var(--ink); }
 
 /* Klavye odağı (a11y): tutarlı vurgu halkası. */
 :where(button, a, input, select):focus-visible {
@@ -53,57 +58,95 @@ body {
   border-radius: var(--r-ctl);
 }
 
-/* Arka plan: çok hafif, sabit radyal mesh orblar (pointer-events yok). */
+/* Arka plan: çok hafif, sabit kurumsal mavi/indigo wash (pointer-events yok). */
 .aurora {
   position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
   background:
-    radial-gradient(46rem 30rem at 10% -10%, rgba(34, 211, 238, 0.09), transparent 60%),
-    radial-gradient(38rem 28rem at 108% 6%, rgba(167, 139, 250, 0.07), transparent 60%),
-    radial-gradient(52rem 40rem at 50% 122%, rgba(52, 211, 153, 0.045), transparent 60%);
+    radial-gradient(50rem 32rem at 8% -12%, rgba(31, 93, 166, 0.05), transparent 60%),
+    radial-gradient(46rem 30rem at 110% 4%, rgba(83, 95, 138, 0.04), transparent 60%);
 }
 
-/* ---- Global görünüm barı (Pano / Canlı Replay) ---- */
-.viewnav {
+/* ---- Birleşik header — üst satır (sticky): tek marka + mod sekmeleri + CANLI ---- */
+.apphead-top {
   position: sticky; top: 0; z-index: 40;
-  display: flex; align-items: center; gap: 0.85rem;
-  padding: 0.6rem clamp(1rem, 4vw, 2.4rem);
-  background: rgba(7, 8, 9, 0.72);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  display: flex; align-items: center; gap: 1.2rem;
+  padding: 0.7rem clamp(1rem, 4vw, 2.4rem);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
   border-bottom: 1px solid var(--line);
 }
-.viewnav-brand {
-  font-size: 12px; font-weight: 800; letter-spacing: 0.16em;
-  color: var(--accent); user-select: none;
+/* Mod sekmeleri (birincil) — alt-çizgi aktif; pill DEĞİL → view-toggle'dan ayrışır. */
+.modetabs { display: inline-flex; gap: 0.4rem; }
+.modetab {
+  background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0;
+  color: var(--muted); font: inherit; font-weight: 600; font-size: 0.9rem; padding: 6px 4px; cursor: pointer;
+  transition: color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+.modetab:hover { color: var(--ink); }
+.modetab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- Kontrol satırı (görünüme özel; header bloğunun parçası, flush) ---- */
+.apphead-controls {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 1rem 1.4rem; flex-wrap: wrap;
+  padding: 0.85rem clamp(1rem, 4vw, 2.4rem);
+  background: var(--bg-2); border-bottom: 1px solid var(--line);
 }
 
-/* ---- Segment kontrolü (Pano/Replay + Müdür/Amir tek stil) ---- */
-.seg, .tabs {
+/* ---- Segment (Görünüm toggle + Hız) — ikincil, etiketli ---- */
+.viewtoggle, .ctl-group { display: flex; flex-direction: column; gap: 5px; }
+.viewtoggle-cap {
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+}
+.vt-seg, .seg {
   display: inline-flex; gap: 3px; padding: 3px;
   background: var(--bg-3); border: 1px solid var(--line); border-radius: var(--r-pill);
 }
-.seg button, .tab {
-  background: transparent; color: var(--muted);
-  padding: 6px 15px; border-radius: var(--r-pill); border: 1px solid transparent;
-  font: inherit; font-weight: 600; font-size: 0.8rem; cursor: pointer;
+.vt, .seg button {
+  background: transparent; color: var(--muted); border: 1px solid transparent; border-radius: var(--r-pill);
+  font: inherit; font-weight: 600; font-size: 0.8rem; padding: 6px 14px; cursor: pointer;
   transition: color 0.3s var(--ease), background 0.3s var(--ease);
 }
-.seg button:hover, .tab:hover { color: var(--ink); }
-.seg button.active, .tab.active {
-  background: rgba(255, 255, 255, 0.07); color: var(--ink);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+.vt:hover, .seg button:hover { color: var(--ink); }
+.vt.active, .seg button.active {
+  background: #fff; color: var(--accent); border-color: var(--line); box-shadow: 0 1px 2px rgba(22, 32, 43, 0.08);
 }
+.seg button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ---- Sayfa başlığı ---- */
-.topbar {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 1rem 1.4rem; padding: 1.5rem clamp(1rem, 4vw, 2.4rem) 0.6rem; flex-wrap: wrap;
+/* ---- Zengin senaryo dropdown ---- */
+.dd { position: relative; display: flex; flex-direction: column; gap: 5px; }
+.dd-cap { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.dd-trigger {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  min-width: 190px; background: var(--bg-3); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 8px 11px;
+  font: inherit; font-weight: 600; font-size: 0.8rem; cursor: pointer;
+  transition: border-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
-.brand .eyebrow {
-  display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.24em;
-  text-transform: uppercase; color: var(--faint); margin-bottom: 3px;
+.dd-trigger:hover { border-color: var(--line-strong); }
+.dd-trigger:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31, 93, 166, 0.16); }
+.dd-trigger:disabled { opacity: 0.55; cursor: not-allowed; }
+.dd-val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-chev { color: var(--faint); flex: none; transition: transform 0.25s var(--ease); }
+.dd-trigger[aria-expanded="true"] .dd-chev { transform: rotate(180deg); }
+.dd-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
+  width: max(300px, 100%); max-height: 360px; overflow-y: auto;
+  list-style: none; margin: 0; padding: 5px;
+  background: var(--bg-2); border: 1px solid var(--line-strong); border-radius: var(--r-core);
+  box-shadow: var(--shadow-card);
 }
-.brand h1 { font-size: 1.3rem; font-weight: 700; margin: 0; letter-spacing: -0.025em; }
+.dd-opt {
+  display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left;
+  background: transparent; border: 0; border-radius: var(--r-ctl); padding: 9px 11px; cursor: pointer;
+  transition: background 0.2s var(--ease);
+}
+.dd-opt:hover, .dd-opt:focus-visible { background: var(--bg-3); outline: none; }
+.dd-opt.sel { background: var(--accent-soft); }
+.dd-opt-title { font-weight: 600; font-size: 0.86rem; color: var(--ink); }
+.dd-opt-desc { font-size: 0.76rem; color: var(--muted); line-height: 1.4; }
+.dd-opt-loss { font-size: 0.72rem; color: var(--faint); font-family: var(--mono); margin-top: 2px; }
 
 .controls { display: flex; align-items: flex-end; gap: 0.6rem; flex-wrap: wrap; }
 .controls label {
@@ -117,26 +160,34 @@ body {
 }
 .controls input:hover, .controls select:hover { border-color: var(--line-strong); }
 .controls input:focus, .controls select:focus {
-  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.16);
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31, 93, 166, 0.16);
 }
 
-/* ---- Birincil buton (vurgu) ---- */
-button {
-  font: inherit; font-weight: 600; font-size: 0.82rem; cursor: pointer;
-  border: 1px solid transparent; border-radius: var(--r-pill); padding: 9px 18px;
+/* Taban buton resetı — renk/zemin YOK (segment/sekme/dropdown kendi stilini korur).
+   Eski geniş `button{background:accent}` ikincil butonlara hover'da mavi zemin basıyordu. */
+button { font: inherit; cursor: pointer; }
+
+/* ---- Birincil buton (yalnız Uygula / Oynat / Yeniden dene) ---- */
+.controls > button, .empty .retry {
+  font-weight: 600; font-size: 0.82rem;
+  border: 1px solid transparent; border-radius: var(--r-ctl); padding: 9px 18px;
   background: var(--accent); color: var(--accent-ink);
-  transition: transform 0.3s var(--ease), filter 0.3s var(--ease), background 0.3s var(--ease);
+  transition: transform 0.3s var(--ease), background 0.3s var(--ease);
 }
-button:hover { filter: brightness(1.07); }
-button:active { transform: translateY(1px) scale(0.99); }
+.controls > button:hover, .empty .retry:hover { background: var(--accent-deep); }
+.controls > button:active, .empty .retry:active { transform: translateY(1px) scale(0.99); }
 
 /* ---- Boş durum ---- */
 .empty {
   margin: clamp(1rem, 4vw, 2.4rem); padding: 2.2rem; border-radius: var(--r-shell);
   background: var(--bg-2); border: 1px solid var(--line); color: var(--muted); line-height: 1.75;
+  box-shadow: var(--shadow-card);
 }
 .empty strong { color: var(--ink); }
-.empty code { color: var(--accent); background: rgba(34, 211, 238, 0.08); padding: 1px 6px; border-radius: 6px; }
+.empty code { color: var(--accent); background: var(--accent-soft); padding: 1px 6px; border-radius: 4px; }
+.empty.error { border-color: var(--line-strong); }
+.empty.error strong { color: var(--loss); }
+.empty .retry { margin-left: 0.75rem; padding: 7px 14px; font-size: 0.8rem; }
 .hidden { display: none !important; }
 
 /* ---- Izgara ---- */
@@ -146,80 +197,244 @@ button:active { transform: translateY(1px) scale(0.99); }
   max-width: 1340px; margin: 0 auto;
 }
 
-/* ---- Çift-bizel kart (dış kabuk + iç çekirdek) ---- */
+/* ---- Çift-bizel çelik panel (dış çerçeve + iç çekirdek) ---- */
+/* Düz-öncelikli, anında render: vardiyada bir-bakış panosu yüklenmeyi BEKLETMEZ.
+   (Product register: orkestre sayfa-yükleme dizisi yok; kademeli `rise` kaldırıldı.) */
 .shell {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--steel);
   border: 1px solid var(--line);
   border-radius: var(--r-shell);
-  padding: 6px;
+  padding: 5px;
   box-shadow: var(--shadow-card);
-  opacity: 0; transform: translateY(14px);
-  animation: rise 0.7s var(--ease) forwards;
-  transition: transform 0.45s var(--ease), border-color 0.45s var(--ease);
+  transition: border-color 0.3s var(--ease);
 }
-.shell:hover { transform: translateY(-3px); border-color: var(--line-strong); }
+/* Etkileşimsiz panel: hover'da yalnız kenar güçlenir (lift YOK — tıklanabilirlik vaat etmez). */
+.shell:hover { border-color: var(--line-strong); }
 .shell .core {
   position: relative;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.14)), var(--bg-2);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
   border-radius: var(--r-core);
   padding: 1.2rem 1.3rem 1.3rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   height: 100%;
 }
-.shell:nth-child(1) { animation-delay: 0.02s; }
-.shell:nth-child(2) { animation-delay: 0.07s; }
-.shell:nth-child(3) { animation-delay: 0.12s; }
-.shell:nth-child(4) { animation-delay: 0.17s; }
-.shell:nth-child(5) { animation-delay: 0.22s; }
-.shell:nth-child(6) { animation-delay: 0.27s; }
-
-@keyframes rise { to { opacity: 1; transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) {
-  .shell { animation: none; opacity: 1; transform: none; }
-  .shell:hover { transform: none; }
-}
-
-/* Kart başlığı: küçük vurgu çentiği + etiket. */
+/* Eyebrow (Archivo UPPERCASE) — satır içi kullanım için temel stil. */
 .eyebrow {
   display: flex; align-items: center; gap: 7px;
-  font-size: 10px; font-weight: 600; letter-spacing: 0.2em;
-  text-transform: uppercase; color: var(--faint); margin-bottom: 0.95rem;
+  font-family: var(--display);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--faint);
 }
-.eyebrow::before {
-  content: ""; width: 14px; height: 2px; border-radius: 2px;
-  background: var(--accent); opacity: 0.7;
+/* Kart başlığı: panel üst şeridi + alt kural (tekrarlayan accent-tick YOK —
+   "her bölümde eyebrow" tuzağından kaçınır, endüstriyel panel hissi verir). */
+.core > .eyebrow {
+  margin: -1.2rem -1.3rem 1.15rem; padding: 0.82rem 1.3rem;
+  border-bottom: 1px solid var(--line);
 }
 canvas { max-height: 268px; }
 
-/* ---- KPI başlığı ---- */
-.kpis { grid-column: 1 / -1; }
-.kpis .core {
-  display: flex; flex-wrap: wrap; align-items: stretch; gap: 0;
+/* Kart ritmi: bazı kartlar tam genişlik (aynı-boy ızgara monotonluğunu kırar). */
+.card-wide { grid-column: 1 / -1; }
+/* Geniş öneri kartı: liste 2 sütun → genişliği doldurur, satır uzunluğu okunur kalır. */
+.recommendations.card-wide .rec-list {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; align-items: start;
 }
-.kpi {
-  display: flex; flex-direction: column; justify-content: center; gap: 4px;
-  padding: 0.1rem clamp(1rem, 2.6vw, 2.2rem);
+@media (max-width: 760px) {
+  .recommendations.card-wide .rec-list { grid-template-columns: 1fr; }
 }
-.kpi:first-child { padding-left: 0.2rem; }
-.kpi + .kpi { border-left: 1px solid var(--line); }
-.kpi .label { font-size: 11px; letter-spacing: 0.06em; color: var(--muted); text-transform: uppercase; }
-/* Legend noktası: KPI'yı OEE trend grafiğinin aynı renkli serisine bağlar (birebir). */
-.kpi .label .dot {
-  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-  margin-right: 7px; vertical-align: middle; flex: none;
+
+
+/* =====================================================================
+   CONTROL STRIP — cesur hero: solda OEE gauge çapası, sağda A×P×Q kanal
+   kaskadı + toplam kayıp. Hero + şelale + maliyet başlığı tek bantta.
+   Amaçlı motion: gauge dolumu, count-up, metre fill.
+   ===================================================================== */
+.fhero { grid-column: 1 / -1; }
+.fhero .core { padding: 0; background: transparent; border: 0; box-shadow: none; }
+.cstrip {
+  display: grid; grid-template-columns: 280px 1fr; gap: 1px;
+  background: var(--line); border: 1px solid var(--line); border-radius: var(--r-core); overflow: hidden;
 }
-.kpi .value.small .dot { width: 6px; height: 6px; margin-right: 5px; }
-.kpi .value {
-  font-family: var(--mono); font-variant-numeric: tabular-nums;
-  font-size: clamp(1.6rem, 3.8vw, 2.3rem); font-weight: 600; line-height: 1.02; letter-spacing: -0.02em;
+@media (max-width: 820px) { .cstrip { grid-template-columns: 1fr; } }
+
+/* Sol: gauge çapası */
+.cs-gauge {
+  background: var(--bg-2); padding: 1.3rem 1.4rem 1.2rem;
+  display: flex; flex-direction: column; align-items: center;
 }
-.kpi .value.small {
-  font-family: "Plus Jakarta Sans", system-ui, sans-serif;   /* alt satır metni sans */
-  font-size: 0.82rem; font-weight: 500; letter-spacing: 0; color: var(--muted); margin-top: 3px;
+.cs-gauge .gcap {
+  align-self: flex-start; font-family: var(--display);
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint);
 }
-.kpi-oee .value {
-  font-size: clamp(2.3rem, 6vw, 3.4rem); font-weight: 700; color: var(--accent);
-  text-shadow: 0 0 22px rgba(34, 211, 238, 0.20);   /* hafif vurgu, neon değil */
+.dial { position: relative; width: 200px; height: 118px; margin-top: 0.5rem; }
+.dial svg { display: block; }
+.dial .read { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; }
+.dial .read .n {
+  display: block; font-family: var(--display);
+  font-size: 2.9rem; font-weight: 800; line-height: 1; color: var(--accent); letter-spacing: -0.01em;
+}
+.dial .read .u { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+.gscale {
+  display: flex; justify-content: space-between; width: 200px; margin-top: 0.2rem;
+  font-family: var(--mono); font-size: 0.66rem; color: var(--faint);
+}
+/* Durum çipi: öncü nokta + HEDEF ALTINDA/ÜSTÜ + sapma. */
+.gdelta {
+  margin-top: 0.7rem; display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--display); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em;
+  padding: 5px 11px; border-radius: var(--r-pill); border: 1px solid transparent;
+}
+.gdelta::before { content: ""; width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.gdelta.neg { color: var(--loss); background: rgba(168, 68, 58, 0.08); border-color: rgba(168, 68, 58, 0.2); }
+.gdelta.neg::before { background: var(--loss); }
+.gdelta.pos { color: var(--good); background: rgba(35, 122, 92, 0.08); border-color: rgba(35, 122, 92, 0.2); }
+.gdelta.pos::before { background: var(--good); }
+
+/* Gauge altı OEE sparkline (eğilim). */
+.spark { margin-top: 0.8rem; display: block; opacity: 0.9; }
+
+/* Sağ: kanal kaskadı + toplam kayıp */
+.cs-cascade { background: var(--bg-2); display: flex; flex-direction: column; }
+.cs-channels {
+  display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: stretch; gap: 0;
+  padding: 1.3rem 0.4rem 1.1rem;
+}
+.cs-arrow { align-self: center; color: var(--line-strong); font-size: 1.1rem; padding: 0 0.2rem; }
+.ctile { padding: 0 1.2rem; display: flex; flex-direction: column; min-width: 0; }
+.ctile .ck {
+  font-family: var(--display);
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint);
+  display: flex; align-items: center; gap: 7px;
+}
+.ctile .ck .sq { width: 8px; height: 8px; border-radius: var(--r-sharp); flex: none; }
+.ctile .cv {
+  font-family: var(--display); font-variant-numeric: tabular-nums;
+  font-size: 2rem; font-weight: 800; color: var(--ink); margin: 0.4rem 0 0.55rem; letter-spacing: -0.01em;
+}
+.ctile .cv small { font-size: 0.5em; font-weight: 700; color: var(--muted); }
+.ctile .closs { margin-top: 0.5rem; font-family: var(--mono); font-size: 0.76rem; color: var(--muted); }
+.ctile .csub { margin-top: 0.35rem; font-size: 0.72rem; color: var(--faint); line-height: 1.4; }
+.ctile .csub strong { color: var(--ink); }
+/* Eşikli metre: yatak + animasyonlu dolum + HEDEF 85 işareti */
+.meter { position: relative; height: 8px; background: #eaeef3; border-radius: var(--r-sharp); overflow: hidden; }
+/* Dolum: width yerine scaleX (GPU, layout-thrash yok). Genişlik %100, transform 0→değer. */
+.meter i {
+  position: absolute; inset: 0 0 0 0; width: 100%; border-radius: var(--r-sharp);
+  transform-origin: left center; will-change: transform;
+}
+.meter::after {
+  content: ""; position: absolute; top: -2px; bottom: -2px; width: 2px;
+  background: var(--ink); opacity: 0.45; left: 85%;
+}
+
+/* Toplam kayıp şeridi (hero alt vurgu) */
+.cs-cost {
+  margin-top: auto; display: flex; align-items: baseline; justify-content: space-between;
+  flex-wrap: wrap; gap: 0.4rem 1.2rem;
+  padding: 0.95rem 1.6rem; border-top: 1px solid var(--line); background: var(--bg-3);
+}
+.cs-cost-main { display: flex; align-items: baseline; gap: 0.5rem; }
+.cs-cost-k { font-size: 0.78rem; color: var(--muted); }
+.cs-cost-main strong { font-family: var(--display); font-size: 1.5rem; font-weight: 800; color: var(--loss); }
+.cs-cost-u { font-size: 0.76rem; color: var(--faint); }
+.cs-dq { font-size: 0.74rem; color: var(--muted); text-align: right; line-height: 1.4; }
+.cs-dq strong { color: var(--ink); font-family: var(--mono); }
+.cs-dq-note { display: block; color: var(--faint); }
+@media (max-width: 560px) {
+  .cs-channels { grid-template-columns: 1fr; gap: 1.1rem; }
+  .cs-arrow { display: none; }
+  .ctile { padding: 0 1.4rem; }
+  .cs-dq { text-align: left; }
+}
+
+/* ---- Replay canlı hero: gauge sinematik kayar, metreler yumuşak dolar ---- */
+.dial.live path { transition: stroke-dashoffset 0.45s var(--ease); }
+/* Anlık-değer ibresi: live'da değerle yumuşak döner (Pano'da count-up yeter, geçiş yok). */
+.dial.live .needle { transition: transform 0.45s var(--ease); }
+.replay-hero .meter i { transition: transform 0.45s var(--ease); }
+@media (prefers-reduced-motion: reduce) {
+  .dial.live path, .dial.live .needle, .replay-hero .meter i { transition: none; }
+}
+/* İlerleme barı (simüle haftada ne kadar ilerlendi). */
+.rprog {
+  width: 200px; height: 5px; margin-top: 0.9rem;
+  background: #eaeef3; border-radius: var(--r-sharp); overflow: hidden;
+}
+.rprog i {
+  display: block; height: 100%; width: 100%; background: var(--accent);
+  transform-origin: left center; transition: transform 0.45s var(--ease);
+}
+.rprog-cap {
+  margin-top: 0.5rem; font-family: var(--mono); font-size: 0.72rem; color: var(--muted); text-align: center;
+}
+@media (prefers-reduced-motion: reduce) { .rprog i { transition: none; } }
+
+/* Üst bar: endüstriyel durum LED'i */
+.viewnav-status {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 0.74rem; color: var(--muted);
+}
+/* Durum LED'i moda bağlı: Pano statik snapshot → nötr nokta (HAZIR); yalnız Replay
+   canlı akış → yeşil nabız (CANLI). Dürüstlük: canlı olmayan veriyi "canlı" göstermez. */
+.viewnav-status .led {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong);
+}
+.viewnav-status .led.live {
+  background: var(--good);
+  box-shadow: 0 0 0 3px rgba(35, 122, 92, 0.16);
+  animation: led-pulse 2.4s var(--ease) infinite;
+}
+@keyframes led-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(35, 122, 92, 0.16); }
+  50% { box-shadow: 0 0 0 5px rgba(35, 122, 92, 0.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .viewnav-status .led.live { animation: none; }
+}
+
+/* ---- Marka logosu (gauge mark + wordmark) ---- */
+.brand-logo { display: inline-flex; align-items: center; gap: 8px; }
+.brand-logo svg { display: block; }
+.brand-logo .wm {
+  font-family: var(--display); font-size: 14px; font-weight: 800; letter-spacing: 0.04em; color: var(--accent);
+}
+
+/* ---- Kayıp ağacı: yığılmış oran çubuğu + taranmış (inferred) + etiketler ---- */
+.proportion {
+  display: flex; height: 16px; border-radius: var(--r-sharp); overflow: hidden;
+  background: #eaeef3; margin: 0.2rem 0 1rem;
+  transform-origin: left center;
+  animation: grow-x 0.9s var(--ease) both;
+}
+@keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .proportion { animation: none; } }
+.prop-seg { height: 100%; box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.55); }
+.prop-seg:last-child { box-shadow: none; }
+/* Çıkarımsal: renge ek diyagonal tarama (renk-körü erişilebilirlik). */
+.prop-seg.inf, .sw.inf {
+  background-image: repeating-linear-gradient(
+    45deg, rgba(255, 255, 255, 0.45) 0 2px, transparent 2px 5px
+  );
+}
+.prop-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.prop-legend li { display: grid; grid-template-columns: 12px 1fr auto auto; align-items: center; gap: 0.6rem; }
+.prop-legend .sw { width: 11px; height: 11px; border-radius: var(--r-sharp); }
+.prop-legend .nm { font-size: 0.84rem; color: var(--ink); }
+.prop-legend .nm em { font-style: normal; color: var(--inferred); font-size: 0.78rem; }
+.prop-legend .vl { font-family: var(--mono); font-size: 0.8rem; color: var(--ink); }
+.prop-legend .pc { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); min-width: 3.2em; text-align: right; }
+.prop-note {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin: 0.9rem 0 0; font-size: 0.72rem; color: var(--faint);
+}
+.prop-note .sw { width: 10px; height: 10px; border-radius: var(--r-sharp); background: var(--muted); }
+
+/* ---- Blueprint dokusu (zemin, neredeyse görünmez teknik ızgara) ---- */
+.blueprint {
+  position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(22, 32, 43, 0.018) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, rgba(22, 32, 43, 0.018) 0 1px, transparent 1px 28px);
 }
 
 /* ---- Veri güvenilirliği detayı ---- */
@@ -234,59 +449,91 @@ canvas { max-height: 268px; }
   font-size: 1.05rem; font-weight: 600; color: var(--ink); letter-spacing: -0.01em;
 }
 
-/* ---- Öneriler ---- */
+/* ---- Öneriler (öncü renkli nokta — yan-şerit YASAK) ---- */
 .recommendations .muted { display: block; margin-bottom: 0.2rem; }
 .rec-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.65rem; }
 .rec {
-  padding: 0.85rem 0.95rem; border-radius: 13px; background: var(--bg-3);
-  border: 1px solid var(--line); border-left: 3px solid var(--good);
+  padding: 0.85rem 0.95rem; border-radius: var(--r-core); background: var(--bg-3);
+  border: 1px solid var(--line);
   transition: border-color 0.35s var(--ease), background 0.35s var(--ease);
 }
-.rec:hover { background: #141821; border-color: var(--line-strong); border-left-color: var(--good); }
-.rec.inferred { border-left-color: var(--inferred); }
-.rec.inferred:hover { border-left-color: var(--inferred); }
-.rec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
-.rec-title { font-weight: 600; color: var(--ink); font-size: 0.95rem; }
+.rec:hover { background: #fff; border-color: var(--line-strong); }
+.rec-head { display: flex; align-items: baseline; gap: 0.55rem; }
+/* Sıra no: önceliği gösteren küçük mono çip. */
+.rec-rank {
+  font-family: var(--mono); font-size: 0.72rem; font-weight: 600; color: var(--faint);
+  width: 1.5em; flex: none;
+}
+/* Kanal anlamı (görünür/çıkarımsal) öncü noktayla taşınır — Inferred-Channel Rule. */
+.rec-title { font-weight: 600; color: var(--ink); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.rec-gain { margin-left: auto; }
+/* Kazanca oranlı etki çubuğu (görsel tarama). */
+.rec-impact { height: 4px; border-radius: var(--r-sharp); background: #eaeef3; overflow: hidden; margin: 0.5rem 0 0; }
+.rec-impact i { display: block; height: 100%; transform-origin: left center; animation: grow-x 0.9s var(--ease) both; }
+@media (prefers-reduced-motion: reduce) { .rec-impact i { animation: none; } }
+.rec-title::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--good);
+}
+.rec.inferred .rec-title::before { background: var(--inferred); }
 .rec-gain {
   font-family: var(--mono); font-variant-numeric: tabular-nums;
   font-weight: 600; color: var(--good); font-size: 0.84rem; white-space: nowrap;
 }
+.rec.inferred .rec-gain { color: var(--inferred); }
 .rec-action { margin: 0.45rem 0 0.4rem; font-size: 0.84rem; line-height: 1.55; color: var(--ink); }
 .rec-meta { margin: 0; }
 .rec-meta strong { color: var(--ink); }
 
 /* ---- Yükleme iskeleti (shimmer) ---- */
 .sk-ph {
-  display: block; border-radius: 8px;
+  display: block; border-radius: 6px;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.04) 25%,
-    rgba(255, 255, 255, 0.09) 37%,
-    rgba(255, 255, 255, 0.04) 63%
+    #eef1f5 25%,
+    #f7f9fb 37%,
+    #eef1f5 63%
   );
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
 }
 @keyframes shimmer { to { background-position: -200% 0; } }
-.sk-kpis { display: flex; flex-wrap: wrap; gap: 0; }
-.sk-kpi { display: flex; flex-direction: column; gap: 10px; padding: 0.1rem clamp(1rem, 2.6vw, 2.2rem); }
-.sk-kpi:first-child { padding-left: 0.2rem; }
-.sk-kpi + .sk-kpi { border-left: 1px solid var(--line); }
 .sk-sm { width: 84px; height: 10px; }
 .sk-lg { width: 116px; height: 30px; }
 .sk-eyebrow { width: 132px; height: 10px; margin-bottom: 1rem; }
-.sk-chart { width: 100%; height: 240px; border-radius: 12px; }
+.sk-chart { width: 100%; height: 240px; border-radius: var(--r-core); }
+/* Control Strip şekilli iskelet parçaları. */
+.sk-gauge { width: 200px; height: 118px; border-radius: var(--r-core); margin: 0.6rem 0; }
+.sk-hero-ch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; padding: 1.3rem 0.4rem 1.1rem; }
 @media (prefers-reduced-motion: reduce) {
   .sk-ph { animation: none; }
 }
 
+/* ---- Anlatısal bölge başlıkları (DURUM / KAYIPLAR / AKSİYON / VERİ) ---- */
+.zone-head {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 0.8rem;
+  font-family: var(--display); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--faint); margin: 0.6rem 0 -0.2rem;
+}
+.zone-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.zone-head:first-child { margin-top: 0; }
+
+/* ---- Bilgi işareti (ⓘ) — sade metin + native tooltip ---- */
+.info {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.82em; color: var(--accent); cursor: help; vertical-align: baseline;
+  border-radius: 50%; transition: color 0.2s var(--ease);
+}
+.info:hover, .info:focus-visible { color: var(--accent-deep); outline: none; }
+
 /* ---- Duyarlı ---- */
-@media (max-width: 860px) {
+/* Tablet (≈768px) birincil cihaz: 2 sütun korunur (kayıp kartları yan yana, bir-bakış).
+   Tek sütuna yalnız dar ekranda (≤700px) düşülür. */
+@media (max-width: 700px) {
   .grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
-  .topbar { align-items: flex-start; }
-  .kpis .core { flex-direction: column; align-items: flex-start; gap: 1rem; }
-  .kpi, .kpi:first-child { padding: 0; }
-  .kpi + .kpi { border-left: 0; border-top: 1px solid var(--line); padding-top: 1rem; width: 100%; }
+  .apphead-top { flex-wrap: wrap; gap: 0.6rem 1rem; }
+  .apphead-controls { flex-direction: column; align-items: stretch; }
+  .apphead-controls .controls { width: 100%; }
+  .dd, .dd-trigger { width: 100%; }
 }

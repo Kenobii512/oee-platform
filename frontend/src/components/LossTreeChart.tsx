@@ -1,9 +1,8 @@
-// lossChart karşılığı: yatay bar, eksen-filtreli (dakika/parça). inferred=mor, visible=yeşil.
-import { Bar } from 'react-chartjs-2'
-import type { ChartData, ChartOptions } from 'chart.js'
-
+// Kayıp ağacı: yığılmış 100% oran çubuğu (her kaybın paya oranı bir bakışta).
+// Renk kind'a göre (görünür=yeşil, çıkarımsal=indigo); çıkarımsal segmentler TARANMIŞ
+// (renk-körü erişilebilirlik — renge ek desen). Absolut değerler etiket listesinde.
 import type { LossCat } from '../api/types'
-import { barStyle, C, gridAxis } from '../styles/theme'
+import { METRIC } from '../styles/theme'
 import Card from './Card'
 
 interface Props {
@@ -11,30 +10,60 @@ interface Props {
   cats: LossCat[]
 }
 
-export default function LossTreeChart({ eyebrow, cats }: Props) {
-  const data: ChartData<'bar'> = {
-    labels: cats.map((c) => c.category + (c.kind === 'inferred' ? ' · çıkarım' : '')),
-    datasets: [
-      {
-        data: cats.map((c) => c.value),
-        backgroundColor: cats.map((c) => (c.kind === 'inferred' ? C.inferred : C.good)),
-        ...barStyle,
-      },
-    ],
-  }
+const fmt = (n: number) => Math.round(n).toLocaleString('tr-TR')
 
-  const options: ChartOptions<'bar'> = {
-    indexAxis: 'y',
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: gridAxis, beginAtZero: true },
-      y: { grid: { display: false } },
-    },
-  }
+export default function LossTreeChart({ eyebrow, cats }: Props) {
+  const total = cats.reduce((s, c) => s + c.value, 0)
+  const unit = cats[0]?.axis === 'parts' ? 'parça' : 'dakika'
+  const color = (c: LossCat) => (c.kind === 'inferred' ? METRIC.performance : METRIC.availability)
 
   return (
     <Card eyebrow={eyebrow}>
-      <Bar data={data} options={options} />
+      {total <= 0 ? (
+        <p className="muted">Bu eksende kayıp yok.</p>
+      ) : (
+        <>
+          <div className="kpi-line">
+            <span className="muted">Toplam kayıp:</span>
+            <strong>
+              {fmt(total)} {unit}
+            </strong>
+          </div>
+          <div
+            className="proportion"
+            role="img"
+            aria-label={`Kayıp dağılımı: ${cats
+              .map((c) => `${c.category} %${Math.round((c.value / total) * 100)}`)
+              .join(', ')}`}
+          >
+            {cats.map((c) => (
+              <span
+                key={c.category}
+                className={`prop-seg${c.kind === 'inferred' ? ' inf' : ''}`}
+                style={{ width: `${(c.value / total) * 100}%`, background: color(c) }}
+                title={`${c.category}: ${fmt(c.value)}`}
+              />
+            ))}
+          </div>
+          <ul className="prop-legend">
+            {cats.map((c) => (
+              <li key={c.category}>
+                <span className={`sw${c.kind === 'inferred' ? ' inf' : ''}`} style={{ background: color(c) }} />
+                <span className="nm">
+                  {c.category}
+                  {c.kind === 'inferred' && <em> · çıkarımsal</em>}
+                </span>
+                <span className="vl">{fmt(c.value)}</span>
+                <span className="pc">%{Math.round((c.value / total) * 100)}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="prop-note">
+            <span className="sw" style={{ background: METRIC.availability }} /> görünür ·{' '}
+            <span className="sw inf" style={{ background: METRIC.performance }} /> çıkarımsal (taranmış)
+          </p>
+        </>
+      )}
     </Card>
   )
 }

@@ -1,11 +1,11 @@
-// Üst bar: marka, Müdür/Amir sekmeleri, senaryo seçici, tarih filtreleri (from/to), Uygula.
-// Tarih girişleri yerel taslak state; Uygula'da parent'a iletilir (mevcut qs() mantığı).
+// Birleşik header'ın kontrol satırı (markasız): Görünüm Özet/Detay + senaryo + tarih + Uygula.
+// Tarih girişleri yerel taslak state; Uygula'da parent'a iletilir.
 import { useState } from 'react'
 
 import type { Range } from '../api/types'
-import ScenarioPicker from './ScenarioPicker'
+import ScenarioDropdown from './ScenarioDropdown'
 
-export type View = 'manager' | 'supervisor'
+export type View = 'ozet' | 'detay'
 
 interface Props {
   view: View
@@ -19,27 +19,30 @@ export default function TopBar({ view, onViewChange, onApply, onActivateScenario
   const [to, setTo] = useState('')
 
   return (
-    <header className="topbar">
-      <div className="brand">
-        <span className="eyebrow">Üretim Verimliliği</span>
-        <h1>OEE Panosu</h1>
-      </div>
-      <div className="controls">
-        <div className="tabs">
+    <header className="apphead-controls">
+      <div className="viewtoggle">
+        <span className="viewtoggle-cap">Görünüm</span>
+        <div className="vt-seg" role="tablist" aria-label="Görünüm">
           <button
-            className={`tab${view === 'manager' ? ' active' : ''}`}
-            onClick={() => onViewChange('manager')}
+            role="tab"
+            aria-selected={view === 'ozet'}
+            className={`vt${view === 'ozet' ? ' active' : ''}`}
+            onClick={() => onViewChange('ozet')}
           >
-            Müdür
+            Özet
           </button>
           <button
-            className={`tab${view === 'supervisor' ? ' active' : ''}`}
-            onClick={() => onViewChange('supervisor')}
+            role="tab"
+            aria-selected={view === 'detay'}
+            className={`vt${view === 'detay' ? ' active' : ''}`}
+            onClick={() => onViewChange('detay')}
           >
-            Amir
+            Detay
           </button>
         </div>
-        <ScenarioPicker onActivate={onActivateScenario} />
+      </div>
+      <div className="controls">
+        <ScenarioDropdown onSelect={onActivateScenario} />
         <label>
           Başlangıç
           <input type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />

@@ -15,9 +15,9 @@ export default function DataQualityDetail({ dq }: { dq: DataQuality }) {
         </span>
       </div>
       <p className="muted">
-        Mor çubuklar <strong>çıkarım</strong> kanallarıdır (gerçek veride yok, genel veriden
-        kestirilir). Farklı eksenler (dakika vs parça) olduğundan tek Pareto yapılmaz; ortak birim
-        (TL) Maliyet Pareto'sunda.
+        <strong>Çıkarımsal</strong> (taranmış) segmentler gerçek veride yoktur; genel veriden
+        kestirilir. Farklı eksenler (dakika ↔ parça) olduğundan tek Pareto yapılmaz; ortak birim
+        (TL) Maliyet Pareto'sundadır.
       </p>
     </Card>
   )

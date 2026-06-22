@@ -10,13 +10,15 @@ import type { ReplaySnapshot } from '../api/types'
 import Card from '../components/Card'
 import CostPareto from '../components/CostPareto'
 import GridSkeleton from '../components/GridSkeleton'
-import { C, gridAxis, pct, tl } from '../styles/theme'
+import ReplayHero from '../components/ReplayHero'
+import ScenarioDropdown from '../components/ScenarioDropdown'
+import { C, gridAxis } from '../styles/theme'
 
 const STEPS = 60
 const SPEEDS = [100, 500, 1000]
 
 export default function Replay() {
-  const { data: catalog, isLoading: catalogLoading } = useQuery({
+  const { isLoading: catalogLoading } = useQuery({
     queryKey: ['scenarios'],
     queryFn: api.scenarios,
   })
@@ -68,11 +70,15 @@ export default function Replay() {
         label: 'OEE',
         data: series,
         borderColor: C.oee,
-        backgroundColor: 'rgba(34,211,238,0.12)',
+        backgroundColor: 'rgba(31,93,166,0.10)',
         fill: true,
         tension: 0.3,
         borderWidth: 2.5,
-        pointRadius: 0,
+        // Canlı uç işareti: yalnız son (en güncel) noktada belirgin nokta.
+        pointRadius: series.map((_, i) => (i === series.length - 1 ? 4 : 0)),
+        pointBackgroundColor: C.oee,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1.5,
       },
     ],
   }
@@ -87,29 +93,24 @@ export default function Replay() {
 
   return (
     <>
-      <div className="aurora" />
-      <header className="topbar">
-        <div className="brand">
-          <span className="eyebrow">Canlı Replay</span>
-          <h1>Bir Haftayı İzle</h1>
-        </div>
+      <header className="apphead-controls">
         <div className="controls">
-          <label>
-            Senaryo
-            <select value={scenario} onChange={(e) => setScenario(e.target.value)} disabled={running}>
-              {catalog?.scenarios.map((s) => (
-                <option key={s.id} value={s.id}>{s.title}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Hız
-            <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))} disabled={running}>
+          <ScenarioDropdown onSelect={setScenario} value={scenario} disabled={running} />
+          <div className="ctl-group">
+            <span className="viewtoggle-cap">Hız</span>
+            <div className="seg" role="group" aria-label="Hız">
               {SPEEDS.map((s) => (
-                <option key={s} value={s}>×{s}</option>
+                <button
+                  key={s}
+                  className={speed === s ? 'active' : ''}
+                  disabled={running}
+                  onClick={() => setSpeed(s)}
+                >
+                  ×{s}
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
+          </div>
           <button onClick={running ? stop : start}>
             {running ? 'Duraklat' : done ? 'Tekrar Oynat' : 'Oynat'}
           </button>
@@ -117,48 +118,21 @@ export default function Replay() {
       </header>
 
       {catalogLoading || (running && !snap) ? (
-        <GridSkeleton kpis={6} cards={2} label="Replay yükleniyor" />
+        <GridSkeleton cards={2} label="Replay yükleniyor" />
       ) : (
       <main className="grid">
-        <section className="shell kpis">
-          <div className="core">
-            <div className="kpi kpi-oee">
-              <span className="label">OEE {done ? '(final)' : running ? '· canlı' : ''}</span>
-              <span className="value">{snap ? pct(snap.oee.oee) : '–'}</span>
-            </div>
-            <div className="kpi">
-              <span className="label">Kullanılabilirlik</span>
-              <span className="value">{snap ? pct(snap.oee.availability) : '–'}</span>
-            </div>
-            <div className="kpi">
-              <span className="label">Performans</span>
-              <span className="value">{snap ? pct(snap.oee.performance) : '–'}</span>
-            </div>
-            <div className="kpi">
-              <span className="label">Biriken kayıp</span>
-              <span className="value">{snap ? tl(snap.cost.total_tl) + ' TL' : '–'}</span>
-            </div>
-            <div className="kpi">
-              <span className="label">Tahmini kazanç</span>
-              <span className="value">{snap ? '~' + tl(snap.total_estimated_gain_tl) + ' TL' : '–'}</span>
-            </div>
-            <div className="kpi">
-              <span className="label">İlerleme</span>
-              <span className="value small">
-                %{progress} · {snap ? snap.event_count : 0} olay {done ? '· tamamlandı' : ''}
-              </span>
-            </div>
-          </div>
-        </section>
+        <div className="zone-head">Canlı Durum</div>
+        <ReplayHero snap={snap} progress={progress} running={running} done={done} />
 
-        <Card eyebrow="OEE · zaman içinde (düşüş)">
+        <div className="zone-head">Biriken Kayıplar</div>
+        <Card eyebrow="OEE · Zaman İçinde (Düşüş)" className="card-wide">
           <Line data={lineData} options={lineOpts} />
         </Card>
 
         {snap ? (
           <CostPareto cost={snap.cost} />
         ) : (
-          <Card eyebrow="Maliyet Pareto'su (TL)">
+          <Card eyebrow="Maliyet Pareto'su (TL)" className="card-wide">
             <p className="muted">Oynat'a basın. Kayıplar biriktikçe canlı dolacak.</p>
           </Card>
         )}
