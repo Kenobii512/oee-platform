@@ -1,0 +1,8 @@
+# H3 — belirsizlik/güven katmanı faktörleri (şeffaf, varsayım tabanlı).
+# Çıkarım kanalları (FILL_LOSS/SPEED_LOSS) için nokta tahmin ETRAFINDA bant üretilir.
+# Çıkarım sistematik olarak EKSİK sayar (nominal = gözlenen max, kendisi kayıpla azalmış)
+# → gerçek nokta tahminin ÜSTÜNDE olma eğilimindedir; bu yüzden bant yukarı asimetriktir.
+
+low_factor: 0.85       # tam yeterlilikte alt sınır = value × 0.85
+high_factor: 1.30      # tam yeterlilikte üst sınır = value × 1.30 (baseline gerçeğini kapsar)
+sufficiency_threshold: 0.5  # bu skorun altında kanal "düşük güven" işaretlenir

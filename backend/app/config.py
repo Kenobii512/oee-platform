@@ -155,6 +155,25 @@ def load_recommend_config(path: str | Path) -> RecommendConfig:
 
 
 @dataclass(frozen=True)
+class ConfidenceConfig:
+    """H3 belirsizlik bandı faktörleri. Çıkarım kanalı nokta tahmini etrafında aralık üretir."""
+
+    low_factor: float
+    high_factor: float
+    sufficiency_threshold: float
+
+
+def load_confidence_config(path: str | Path) -> ConfidenceConfig:
+    with open(path, encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+    return ConfidenceConfig(
+        low_factor=float(raw.get("low_factor", 0.85)),
+        high_factor=float(raw.get("high_factor", 1.30)),
+        sufficiency_threshold=float(raw.get("sufficiency_threshold", 0.5)),
+    )
+
+
+@dataclass(frozen=True)
 class ScenarioInfo:
     """Demo senaryo kataloğu girdisi. expected_top_loss kalibrasyon kapısının hedefidir."""
 
