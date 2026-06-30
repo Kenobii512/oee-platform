@@ -78,6 +78,7 @@ export default function ScenarioDropdown({ onSelect, value, disabled }: Props) {
               >
                 <span className="dd-opt-title">{s.title}</span>
                 <span className="dd-opt-desc">{s.description}</span>
+                {s.narrative && <span className="dd-opt-narr">{s.narrative}</span>}
                 <span className="dd-opt-loss">Beklenen baş kayıp: {catLabel(s.expected_top_loss)}</span>
               </button>
             </li>

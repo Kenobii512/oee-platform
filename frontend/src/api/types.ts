@@ -76,6 +76,8 @@ export interface ScenarioInfo {
   title: string
   description: string
   expected_top_loss: string
+  narrative?: string // H6: bir cümlelik demo hikâyesi
+  highlight?: string // H6: vurgulanacak grafik (cost | loss_tree | trend | oee)
 }
 
 export interface ScenarioCatalog {
