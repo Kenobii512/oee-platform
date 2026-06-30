@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-06-30 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 145/145 + frontend vitest 8/8 + simülatör 105/105 yeşil
+**Güncelleme:** 2026-06-30 · **Repo:** `Kenobii512/oee-platform` (private) · **Test (entegre main):** backend + frontend vitest 8/8 + simülatör 115/115 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -81,23 +81,30 @@ GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
 ## Sıradaki yol haritası
 
 **Dalga 2 TAMAM** (G8 · GR · G7). **Dalga 3 TAMAM** (G12 · G4.1 · G10 · Perf-UI).
-**Hazırlık Dalga A TAMAM** (H1 · H2 · H3 — `feat/h1-dirty-data`):
+**Hazırlık Dalga A TAMAM** (H1 · H2 · H3):
 - **H1 — Kirli-veri dayanıklılığı:** `tools/corrupt.py` (10 tür, seed'li); loader ham-CSV/encoding'de
-  zarif-bozulma (utf-8-sig+replace, csv.Error dosya-bazında red); EventRow negatif-duration validator;
-  `tests/fixtures/dirty/` + parametrize testler; `data_quality.coverage(...)` `sufficient` sinyali
-  (kısmi/boş pencere 0/NaN yerine açık "yetersiz veri"); out-of-order/duplicate span+union testleri.
-- **H2 — Konfigürasyonla ingest adaptörü:** `app/ingest/adapter.py` `apply_mapping` + `AdapterConfig`
-  (kolon/zaman/tz/süre-birimi/reason/event_type/default); `config/adapters/generic_plant.yaml` +
-  `tests/fixtures/raw/`; `POST /ingest?adapter=<profil>` (ham→adapt→H1 ingest); eşlenemeyen/eksik → 400.
-  Yeni profil = yeni YAML.
-- **H3 — Belirsizlik/güven:** `app/analytics/confidence.py` `data_sufficiency(...)` (0–1) + `band(...)`
-  (çıkarım kanalı nokta etrafında aralık; baseline'da ground_truth'u KAPSAR); `cost.to_tl` →
-  `tl_low/tl_high/confidence/low_confidence` (görünür=tam güven, çıkarım=bant; `total_tl` değişmez);
-  recommend düşük-güven işareti; `/loss-tree/cost` + `/recommendations` alanları; `config/confidence.yaml`;
-  pano "düşük güven" rozeti (Recommendations).
+  zarif-bozulma; EventRow negatif-duration validator; `tests/fixtures/dirty/`; `data_quality.coverage`
+  `sufficient` sinyali; out-of-order/duplicate span+union testleri.
+- **H2 — Konfigürasyonla ingest adaptörü:** `app/ingest/adapter.py` `apply_mapping` + `AdapterConfig`;
+  `config/adapters/generic_plant.yaml` + `tests/fixtures/raw/`; `POST /ingest?adapter=<profil>`.
+- **H3 — Belirsizlik/güven:** `app/analytics/confidence.py` `data_sufficiency` + `band` (baseline'da
+  ground_truth'u KAPSAR); `cost.to_tl` → `tl_low/tl_high/confidence/low_confidence`; pano "düşük güven" rozeti.
 
-**Sırada:** Hazırlık Dalga B (H4 çok-seed · H5 duyarlılık · H6 demo cilası · H7 hat-doğrulayıcı),
-Dalga C (H8 utilization/takvim · H9 ops hızlı kazanımlar); ardından pilot kiti / saha denemesi.
+**Hazırlık Dalga B TAMAM** (H4 · H5 · H6 · H7):
+- **H4 — Çok-seed + hat varyasyonları:** `fixtures/multiseed/` N=10 + `test_multiseed_parity` (DAĞILIM
+  parite: ortalama ±%1, geri kazanım medyanı ≥%85); simülatör `config/lines/` 2 varyasyon.
+- **H5 — Duyarlılık analizi:** `simulator/tools/sensitivity.py` + `docs/sensitivity_report.md`
+  (speed_loss en yüksek etki, fill_loss en düşük).
+- **H6 — Demo cilası:** `ScenarioInfo` `narrative`/`highlight`; pano `ScenarioDropdown` anlatısı.
+- **H7 — Hat-tanımı doğrulayıcı:** `app/config_validate.py` + `POST /line/validate` + `docs/line-definition-guide.md`.
+
+**Hazırlık Dalga C TAMAM** (H8 · H9):
+- **H8 — Utilization/takvim:** `app/analytics/calendar.py` `calendar_minutes` (workday ∩ vardiya −
+  mola − bakım); utilization = çalışılan/takvim. A/P/Q/OEE değişmez.
+- **H9 — Ops:** loglama (`logging_setup` + timing middleware), tutarlı 400 (`_params` + global handler),
+  perf smoke (~12 hafta < 2s), `docs/deployment.md`. Yan düzeltme: `fetch_events` tarih filtresi CAST.
+
+**Sırada:** **pilot kiti / saha denemesi**. Olası ileri işler: simülatör destekli what-if, çok-hatlı destek.
 
 ### G7 replay — artık dönem-doğru (G4.1 sonrası)
 Replay penceresi G4.1 ile **üretime de uygulanır** (carrier_id zaman atfı) → Availability + kayıp-zaman +

@@ -179,13 +179,19 @@ def load_confidence_config(path: str | Path) -> ConfidenceConfig:
 
 @dataclass(frozen=True)
 class ScenarioInfo:
-    """Demo senaryo kataloğu girdisi. expected_top_loss kalibrasyon kapısının hedefidir."""
+    """Demo senaryo kataloğu girdisi. expected_top_loss kalibrasyon kapısının hedefidir.
+
+    H6: `narrative` = senaryoyu bir cümlede anlatan demo hikâyesi; `highlight` = panoda
+    vurgulanacak grafik anahtarı (cost/loss_tree/trend/oee).
+    """
 
     id: str
     title: str
     description: str
     expected_top_loss: str
     data_dir: str
+    narrative: str = ""
+    highlight: str = "cost"
 
 
 def load_scenario_catalog(path: str | Path) -> list[ScenarioInfo]:
@@ -195,6 +201,7 @@ def load_scenario_catalog(path: str | Path) -> list[ScenarioInfo]:
         ScenarioInfo(
             id=s["id"], title=s["title"], description=s["description"],
             expected_top_loss=s["expected_top_loss"], data_dir=s["data_dir"],
+            narrative=s.get("narrative", ""), highlight=s.get("highlight", "cost"),
         )
         for s in raw.get("scenarios", [])
     ]

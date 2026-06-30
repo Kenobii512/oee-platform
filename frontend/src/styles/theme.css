@@ -146,6 +146,8 @@ body {
 .dd-opt.sel { background: var(--accent-soft); }
 .dd-opt-title { font-weight: 600; font-size: 0.86rem; color: var(--ink); }
 .dd-opt-desc { font-size: 0.76rem; color: var(--muted); line-height: 1.4; }
+/* H6 demo anlatısı: senaryoyu bir cümlede özetler (sakin, italik, vurgu yok). */
+.dd-opt-narr { font-size: 0.74rem; color: var(--ink); line-height: 1.45; font-style: italic; margin-top: 3px; }
 .dd-opt-loss { font-size: 0.72rem; color: var(--faint); font-family: var(--mono); margin-top: 2px; }
 
 .controls { display: flex; align-items: flex-end; gap: 0.6rem; flex-wrap: wrap; }

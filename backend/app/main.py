@@ -15,6 +15,7 @@ from app.api.dashboard_routes import render_dashboard
 from app.api.dashboard_routes import router as dashboard_router
 from app.api.data_quality_routes import router as data_quality_router
 from app.api.ingest_routes import router as ingest_router
+from app.api.line_routes import router as line_router
 from app.api.loss_tree_routes import router as loss_tree_router
 from app.api.oee_routes import router as oee_router
 from app.api.recommend_routes import router as recommend_router
@@ -99,6 +100,7 @@ app.include_router(recommend_router)
 app.include_router(trend_router)
 app.include_router(data_quality_router)
 app.include_router(scenario_router)
+app.include_router(line_router)
 app.include_router(replay_router)
 app.include_router(dashboard_router)
 

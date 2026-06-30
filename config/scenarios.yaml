@@ -4,34 +4,48 @@
 #   Doğal-eksen kuralı: adlı kayıp, KENDİ ekseninde (dakika/parça) en yüksek değere sahip.
 #   Zaman kanalları (DOWNTIME/MICROSTOP/SPEED_LOSS) dakika ekseninde; malzeme kanalları
 #   (FILL_LOSS/QUALITY_REDO/QUALITY_SCRAP) parça ekseninde yarışır.
+# H6 demo: narrative = bir cümlelik hikâye; highlight = panoda vurgulanacak grafik
+#   (cost | loss_tree | trend | oee).
 scenarios:
   - id: baseline
     title: "Normal hafta"
     description: "Tipik bir hafta; en büyük kayıp duruşta."
     expected_top_loss: DOWNTIME
     data_dir: tests/fixtures/scenarios/baseline
+    narrative: "Sıradan bir vardiya: kayıplar dengeli ama en pahalısı duruş — referans noktası."
+    highlight: cost
   - id: breakdown_storm
     title: "Arıza fırtınası"
     description: "Sık ekipman arızası; duruş kaybı patlıyor."
     expected_top_loss: DOWNTIME
     data_dir: tests/fixtures/scenarios/breakdown_storm
+    narrative: "Redresör ve vinç üst üste arızalanıyor; duruş kaybı tüm Pareto'yu domine ediyor."
+    highlight: cost
   - id: microstop_plague
     title: "Mikro duruş salgını"
     description: "Vinçte sürekli kısa duruşlar; operatör çoğunu girmiyor."
     expected_top_loss: MICROSTOP
     data_dir: tests/fixtures/scenarios/microstop_plague
+    narrative: "Görünmez mikro duruşlar birikip büyük kayıp oluyor — operatör çoğunu hiç girmiyor."
+    highlight: loss_tree
   - id: speed_bottleneck
     title: "Hız kaybı / darboğaz"
     description: "Banyo süreleri sapıyor; kimsenin loglamadığı gizli kayıp (dakika ekseninde baskın)."
     expected_top_loss: SPEED_LOSS
     data_dir: tests/fixtures/scenarios/speed_bottleneck
+    narrative: "Kaplama banyosu nominalden yavaş; kimse loglamıyor ama çıkarım hız kaybını yakalıyor."
+    highlight: loss_tree
   - id: fill_problem
     title: "Doluluk problemi"
     description: "Askılar eksik dolu; parça kaybı büyük, kapasite düşük (parça ekseninde baskın)."
     expected_top_loss: FILL_LOSS
     data_dir: tests/fixtures/scenarios/fill_problem
+    narrative: "Askılar yarı dolu gidiyor; kapasitenin önemli kısmı boşa — parça ekseninde dev kayıp."
+    highlight: loss_tree
   - id: redo_crisis
     title: "Redo / kalite krizi"
     description: "Kalınlık sapması; yeniden işleme hurdayı geçiyor (parça ekseninde baskın)."
     expected_top_loss: QUALITY_REDO
     data_dir: tests/fixtures/scenarios/redo_crisis
+    narrative: "Kalınlık tutmuyor; parçalar tekrar tekrar kaplanıyor, ilk-geçiş kalitesi çöküyor."
+    highlight: trend

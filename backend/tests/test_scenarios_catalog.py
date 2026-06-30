@@ -15,6 +15,16 @@ def test_list_scenarios(tmp_path, monkeypatch):
             assert set(s) >= {"id", "title", "description", "expected_top_loss"}
 
 
+def test_scenarios_have_narrative_and_highlight(tmp_path, monkeypatch):
+    """H6: her senaryo demo anlatısı (boş değil) + vurgu grafiği taşır."""
+    monkeypatch.setenv("OEE_DUCKDB_PATH", str(tmp_path / "s.duckdb"))
+    valid_highlights = {"cost", "loss_tree", "trend", "oee"}
+    with TestClient(app) as client:
+        for s in client.get("/scenarios").json()["scenarios"]:
+            assert s.get("narrative"), f"{s['id']}: narrative boş"
+            assert s.get("highlight") in valid_highlights, f"{s['id']}: geçersiz highlight"
+
+
 def test_activate_scenario_loads_data(tmp_path, monkeypatch):
     monkeypatch.setenv("OEE_DUCKDB_PATH", str(tmp_path / "s.duckdb"))
     with TestClient(app) as client:
