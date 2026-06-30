@@ -9,7 +9,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 
 class EventType(str, Enum):
@@ -36,6 +36,13 @@ class EventRow(BaseModel):
     reason_code: Optional[str] = None
     operator_entered_reason: Optional[str] = None
     operator_entry_ts: Optional[datetime] = None
+
+    @field_validator("duration")
+    @classmethod
+    def _non_negative_duration(cls, v: float) -> float:
+        if v < 0:
+            raise ValueError(f"duration negatif olamaz: {v}")
+        return v
 
 
 class ProductionRow(BaseModel):

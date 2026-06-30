@@ -203,7 +203,8 @@ def main(argv: list[str] | None = None) -> int:
             rows = corrupt_rows(rows, args.kind, seed=args.seed, rate=args.rate)
         _write_csv(out_dir / name, fieldnames, rows)
 
-    print(f"kirli veri yazıldı: {out_dir} (kind={args.kind}, seed={args.seed}, rate={args.rate})")
+    # ASCII-only: Windows cp1252 konsolu Türkçe karakterde UnicodeEncodeError verir.
+    print(f"OK: {out_dir} (kind={args.kind}, seed={args.seed}, rate={args.rate})")
     return 0
 
 

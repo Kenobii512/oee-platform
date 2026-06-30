@@ -9,7 +9,16 @@ from app.ingest.loader import load_csv_dir
 from app.store.duckdb_repo import DuckDBRepository
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
+DIRTY = FIXTURES / "dirty"
 LINE_CONFIG = Path(__file__).resolve().parents[2] / "config" / "line_default.yaml"
+
+
+def fresh_repo(db_path: str):
+    """Boş, şema kurulu bir DuckDB deposu (yükleme yapılmadan)."""
+    repo = DuckDBRepository(db_path)
+    repo.connect()
+    repo.init_schema()
+    return repo
 
 # Kayıp ağacı doğrulamasında doğal eksen (dakika vs parça) seçimi.
 _MINUTES = {"DOWNTIME", "MICROSTOP", "SPEED_LOSS"}

@@ -28,9 +28,16 @@ def _clean(value):
     return value
 
 
-def _read_csv(path: Path) -> list[dict]:
-    with open(path, newline="", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
+def _read_csv(path: Path, report: LoadReport | None = None) -> list[dict]:
+    """CSV'yi zarifçe oku: bozuk encoding karakterleri değiştirilir (utf-8-sig + replace),
+    yapısal CSV hatası (csv.Error) dosya bazında reddedilir — tüm yüklemeyi düşürmez."""
+    try:
+        with open(path, newline="", encoding="utf-8-sig", errors="replace") as f:
+            return list(csv.DictReader(f))
+    except (csv.Error, OSError) as exc:
+        if report is not None:
+            report.add_rejection(path.name, -1, f"CSV okunamadı: {exc}")
+        return []
 
 
 def _is_ground_truth(name: str) -> bool:
@@ -58,7 +65,7 @@ def _load_events(path: Path, repo: Repository, report: LoadReport) -> None:
     if not path.exists():
         return
     valid: list[dict] = []
-    for i, raw in enumerate(_read_csv(path)):
+    for i, raw in enumerate(_read_csv(path, report)):
         try:
             row = EventRow(
                 timestamp=raw["timestamp"],
@@ -95,7 +102,7 @@ def _load_production(path: Path, repo: Repository, report: LoadReport) -> None:
     if not path.exists():
         return
     valid: list[dict] = []
-    for i, raw in enumerate(_read_csv(path)):
+    for i, raw in enumerate(_read_csv(path, report)):
         try:
             row = ProductionRow(
                 carrier_id=raw["carrier_id"],
@@ -118,7 +125,7 @@ def _load_orders(path: Path, repo: Repository, report: LoadReport) -> None:
     if not path.exists():
         return
     valid: list[dict] = []
-    for i, raw in enumerate(_read_csv(path)):
+    for i, raw in enumerate(_read_csv(path, report)):
         try:
             row = OrderRow(
                 order_id=raw["order_id"],
