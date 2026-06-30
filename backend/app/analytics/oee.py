@@ -127,7 +127,11 @@ def compute_oee(
     production: list[dict],
     line: LineDefinition,
     planned_downtime_min: float = 0.0,
+    calendar_min: float | None = None,
 ) -> OeeResult:
+    """A/P/Q/OEE + utilization. `calendar_min` verilirse (H8) utilization gerçek
+    takvim-zamanından (vardiya−mola−bakım) hesaplanır; yoksa eski MVP (span+planned).
+    A/P/Q/OEE her iki yolda da AYNIDIR — yalnız utilization değişir."""
     if not events or not production:
         return OeeResult(0.0, 0.0, 0.0, 0.0, 0.0, planned_downtime_min, 0.0)
     avail, span, _dt = availability_from_events(events)
@@ -135,8 +139,11 @@ def compute_oee(
     qual, final_yield = _quality_metrics(production)
     oee = avail * perf * qual
     operating = span * avail
-    calendar = span + planned_downtime_min
-    utilization = _clamp01(operating / calendar) if calendar > 0 else 0.0
+    if calendar_min is not None and calendar_min > 0:
+        utilization = _clamp01(operating / calendar_min)
+    else:
+        calendar = span + planned_downtime_min
+        utilization = _clamp01(operating / calendar) if calendar > 0 else 0.0
     return OeeResult(
         avail, perf, qual, oee, utilization, planned_downtime_min, final_yield
     )
