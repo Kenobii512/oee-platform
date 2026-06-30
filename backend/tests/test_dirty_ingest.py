@@ -3,8 +3,37 @@
 Her kirlilik türünde: sağlam satır yüklenir, bozuk satır LoadReport'a raporlanır,
 sistem ÇÖKMEZ. Ham-CSV/encoding hataları da satır/dosya bazında zarifçe ele alınır.
 """
+import pytest
+
 from app.ingest.loader import load_csv_dir
-from tests.conftest import fresh_repo
+from tests.conftest import DIRTY, fresh_repo
+
+# Bozuk satır üreten türler (reddedilme beklenir).
+_REJECTION_KINDS = (
+    "unknown_reason",
+    "empty_required",
+    "type_corruption",
+    "negative_duration",
+    "disposition_violation",
+)
+# Yapısal olarak geçerli ama eksik/sıra-dışı/duplicate türler (çökme yok, tam yükleme).
+_CLEAN_KINDS = ("missing_row", "duplicate", "out_of_order", "clock_skew", "partial_shift")
+_ALL_KINDS = _REJECTION_KINDS + _CLEAN_KINDS
+
+
+@pytest.mark.parametrize("kind", _ALL_KINDS)
+def test_dirty_fixture_loads_without_crash(kind, tmp_path):
+    """Her kirli fixture: çökmeden yüklenir ve en az bir tabloya sağlam satır girer."""
+    fixture = DIRTY / kind
+    if not fixture.exists():
+        pytest.skip(f"kirli fixture yok: {kind} (tools.corrupt ile üret)")
+    repo = fresh_repo(str(tmp_path / "t.duckdb"))
+    rep = load_csv_dir(fixture, repo).to_dict()  # çökmez
+    accepted = rep["accepted"]
+    assert sum(accepted.values()) > 0  # en az bir sağlam satır yüklendi
+    if kind in _REJECTION_KINDS:
+        assert rep["rejected_count"] >= 1  # bozuk satır raporlandı
+    repo.close()
 
 _EVENTS_HEADER = (
     "timestamp,line_id,carrier_id,station_id,event_type,duration,"
