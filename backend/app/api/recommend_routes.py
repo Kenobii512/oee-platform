@@ -8,10 +8,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query, Request
 
+from app.analytics.confidence import data_sufficiency
 from app.analytics.cost import to_tl
 from app.analytics.loss_tree import extract_loss_tree
 from app.analytics.recommend import RatioGainEstimator, generate_recommendations
 from app.config import (
+    load_confidence_config,
     load_cost_config,
     load_line_definition,
     load_recommend_config,
@@ -31,10 +33,12 @@ def get_recommendations(
     line = load_line_definition(cfg.line_config_path)
     costs = load_cost_config(cfg.cost_config_path)
     rec_cfg = load_recommend_config(cfg.recommend_config_path)
+    conf = load_confidence_config(cfg.confidence_config_path)
     events = repo.fetch_events(frm, to)
     production = repo.fetch_production(frm, to)
     tree = extract_loss_tree(events, production, line)
-    cost_tree = to_tl(tree, costs)
+    sufficiency = data_sufficiency(events, production, line)
+    cost_tree = to_tl(tree, costs, confidence_cfg=conf, sufficiency=sufficiency)
     recommendations = generate_recommendations(
         cost_tree, events, rec_cfg, RatioGainEstimator(rec_cfg)
     )

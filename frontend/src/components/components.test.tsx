@@ -49,6 +49,22 @@ describe('Recommendations', () => {
     expect(screen.getByText(/11\.546 ₺/)).toBeInTheDocument()
   })
 
+  it('düşük güvenli (low_confidence) kalemde "düşük güven" rozetini gösterir', () => {
+    const rec: RecData = {
+      ...REC,
+      recommendations: [{ ...REC.recommendations[0], kind: 'inferred', low_confidence: true }],
+    }
+    const { container } = render(<Recommendations rec={rec} />)
+    const badge = container.querySelector('.rec-badge')
+    expect(badge).not.toBeNull()
+    expect(badge?.textContent).toMatch(/düşük güven/i)
+  })
+
+  it('güveni yüksek kalemde rozet göstermez', () => {
+    const { container } = render(<Recommendations rec={REC} />)
+    expect(container.querySelector('.rec-badge')).toBeNull()
+  })
+
   it('aksiyon metnindeki `kod` token\'ını <code> olarak render eder (ham backtick değil)', () => {
     const rec: RecData = {
       ...REC,

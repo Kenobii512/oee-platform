@@ -33,7 +33,17 @@ export default function Recommendations({ rec }: { rec: RecData }) {
           <li key={r.category} className={`rec${r.kind === 'inferred' ? ' inferred' : ''}`}>
             <div className="rec-head">
               <span className="rec-rank">{i + 1}</span>
-              <span className="rec-title">{r.title}</span>
+              <span className="rec-title">
+                {r.title}
+                {r.low_confidence && (
+                  <span
+                    className="rec-badge"
+                    title="Bu kalem çıkarımdan gelir ve veri-yeterliliği düşük; değer bir aralıkla okunmalı."
+                  >
+                    ⚠ düşük güven
+                  </span>
+                )}
+              </span>
               <span className="rec-gain">
                 ~{tl(r.estimated_gain_tl_low)}–{tl(r.estimated_gain_tl_high)} ₺/dönem
               </span>

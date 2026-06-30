@@ -28,6 +28,7 @@ class AppConfig:
     cost_config_path: str
     recommend_config_path: str
     scenario_config_path: str
+    confidence_config_path: str
 
 
 def load_app_config() -> AppConfig:
@@ -46,6 +47,9 @@ def load_app_config() -> AppConfig:
         ),
         scenario_config_path=os.environ.get(
             "OEE_SCENARIO_CONFIG", str(config_dir / "scenarios.yaml")
+        ),
+        confidence_config_path=os.environ.get(
+            "OEE_CONFIDENCE_CONFIG", str(config_dir / "confidence.yaml")
         ),
     )
 
@@ -151,6 +155,25 @@ def load_recommend_config(path: str | Path) -> RecommendConfig:
         recovery_low_factor=float(defaults.get("recovery_low_factor", 0.5)),
         recovery_high_factor=float(defaults.get("recovery_high_factor", 1.0)),
         rules=rules,
+    )
+
+
+@dataclass(frozen=True)
+class ConfidenceConfig:
+    """H3 belirsizlik bandı faktörleri. Çıkarım kanalı nokta tahmini etrafında aralık üretir."""
+
+    low_factor: float
+    high_factor: float
+    sufficiency_threshold: float
+
+
+def load_confidence_config(path: str | Path) -> ConfidenceConfig:
+    with open(path, encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+    return ConfidenceConfig(
+        low_factor=float(raw.get("low_factor", 0.85)),
+        high_factor=float(raw.get("high_factor", 1.30)),
+        sufficiency_threshold=float(raw.get("sufficiency_threshold", 0.5)),
     )
 
 

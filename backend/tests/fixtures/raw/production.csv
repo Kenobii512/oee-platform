@@ -1,0 +1,4 @@
+carrier_id,order_id,loaded_qty,good_count,redo_count,scrap_count
+CAR-1,ORD-1,10,10,0,0
+CAR-2,ORD-1,10,10,1,0
+CAR-3,ORD-1,10,10,0,0

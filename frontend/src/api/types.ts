@@ -30,6 +30,11 @@ export interface CostCat {
   value: number
   tl: number
   kind: Kind
+  // H3 belirsizlik: çıkarım kanallarında nokta TL etrafında bant + güven skoru.
+  tl_low?: number
+  tl_high?: number
+  confidence?: number
+  low_confidence?: boolean
 }
 
 export interface CostTree {
@@ -50,6 +55,7 @@ export interface Recommendation {
   title: string
   action: string
   assumption: string
+  low_confidence?: boolean // H3: kayıp kaleminin veri-güveni düşük (öneride uyarı)
 }
 
 export interface Recommendations {

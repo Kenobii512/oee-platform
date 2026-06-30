@@ -1,0 +1,50 @@
+# H2 — örnek "saha dili" → sözleşme eşleme profili (jenerik bir fabrika CSV'si).
+# Sözleşme sabittir; bu profil ham PLC/SCADA/MES olay logunu sözleşme events satırına çevirir.
+# Yeni tesis = yeni YAML; kod değişmez.
+
+# ham_kolon -> sözleşme_kolon
+column_map:
+  ts: timestamp
+  machine: line_id
+  carrier: carrier_id
+  station: station_id
+  evt: event_type
+  dur_s: duration
+  cause: reason_code
+
+# strptime formatı (None/boş -> zaten ISO kabul edilir)
+timestamp_format: "%d/%m/%Y %H:%M:%S"
+# IANA saat dilimi (boş -> dönüşüm yok). Örn. "Europe/Istanbul"
+timezone: null
+
+# ham süre birimi; sözleşme birimi = DAKİKA. "s" -> /60, "min" -> aynen
+duration_unit: s
+
+# ham olay etiketi -> sözleşme EventType (eşlenemeyen değer açık hata)
+event_type_rule:
+  RUN: PROCESS
+  STOP: MICROSTOP
+  DOWN: DOWNTIME
+  LOAD: LOAD
+  UNLOAD: UNLOAD
+  QC: QC
+
+# ham neden etiketi -> standart reason_code (eşlenemeyen DOLU değer açık hata; boş -> boş)
+reason_map:
+  Sıkışma: jam
+  Bakım: maintenance
+  Ayar: setup
+  Malzeme: material
+
+# zorunlu ham kolonlar (eksik/boş -> açık hata)
+required:
+  - ts
+  - machine
+  - evt
+  - dur_s
+
+# eksik sözleşme alanları için varsayılan
+defaults:
+  station_id: ""
+  operator_entered_reason: ""
+  operator_entry_ts: ""
