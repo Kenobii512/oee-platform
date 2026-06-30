@@ -10,7 +10,10 @@ from app.store.duckdb_repo import DuckDBRepository
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 DIRTY = FIXTURES / "dirty"
-LINE_CONFIG = Path(__file__).resolve().parents[2] / "config" / "line_default.yaml"
+RAW = FIXTURES / "raw"
+CONFIG_DIR = Path(__file__).resolve().parents[2] / "config"
+ADAPTERS = CONFIG_DIR / "adapters"
+LINE_CONFIG = CONFIG_DIR / "line_default.yaml"
 
 
 def fresh_repo(db_path: str):
