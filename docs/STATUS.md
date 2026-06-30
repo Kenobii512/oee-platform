@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-06-18 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 94/94 + frontend vitest 2/2 + simülatör 105/105 yeşil
+**Güncelleme:** 2026-06-30 · **Repo:** `Kenobii512/oee-platform` (private) · **Test (Dalga C branch):** backend 117/117 + frontend vitest 2/2 + simülatör 115/115 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -68,8 +68,10 @@ GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
 - **G4.1 — dönem-doğru üretim atfı:** ✓ ÇÖZÜLDÜ (Dalga 3). `events.csv`'ye `carrier_id` eklendi;
   `fetch_production(frm,to)` askıyı kendi olaylarının en geç zaman damgasına göre pencereye bağlar →
   trend ve replay'de **P/Q pencere bazında doğru** değişir.
-- **Utilization formülü:** `calendar = span + planned_downtime_min` basit bir MVP; span içine düşen
-  planlı bakım çift sayılabilir, vardiya-dışı/molalar hariç. Parite testi yok; takvim modeliyle netleşecek.
+- **Utilization formülü:** ✓ ÇÖZÜLDÜ (H8, `feat/dalga-c-h8-h9`). `analytics/calendar.py`
+  `calendar_minutes` gerçek takvimden (workday ∩ vardiya − mola − bakım; örtüşme bir kez) hesaplar;
+  utilization = çalışılan / takvim-zamanı. A/P/Q/OEE değişmez (yalnız utilization). Mola/bakım çift
+  sayılmaz, vardiya-dışı dışlanır.
 - **Pano frontend:** **React 19 + Vite SPA** (GR). FastAPI build çıktısını (`app/frontend_dist/`,
   gitignore'lu; Docker stage-1 üretir) `/`'ta sunar; eski Jinja `/legacy`'de fallback. Dev'de
   `frontend/` Vite sunucusu backend'e (8000) proxy'ler. JSON sözleşmesi backend'le aynı.
@@ -81,8 +83,18 @@ GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
 ## Sıradaki yol haritası
 
 **Dalga 2 TAMAM** (G8 · GR · G7). **Dalga 3 TAMAM** (G12 · G4.1 · G10 · Perf-UI).
-**Sırada:** pilot kiti / saha denemesi. Olası ileri işler: simülatör destekli what-if (GainEstimator
-arayüzü hazır), utilization/takvim modeli paritesi, çok-hatlı destek.
+
+**Hazırlık paketleri H1–H9 TAMAM** (üç sibling branch, ayrı PR'lar; her biri main'den bağımsız):
+- **Dalga A** `feat/h1-dirty-data` — H1 kirli-veri dayanıklılığı · H2 konfigürasyonla ingest adaptörü ·
+  H3 belirsizlik/güven (çıkarım bandı + düşük-güven rozeti).
+- **Dalga B** `feat/dalga-b-h4-h7` — H4 çok-seed parite + hat varyasyonları · H5 duyarlılık analizi ·
+  H6 demo anlatısı · H7 hat-tanımı doğrulayıcı (`POST /line/validate`).
+- **Dalga C** `feat/dalga-c-h8-h9` — H8 utilization/takvim paritesi · H9 ops (loglama, tutarlı 400
+  hata, perf smoke ~12 hafta < 2s, `docs/deployment.md`). Yan bulgu: `fetch_events` tarih filtresi
+  CAST eksikliği düzeltildi.
+
+**Sırada:** üç hazırlık PR'ını main'e merge + **pilot kiti / saha denemesi**. Olası ileri işler:
+simülatör destekli what-if (GainEstimator arayüzü hazır), çok-hatlı destek.
 
 ### G7 replay — artık dönem-doğru (G4.1 sonrası)
 Replay penceresi G4.1 ile **üretime de uygulanır** (carrier_id zaman atfı) → Availability + kayıp-zaman +
