@@ -161,6 +161,12 @@ export default function GaugeHero({ oee, dq, costTotal, redoParts, trend }: Prop
                 <strong>{costTotal != null ? `${tl(costTotal)} ₺` : '—'}</strong>
                 <span className="cs-cost-u">/ vardiya</span>
               </div>
+              {oee.utilization != null && (
+                <div className="cs-util">
+                  Takvim kullanımı <strong>{pct(oee.utilization)}</strong>
+                  <span className="cs-dq-note">çalışılan / takvim (vardiya−mola−bakım)</span>
+                </div>
+              )}
               <div className="cs-dq">
                 Veri güvenilirliği · mikro-duruş girişi <strong>{pct(dq.microstop_entry_coverage)}</strong>
                 <span className="cs-dq-note">tek manuel girdi; gerisi sistemce</span>

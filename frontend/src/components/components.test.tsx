@@ -19,6 +19,16 @@ describe('GaugeHero', () => {
     expect(screen.getByText('81,0')).toBeInTheDocument()
     expect(screen.getByText('88,0')).toBeInTheDocument()
   })
+
+  it('utilization verildiğinde "Takvim kullanımı" gösterir (H8)', () => {
+    render(<GaugeHero oee={{ ...OEE, utilization: 0.92 }} dq={DQ} />)
+    expect(screen.getByText(/Takvim kullanımı/)).toBeInTheDocument()
+  })
+
+  it('utilization yoksa takvim satırını gizler', () => {
+    const { container } = render(<GaugeHero oee={OEE} dq={DQ} />)
+    expect(container.querySelector('.cs-util')).toBeNull()
+  })
 })
 
 const REC: RecData = {

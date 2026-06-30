@@ -19,12 +19,23 @@ function isEmpty(oee?: Oee): boolean {
   return !oee || (oee.availability === 0 && oee.performance === 0 && oee.quality === 0)
 }
 
+// H6: highlight anahtarı -> panodaki grafik adı ("neye bak" ipucu).
+const HIGHLIGHT_LABEL: Record<string, string> = {
+  cost: "Maliyet Pareto'su",
+  loss_tree: 'Kayıp Ağacı',
+  trend: 'OEE Trendi',
+  oee: 'OEE göstergesi',
+}
+
 export default function Dashboard() {
   const qc = useQueryClient()
   const [range, setRange] = useState<Range>({})
   const [view, setView] = useState<View>('detay')
+  const [activeScenario, setActiveScenario] = useState<string | undefined>()
 
   const oeeQ = useQuery({ queryKey: ['oee', range], queryFn: () => api.oee(range) })
+  const scenQ = useQuery({ queryKey: ['scenarios'], queryFn: api.scenarios })
+  const scenario = scenQ.data?.scenarios.find((s) => s.id === activeScenario)
   const empty = isEmpty(oeeQ.data)
   const enabled = !oeeQ.isLoading && !empty
 
@@ -36,6 +47,7 @@ export default function Dashboard() {
 
   async function activateScenario(id: string) {
     await api.activateScenario(id)
+    setActiveScenario(id)
     setRange({}) // senaryo değişiminde filtreleri sıfırla
     await qc.invalidateQueries()
   }
@@ -68,6 +80,16 @@ export default function Dashboard() {
         </div>
       ) : (
         <main className="grid">
+          {scenario?.narrative && (
+            <div className="scenario-banner" role="note">
+              <span className="sb-tag">Senaryo</span>
+              <span className="sb-title">{scenario.title}</span>
+              <span className="sb-narr">{scenario.narrative}</span>
+              {scenario.highlight && HIGHLIGHT_LABEL[scenario.highlight] && (
+                <span className="sb-hl">👁 Neye bak: {HIGHLIGHT_LABEL[scenario.highlight]}</span>
+              )}
+            </div>
+          )}
           <div className="zone-head">Durum</div>
           {oeeQ.data && dqQ.data && (
             <GaugeHero

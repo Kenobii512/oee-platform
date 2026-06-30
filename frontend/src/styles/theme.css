@@ -343,6 +343,9 @@ canvas { max-height: 268px; }
 .cs-dq { font-size: 0.74rem; color: var(--muted); text-align: right; line-height: 1.4; min-width: 13rem; }
 .cs-dq strong { color: var(--ink); font-family: var(--mono); }
 .cs-dq-note { display: block; color: var(--faint); }
+/* H8: takvim kullanımı (utilization) — cs-dq ile aynı sakin ikincil-metin dili. */
+.cs-util { font-size: 0.74rem; color: var(--muted); text-align: right; line-height: 1.4; min-width: 13rem; }
+.cs-util strong { color: var(--ink); font-family: var(--mono); }
 @media (max-width: 560px) {
   .cs-channels { grid-template-columns: 1fr; gap: 1.1rem; }
   .cs-arrow { display: none; }
@@ -532,6 +535,23 @@ canvas { max-height: 268px; }
 }
 .zone-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .zone-head:first-child { margin-top: 0; }
+
+/* H6: aktif senaryo anlatı bandı (tam genişlik) — demo "neye bak" hikâyesi. */
+.scenario-banner {
+  grid-column: 1 / -1; display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.4rem 0.8rem;
+  padding: 0.6rem 0.9rem; background: var(--accent-soft);
+  border: 1px solid var(--line); border-radius: var(--r-core);
+}
+.sb-tag {
+  font-family: var(--display); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--accent);
+}
+.sb-title { font-weight: 700; color: var(--ink); font-size: 0.9rem; }
+.sb-narr { color: var(--muted); font-size: 0.84rem; line-height: 1.45; }
+.sb-hl {
+  margin-left: auto; font-size: 0.76rem; color: var(--accent); font-weight: 600; white-space: nowrap;
+}
+@media (max-width: 560px) { .sb-hl { margin-left: 0; } }
 
 /* ---- Bilgi işareti (ⓘ) — sade metin + native tooltip ---- */
 .info {
