@@ -12,6 +12,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import auth
+from app.api._params import BadRequest
 from app.api.cost_routes import router as cost_router
 from app.api.dashboard_routes import render_dashboard
 from app.api.dashboard_routes import router as dashboard_router
@@ -52,6 +53,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="OEE Platform", lifespan=lifespan)
+
+
+# --- Tutarlı istemci hatası (H9): bozuk parametre -> 400 (500 değil) ---
+@app.exception_handler(BadRequest)
+async def _bad_request_handler(request: Request, exc: BadRequest):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 
 # --- İstek zamanlama logu (H9): her isteği method/path/status/duration_ms ile loglar ---

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Query, Request
 
 from app.analytics.cost import to_tl
 from app.analytics.loss_tree import extract_loss_tree
+from app.api._params import validate_range
 from app.config import load_cost_config, load_line_definition
 
 router = APIRouter()
@@ -20,6 +21,7 @@ def get_loss_tree_cost(
     frm: str | None = Query(None, alias="from"),
     to: str | None = Query(None),
 ) -> dict:
+    frm, to = validate_range(frm, to)
     repo = request.app.state.repo
     cfg = request.app.state.config
     line = load_line_definition(cfg.line_config_path)

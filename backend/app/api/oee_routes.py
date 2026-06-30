@@ -7,6 +7,7 @@ from fastapi import APIRouter, Query, Request
 
 from app.analytics.calendar import calendar_minutes
 from app.analytics.oee import compute_oee
+from app.api._params import validate_range
 from app.config import load_calendar, load_line_definition, load_planned_maintenance
 
 router = APIRouter()
@@ -51,6 +52,7 @@ def get_oee(
     frm: str | None = Query(None, alias="from"),
     to: str | None = Query(None),
 ) -> dict:
+    frm, to = validate_range(frm, to)
     repo = request.app.state.repo
     cfg = request.app.state.config
     line = load_line_definition(cfg.line_config_path)

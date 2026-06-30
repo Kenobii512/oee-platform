@@ -8,6 +8,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Query, Request
 
 from app.analytics.loss_tree import CATEGORIES, axis_of, extract_loss_tree, kind_of
+from app.api._params import validate_range
 from app.config import load_line_definition
 
 router = APIRouter()
@@ -19,6 +20,7 @@ def get_loss_tree(
     frm: str | None = Query(None, alias="from"),
     to: str | None = Query(None),
 ) -> dict:
+    frm, to = validate_range(frm, to)
     repo = request.app.state.repo
     cfg = request.app.state.config
     line = load_line_definition(cfg.line_config_path)
