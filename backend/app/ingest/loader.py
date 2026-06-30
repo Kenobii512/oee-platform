@@ -7,6 +7,7 @@ doğal anahtarla upsert (bkz. repository).
 from __future__ import annotations
 
 import csv
+import logging
 import math
 from pathlib import Path
 
@@ -58,6 +59,10 @@ def load_csv_dir(path: str | Path, repo: Repository) -> LoadReport:
     _load_events(d / "events.csv", repo, report)
     _load_production(d / "production.csv", repo, report)
     _load_orders(d / "orders.csv", repo, report)
+    logging.getLogger("oee.ingest").info(
+        "ingest dir=%s accepted=%s rejected=%d skipped=%d",
+        d.name, report.accepted, len(report.rejected), len(report.skipped),
+    )
     return report
 
 

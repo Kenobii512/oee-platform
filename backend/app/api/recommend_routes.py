@@ -12,6 +12,7 @@ from app.analytics.confidence import data_sufficiency
 from app.analytics.cost import to_tl
 from app.analytics.loss_tree import extract_loss_tree
 from app.analytics.recommend import RatioGainEstimator, generate_recommendations
+from app.api._params import validate_range
 from app.config import (
     load_confidence_config,
     load_cost_config,
@@ -28,6 +29,7 @@ def get_recommendations(
     frm: str | None = Query(None, alias="from"),
     to: str | None = Query(None),
 ) -> dict:
+    frm, to = validate_range(frm, to)
     repo = request.app.state.repo
     cfg = request.app.state.config
     line = load_line_definition(cfg.line_config_path)

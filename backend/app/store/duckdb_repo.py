@@ -142,10 +142,10 @@ class DuckDBRepository:
                "FROM events WHERE 1=1")
         args: list = []
         if frm is not None:
-            sql += " AND timestamp >= ?"
+            sql += " AND timestamp >= CAST(? AS TIMESTAMP)"
             args.append(frm)
         if to is not None:
-            sql += " AND timestamp <= ?"
+            sql += " AND timestamp <= CAST(? AS TIMESTAMP)"
             args.append(to)
         with self._lock:
             cur = self.con.execute(sql, args)

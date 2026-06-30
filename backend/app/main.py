@@ -1,7 +1,9 @@
 """FastAPI uygulama girişi + repo yaşam döngüsü + pano/statik servisi."""
 from __future__ import annotations
 
+import logging
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -10,6 +12,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import auth
+from app.api._params import BadRequest
 from app.api.cost_routes import router as cost_router
 from app.api.dashboard_routes import render_dashboard
 from app.api.dashboard_routes import router as dashboard_router
@@ -24,13 +27,16 @@ from app.api.scenario_routes import router as scenario_router
 from app.api.trend_routes import router as trend_router
 from app.config import load_app_config
 from app.ingest.loader import load_csv_dir
+from app.logging_setup import setup_logging
 from app.store.duckdb_repo import DuckDBRepository
 
 _BASE = Path(__file__).resolve().parent
+_req_log = logging.getLogger("oee.request")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    setup_logging()
     cfg = load_app_config()
     repo = DuckDBRepository(cfg.duckdb_path)
     repo.connect()
@@ -48,6 +54,25 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="OEE Platform", lifespan=lifespan)
+
+
+# --- Tutarlı istemci hatası (H9): bozuk parametre -> 400 (500 değil) ---
+@app.exception_handler(BadRequest)
+async def _bad_request_handler(request: Request, exc: BadRequest):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+# --- İstek zamanlama logu (H9): her isteği method/path/status/duration_ms ile loglar ---
+@app.middleware("http")
+async def _timing(request: Request, call_next):
+    t0 = time.perf_counter()
+    response = await call_next(request)
+    dur_ms = (time.perf_counter() - t0) * 1000.0
+    _req_log.info(
+        "request method=%s path=%s status=%s duration_ms=%.1f",
+        request.method, request.url.path, response.status_code, dur_ms,
+    )
+    return response
 
 
 # --- Erişim katmanı (form-tabanlı giriş; yalnız OEE_AUTH_PASS tanımlıysa aktif) ---

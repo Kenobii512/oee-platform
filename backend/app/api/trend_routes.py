@@ -4,6 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Query, Request
 
 from app.analytics.trend import bucket_oee_series
+from app.api._params import validate_range
 from app.config import load_line_definition
 
 router = APIRouter()
@@ -16,6 +17,7 @@ def oee_trend(
     frm: str | None = Query(None, alias="from"),
     to: str | None = Query(None),
 ) -> list[dict]:
+    frm, to = validate_range(frm, to)
     repo = request.app.state.repo
     cfg = request.app.state.config
     line = load_line_definition(cfg.line_config_path)

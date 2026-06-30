@@ -11,4 +11,5 @@ ignore = ["E501"]  # satır uzunluğu uyarısını kapıda zorlamıyoruz (mevcut
 testpaths = ["tests"]
 markers = [
     "regression: parite/doğruluk eşiklerini kilitleyen sözleşme testleri (G6 kapısı)",
+    "perf: performans smoke testleri (ölçekli veri; H9)",
 ]
