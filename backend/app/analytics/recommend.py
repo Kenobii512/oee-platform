@@ -93,6 +93,8 @@ def generate_recommendations(
                 "estimated_gain_tl": gain,
                 "estimated_gain_tl_low": gain * config.recovery_low_factor,
                 "estimated_gain_tl_high": gain * config.recovery_high_factor,
+                # H3: kayıp kaleminin veri-güveni (düşük ise öneride uyarı gösterilir).
+                "low_confidence": bool(entry.get("low_confidence", False)),
                 "recovery_ratio": ratio,
                 "title": rule.title,
                 "action": rule.action.format(detail=detail, pct=pct),
