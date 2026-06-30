@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-06-18 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 94/94 + frontend vitest 2/2 + simülatör 105/105 yeşil
+**Güncelleme:** 2026-06-30 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 145/145 + frontend vitest 8/8 + simülatör 105/105 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -81,8 +81,23 @@ GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
 ## Sıradaki yol haritası
 
 **Dalga 2 TAMAM** (G8 · GR · G7). **Dalga 3 TAMAM** (G12 · G4.1 · G10 · Perf-UI).
-**Sırada:** pilot kiti / saha denemesi. Olası ileri işler: simülatör destekli what-if (GainEstimator
-arayüzü hazır), utilization/takvim modeli paritesi, çok-hatlı destek.
+**Hazırlık Dalga A TAMAM** (H1 · H2 · H3 — `feat/h1-dirty-data`):
+- **H1 — Kirli-veri dayanıklılığı:** `tools/corrupt.py` (10 tür, seed'li); loader ham-CSV/encoding'de
+  zarif-bozulma (utf-8-sig+replace, csv.Error dosya-bazında red); EventRow negatif-duration validator;
+  `tests/fixtures/dirty/` + parametrize testler; `data_quality.coverage(...)` `sufficient` sinyali
+  (kısmi/boş pencere 0/NaN yerine açık "yetersiz veri"); out-of-order/duplicate span+union testleri.
+- **H2 — Konfigürasyonla ingest adaptörü:** `app/ingest/adapter.py` `apply_mapping` + `AdapterConfig`
+  (kolon/zaman/tz/süre-birimi/reason/event_type/default); `config/adapters/generic_plant.yaml` +
+  `tests/fixtures/raw/`; `POST /ingest?adapter=<profil>` (ham→adapt→H1 ingest); eşlenemeyen/eksik → 400.
+  Yeni profil = yeni YAML.
+- **H3 — Belirsizlik/güven:** `app/analytics/confidence.py` `data_sufficiency(...)` (0–1) + `band(...)`
+  (çıkarım kanalı nokta etrafında aralık; baseline'da ground_truth'u KAPSAR); `cost.to_tl` →
+  `tl_low/tl_high/confidence/low_confidence` (görünür=tam güven, çıkarım=bant; `total_tl` değişmez);
+  recommend düşük-güven işareti; `/loss-tree/cost` + `/recommendations` alanları; `config/confidence.yaml`;
+  pano "düşük güven" rozeti (Recommendations).
+
+**Sırada:** Hazırlık Dalga B (H4 çok-seed · H5 duyarlılık · H6 demo cilası · H7 hat-doğrulayıcı),
+Dalga C (H8 utilization/takvim · H9 ops hızlı kazanımlar); ardından pilot kiti / saha denemesi.
 
 ### G7 replay — artık dönem-doğru (G4.1 sonrası)
 Replay penceresi G4.1 ile **üretime de uygulanır** (carrier_id zaman atfı) → Availability + kayıp-zaman +
