@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-06-18 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 94/94 + frontend vitest 2/2 + simülatör 105/105 yeşil
+**Güncelleme:** 2026-06-30 · **Repo:** `Kenobii512/oee-platform` (private) · **Test (Dalga B branch):** backend 109/109 + frontend vitest 7/7 + simülatör 115/115 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -81,8 +81,26 @@ GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
 ## Sıradaki yol haritası
 
 **Dalga 2 TAMAM** (G8 · GR · G7). **Dalga 3 TAMAM** (G12 · G4.1 · G10 · Perf-UI).
-**Sırada:** pilot kiti / saha denemesi. Olası ileri işler: simülatör destekli what-if (GainEstimator
-arayüzü hazır), utilization/takvim modeli paritesi, çok-hatlı destek.
+
+**Hazırlık Dalga A** (H1 kirli-veri · H2 ingest adaptörü · H3 belirsizlik/güven): sibling branch
+`feat/h1-dirty-data`'da TAMAM (bu branch'te yok; ayrı PR).
+
+**Hazırlık Dalga B TAMAM** (H4 · H5 · H6 · H7 — `feat/dalga-b-h4-h7`):
+- **H4 — Çok-seed + hat varyasyonları:** `_generate.py` N=10 seed golden (`fixtures/multiseed/` +
+  `multiseed_golden.json`); `test_multiseed_parity` (regression) platform OEE pariteyi DAĞILIM olarak
+  doğrular (ortalama ±%1, hiçbir seed >0.02 sapma; FILL/SPEED geri kazanım medyanı ≥%85). Simülatöre
+  2 hat varyasyonu (`config/lines/`, hızlı/yavaş darboğaz + 24s vardiya) + akıl-sağlığı testi.
+- **H5 — Duyarlılık analizi:** `simulator/tools/sensitivity.py` param-sweep (fill/speed/microstop/MTBF
+  → OEE delta) + azalan etki tablosu + CLI; örnek `docs/sensitivity_report.md` (speed_loss en yüksek
+  etki, fill_loss en düşük — OEE şelalesi dışı malzeme kanalı). Monotonluk testleri.
+- **H6 — Demo cilası:** `ScenarioInfo`'ya `narrative` + `highlight`; `scenarios.yaml` 6 senaryoya
+  bir-cümle anlatı; pano `ScenarioDropdown` anlatıyı gösterir.
+- **H7 — Hat-tanımı doğrulayıcı:** `app/config_validate.py` `validate_line_dict` (line.id, tank
+  süre/kapasite, tam 1 bottleneck, carrier_qty) + `POST /line/validate` ({valid,errors}) +
+  `docs/line-definition-guide.md` pilot kiti kılavuzu.
+
+**Sırada:** Hazırlık Dalga C (H8 utilization/takvim paritesi · H9 ops hızlı kazanımlar); ardından
+pilot kiti / saha denemesi. Not: H9 auth/deploy kısmen mevcut (Render).
 
 ### G7 replay — artık dönem-doğru (G4.1 sonrası)
 Replay penceresi G4.1 ile **üretime de uygulanır** (carrier_id zaman atfı) → Availability + kayıp-zaman +
