@@ -28,6 +28,7 @@ class AppConfig:
     cost_config_path: str
     recommend_config_path: str
     scenario_config_path: str
+    confidence_config_path: str
 
 
 def load_app_config() -> AppConfig:
@@ -46,6 +47,9 @@ def load_app_config() -> AppConfig:
         ),
         scenario_config_path=os.environ.get(
             "OEE_SCENARIO_CONFIG", str(config_dir / "scenarios.yaml")
+        ),
+        confidence_config_path=os.environ.get(
+            "OEE_CONFIDENCE_CONFIG", str(config_dir / "confidence.yaml")
         ),
     )
 

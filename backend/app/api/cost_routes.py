@@ -7,9 +7,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query, Request
 
+from app.analytics.confidence import data_sufficiency
 from app.analytics.cost import to_tl
 from app.analytics.loss_tree import extract_loss_tree
-from app.config import load_cost_config, load_line_definition
+from app.config import load_confidence_config, load_cost_config, load_line_definition
 
 router = APIRouter()
 
@@ -24,7 +25,9 @@ def get_loss_tree_cost(
     cfg = request.app.state.config
     line = load_line_definition(cfg.line_config_path)
     costs = load_cost_config(cfg.cost_config_path)
+    conf = load_confidence_config(cfg.confidence_config_path)
     events = repo.fetch_events(frm, to)
     production = repo.fetch_production(frm, to)
     tree = extract_loss_tree(events, production, line)
-    return to_tl(tree, costs)
+    sufficiency = data_sufficiency(events, production, line)
+    return to_tl(tree, costs, confidence_cfg=conf, sufficiency=sufficiency)
