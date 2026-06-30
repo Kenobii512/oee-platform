@@ -82,13 +82,66 @@ def load_planned_maintenance(path: str | Path) -> list[MaintenanceWindow]:
     """Calendar'dan planlı bakım pencerelerini okur (utilization metriği için)."""
     with open(path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
+    return _parse_maintenance(raw.get("calendar", {}))
+
+
+def _parse_maintenance(cal_raw: dict) -> list[MaintenanceWindow]:
     out: list[MaintenanceWindow] = []
-    for m in raw.get("calendar", {}).get("planned_maintenance", []):
+    for m in cal_raw.get("planned_maintenance", []):
         start = m["start_datetime"]
         if not isinstance(start, datetime):
             start = datetime.strptime(str(start), "%Y-%m-%d %H:%M")
         out.append(MaintenanceWindow(start=start, duration_min=float(m["duration_min"])))
     return out
+
+
+# H8 — vardiya/mola/takvim modeli (utilization = çalışılan / takvim-zamanı).
+_WEEKDAYS = {"Mon": 0, "Tue": 1, "Wed": 2, "Thu": 3, "Fri": 4, "Sat": 5, "Sun": 6}
+
+
+def _hhmm_to_min(s: str) -> int:
+    """'HH:MM' -> gün-içi dakika (00:00 = 0, 14:00 = 840)."""
+    h, m = str(s).split(":")
+    return int(h) * 60 + int(m)
+
+
+@dataclass(frozen=True)
+class ShiftDef:
+    start_min: int  # gün içi dakika [0,1440)
+    end_min: int    # vardiya gece-yarısını aşmaz (start < end)
+
+
+@dataclass(frozen=True)
+class BreakDef:
+    start_min: int
+    duration_min: float
+
+
+@dataclass(frozen=True)
+class CalendarDef:
+    """Hat takvimi: çalışılabilir zaman = workday ∩ vardiya − mola − planlı bakım."""
+
+    workdays: tuple[int, ...]  # 0=Pazartesi (simülatör _WEEKDAYS ile aynı)
+    shifts: tuple[ShiftDef, ...]
+    breaks: tuple[BreakDef, ...]
+    maintenance: tuple[MaintenanceWindow, ...]
+
+
+def load_calendar(path: str | Path) -> CalendarDef:
+    """line YAML `calendar` bloğunu CalendarDef'e çevirir. Eksik bloklar -> boş tuple."""
+    with open(path, encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+    cal = raw.get("calendar", {}) or {}
+    workdays = tuple(_WEEKDAYS[d] for d in cal.get("workdays", []) if d in _WEEKDAYS)
+    shifts = tuple(
+        ShiftDef(_hhmm_to_min(s["start"]), _hhmm_to_min(s["end"]))
+        for s in cal.get("shifts", [])
+    )
+    breaks = tuple(
+        BreakDef(_hhmm_to_min(b["start"]), float(b["duration_min"]))
+        for b in cal.get("breaks", [])
+    )
+    return CalendarDef(workdays, shifts, breaks, tuple(_parse_maintenance(cal)))
 
 
 @dataclass(frozen=True)
