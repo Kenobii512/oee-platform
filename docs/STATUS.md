@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-06-30 · **Repo:** `Kenobii512/oee-platform` (private) · **Test (entegre main):** backend + frontend vitest 8/8 + simülatör 115/115 yeşil
+**Güncelleme:** 2026-07-01 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 186/186 + frontend vitest 13/13 + simülatör 115/115 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -27,24 +27,38 @@ Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıy
 | **G4.1** | Dönem-doğru üretim atfı: `events.csv`'ye **`carrier_id`**; `fetch_production(frm,to)` askıyı kendi olaylarının en geç zaman damgasına göre pencereye bağlar → trend/replay'de **P/Q pencere-doğru** değişir (eskiden dönem-sabit) | ✓ |
 | **G10** | Operatör = **yalnız microstop**: senaryo `operator.channels` sadeleşti (DOWNTIME kalktı; duruş nedeni sistemce `reason_code`). `data_quality` yalnız `microstop_entry_coverage`. Pano "tek manuel girdi = mikro duruş; gerisi sistemce" anlatısı (Excel/manuel takibe karşı satış argümanı) | ✓ |
 | **Perf-UI** | Görünürlük: trend grafiğine **Performance + Quality(ilk-geçiş) + nihai verim** çizgileri (G4.1 ile pencere-doğru); replay'e **Performance** KPI; öneri **kazanç aralığı** (`estimated_gain_tl_low/high`) + toplam "üst sınır; örtüşebilir" çekincesi | ✓ |
+| **H1** | Kirli-veri dayanıklılığı (`tools/corrupt.py`, loader zarif-bozulma, `data_quality.coverage` sufficient) | ✓ |
+| **H2** | Konfigürasyonla ingest adaptörü (`adapter.py`, `config/adapters/`, `POST /ingest?adapter=`) | ✓ |
+| **H3** | Belirsizlik/güven (`confidence.py`, cost `tl_low/high/confidence`, pano düşük-güven rozeti) | ✓ |
+| **H4** | Çok-seed parite dağılımı + simülatör hat varyasyonları | ✓ |
+| **H5** | Duyarlılık analizi (`simulator/tools/sensitivity.py` + `docs/sensitivity_report.md`) | ✓ |
+| **H6** | Demo cilası (senaryo `narrative`/`highlight` + pano anlatı bandı) | ✓ |
+| **H7** | Hat-tanımı doğrulayıcı (`POST /line/validate` + `docs/line-definition-guide.md`) | ✓ |
+| **H8** | Utilization/takvim paritesi (`calendar.py` `calendar_minutes`; A/P/Q/OEE değişmez) | ✓ |
+| **H9** | Ops (loglama + timing middleware, tutarlı 400, perf smoke, `docs/deployment.md`) | ✓ |
+| **Pilot A** | Pilot kiti doküman paketi (`docs/pilot-kit/` 6 dosya) | ✓ |
+| **QC** | Entegrasyon cilası (data-quality yeterlilik ucu, adaptör temp temizliği, redo doğrulama, calendar_min, frontend yansımaları) | ✓ |
 
 ## API yüzeyi (mevcut)
 
 ```
 GET  /health                          -> {"status":"ok"}
-POST /ingest        {"path": "..."}    -> LoadReport (kabul/ret/atlanan + ilk N hata)
-GET  /oee?from=&to=                    -> {availability, performance, quality(=ilk-geçiş), oee, utilization, planned_downtime_min, final_yield}
+POST /ingest        {"path": "...", "adapter": "<profil>"|null}  -> LoadReport (kabul/ret/atlanan + ilk N hata)
+GET  /oee?from=&to=                    -> {availability, performance, quality(=ilk-geçiş), oee, utilization, planned_downtime_min, final_yield, calendar_min}
 GET  /loss-tree?from=&to=              -> {categories:[{category, axis, value, kind}]}  (5 kategori; no-scrap)
-GET  /loss-tree/cost?from=&to=         -> {categories:[{category, axis, value, tl, kind}], total_tl}  (5 kategori, TL azalan)
+GET  /loss-tree/cost?from=&to=         -> {categories:[{category, axis, value, tl, tl_low, tl_high, confidence, low_confidence, kind}], total_tl}  (5 kategori, TL azalan)
 GET  /recommendations?from=&to=        -> {recommendations:[{category, tl, estimated_gain_tl, estimated_gain_tl_low, estimated_gain_tl_high, title, action, assumption, ...}], total_estimated_gain_tl}
-GET  /oee/trend?bucket=day|week        -> [{period, availability, performance, quality, final_yield, oee}]  (P/Q pencere-doğru)
-GET  /data-quality/summary             -> {microstop_entry_coverage}  (G10: tek manuel girdi)
-GET  /scenarios                        -> {scenarios:[{id, title, description, expected_top_loss, data_dir}]}  (6 demo)
+GET  /oee/trend?bucket=day|week        -> [{period, availability, performance, quality, final_yield, oee}]  (P/Q pencere-doğru; geçersiz bucket → 400)
+GET  /data-quality/summary             -> {microstop_entry_coverage, event_count, span_min, sufficient, sufficiency_score}  (H1 coverage + H3 yeterlilik)
+GET  /scenarios                        -> {scenarios:[{id, title, description, expected_top_loss, data_dir, narrative, highlight}]}  (6 demo)
 POST /scenarios/{id}/activate          -> {activated, ingest}  (repo.reset() + o senaryoyu ingest)
 GET  /replay/stream?scenario=&speed=&steps=  -> SSE: büyüyen 'şimdiye kadar' snapshot'ları (oee, cost, gain, event_count)
+POST /line/validate  {hat-tanımı dict}  -> {valid: bool, errors: [str]}
 GET  /                                 -> React SPA (build varsa) ya da Jinja fallback (HTML)
 GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
 ```
+
+Bozuk tarih/parametre (from/to/bucket) → 400 {detail} (H9).
 
 ## Mimari & sabit kararlar
 
@@ -128,9 +142,9 @@ Yerelde backend kapısı: `make ci`.
 ```
 docker compose up --build          # http://localhost:8000  (React SPA, açılışta baseline yüklü)
                                    #   /legacy = eski Jinja pano
-# backend testleri:  cd backend && pytest -q          (94 test)
+# backend testleri:  cd backend && pytest -q          (186 test)
 # frontend dev:      cd frontend && npm run dev        (Vite, backend'e proxy)
-# frontend testleri: cd frontend && npm run test       (vitest 2)
+# frontend testleri: cd frontend && npm run test       (vitest 13)
 ```
 
 ## Deploy (başkalarının erişmesi için)

@@ -6,7 +6,7 @@ ve önceliklendirilmiş öneriler üretir. Pano **React 19 + Vite SPA**; canlı 
 replay dahil.
 
 > **Proje durumu / yol haritası:** [`docs/STATUS.md`](docs/STATUS.md) — tamamlanan görevler
-> (G1–G5 · Dalga 1 G6·G11·G9 · Dalga 2 G8·GR·G7 · Dalga 3 G12·G4.1·G10·Perf-UI), API yüzeyi,
+> (G1–G5 · Dalga 1 G6·G11·G9 · Dalga 2 G8·GR·G7 · Dalga 3 G12·G4.1·G10·Perf-UI · Hazırlık H1–H9 · Pilot Kiti A), API yüzeyi,
 > mimari kararlar, bilinen sınırlamalar. **Veri sözleşmesi:** [`docs/data-contract.md`](docs/data-contract.md).
 
 > **Frontend tasarımı (UI):** Pano "**The Foundry Gauge**" — açık/kurumsal endüstriyel
@@ -28,7 +28,7 @@ Aynı imaj laptopta `localhost:8000` ve uzak sunucuda public URL ile çalışır
 ## Geliştirme
 
 ```bash
-cd backend && pip install -r requirements.txt && pytest -q     # 92 test
+cd backend && pip install -r requirements.txt && pytest -q     # 186 test
 cd frontend && npm install && npm run dev                      # Vite (backend'e :8000 proxy)
 cd frontend && npm run lint && npm run test && npm run build   # vitest + üretim build
 ```
@@ -44,11 +44,11 @@ cd frontend && npm run lint && npm run test && npm run build   # vitest + üreti
 
 ```
 GET  /health                          -> {"status":"ok"}
-POST /ingest        {"path": "..."}    -> LoadReport
+POST /ingest        {"path": "...", "adapter": "<profil>"|null}  -> LoadReport
 GET  /oee?from=&to=                    -> {availability, performance, quality(=ilk-geçiş), oee,
                                           utilization, planned_downtime_min, final_yield}
 GET  /loss-tree?from=&to=             -> {categories:[{category, axis, value, kind}]}  (5 kategori)
-GET  /loss-tree/cost?from=&to=        -> {categories:[...,tl], total_tl}  (TL azalan)
+GET  /loss-tree/cost?from=&to=        -> {categories:[...,tl,tl_low,tl_high,confidence,low_confidence], total_tl}  (TL azalan)
 GET  /recommendations?from=&to=       -> {recommendations:[{category, tl, estimated_gain_tl,
                                           estimated_gain_tl_low/high, title, action, assumption}], ...}
 GET  /oee/trend?bucket=day|week       -> [{period, availability, performance, quality, final_yield, oee}]
@@ -56,6 +56,7 @@ GET  /data-quality/summary            -> {microstop_entry_coverage}   (G10: tek 
 GET  /scenarios                       -> {scenarios:[...]}  (6 demo)
 POST /scenarios/{id}/activate         -> repo.reset() + o senaryoyu ingest
 GET  /replay/stream?scenario=&speed=&steps=  -> SSE: büyüyen 'şimdiye kadar' snapshot'ları
+POST /line/validate {hat-tanımı dict}  -> {valid: bool, errors: [str]}
 GET  /                                -> React SPA   ·   GET /legacy -> Jinja fallback
 ```
 
