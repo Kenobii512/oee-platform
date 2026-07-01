@@ -31,6 +31,7 @@ from app.analytics.confidence import data_sufficiency
 from app.analytics.oee import OeeResult, compute_oee
 from app.config import load_line_definition
 from app.config_validate import validate_line_dict
+from app.ingest.adapter import AdapterError, adapt_dir_to_contract, load_adapter_config
 from app.ingest.loader import load_csv_dir
 from app.ingest.report import LoadReport
 from app.models.contract import LineDefinition
@@ -169,6 +170,30 @@ def _line_stage(line_path: Path) -> tuple[LineDefinition | None, CheckResult]:
 
 _SKIP_NO_LINE = "hat tanimi gecersiz oldugu icin atlandi"
 _SKIP_NO_DATA = "veri yok (ingest bos satir kabul etti) - atlandi"
+_SKIP_ADAPTER_FAIL = "adapter eslemesi basarisiz oldugu icin atlandi"
+
+# Eşleme profilleri repo-kökü config/adapters/ altında (tools/ -> backend -> repo kökü).
+_ADAPTERS_DIR = Path(__file__).resolve().parents[2] / "config" / "adapters"
+
+
+def adapter_profile_path(name: str) -> Path:
+    return _ADAPTERS_DIR / f"{name}.yaml"
+
+
+def _adapter_stage(name: str, data_dir: Path, tmp_path: Path) -> tuple[CheckResult, Path]:
+    """Ham dizini profil ile sözleşmeye çevirir; (kontrol, ingest_dizini) döner.
+
+    Profil dosyasının VARLIĞI `main`'de doğrulanır (yoksa kullanım hatası, exit 2);
+    burada içerik/eşleme hataları FAIL kontrolüne dönüşür.
+    """
+    mapping = load_adapter_config(adapter_profile_path(name))
+    out = tmp_path / "adapted"
+    out.mkdir()
+    try:
+        adapt_dir_to_contract(data_dir, mapping, out)
+    except AdapterError as exc:
+        return CheckResult("adapter", FAIL, f"adapter eslemesi basarisiz: {exc}"), data_dir
+    return CheckResult("adapter", PASS, f"profil '{name}' uygulandi -> sozlesme dizini"), out
 
 
 def run_doctor(
@@ -193,8 +218,15 @@ def run_doctor(
         tmp_path = Path(tmp)
         ingest_dir = Path(data_dir)
         if adapter:
-            raise NotImplementedError("adapter yolu Task 4'te")  # Task 4 dolduracak
-        checks.append(CheckResult("adapter", SKIP, "adapter verilmedi"))
+            adapter_check, ingest_dir = _adapter_stage(adapter, Path(data_dir), tmp_path)
+            checks.append(adapter_check)
+            if adapter_check.status == FAIL:
+                # Sözleşme-şekilli veri yok -> aşağı akış kontrolleri anlamsız.
+                for name in ("ingest", "oee", "sufficiency", "rejection"):
+                    checks.append(CheckResult(name, SKIP, _SKIP_ADAPTER_FAIL))
+                return DoctorReport(checks=checks, ingest=None, oee=None)
+        else:
+            checks.append(CheckResult("adapter", SKIP, "adapter verilmedi"))
 
         # Smoke ingest — geçici DB; close() cleanup'tan ÖNCE (Windows dosya kilidi).
         repo = DuckDBRepository(str(tmp_path / "doctor.duckdb"))

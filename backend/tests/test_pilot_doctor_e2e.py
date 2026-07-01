@@ -3,7 +3,7 @@
 `run_doctor` gerçek dosyalarla koşar; gerçek `oee.duckdb`'ye asla dokunmaz
 (cwd'de DB kalıntısı testi). CLI (`main`) testleri exit kodu + stdout üstünden.
 """
-from tests.conftest import DIRTY, FIXTURES, LINE_CONFIG
+from tests.conftest import DIRTY, FIXTURES, LINE_CONFIG, RAW
 from tools.pilot_doctor import FAIL, PASS, SKIP, run_doctor
 
 BASELINE = FIXTURES / "baseline"
@@ -73,6 +73,34 @@ def test_unreadable_line_yaml_is_nogo(tmp_path):
     rep = run_doctor(BASELINE, bad, adapter=None)  # exception yok
     assert rep.go() is False
     assert _by_name(rep, "line").status == FAIL
+
+
+# ---- run_doctor: adaptör yolu (H2) ------------------------------------------
+
+
+def test_adapter_raw_fixture_maps_and_ingests():
+    # raw fixture kucuk (13 olay) -> yeterlilik dusuk; adaptor+ingest'i test ediyoruz
+    rep = run_doctor(RAW, LINE_CONFIG, adapter="generic_plant", min_sufficiency=0.0)
+    assert _by_name(rep, "adapter").status == PASS
+    assert _by_name(rep, "ingest").status == PASS
+    assert rep.ingest is not None and rep.ingest["accepted"].get("events", 0) > 0
+
+
+def test_adapter_raw_default_sufficiency_is_nogo():
+    rep = run_doctor(RAW, LINE_CONFIG, adapter="generic_plant")
+    assert rep.go() is False
+    assert _by_name(rep, "sufficiency").status == FAIL  # 13 olay ~0.4 < 0.6
+
+
+def test_adapter_mapping_error_skips_downstream(tmp_path):
+    # sozlesme-sekilli baseline'i HAM diye adaptorden gecir -> event_type eslenemez
+    rep = run_doctor(BASELINE, LINE_CONFIG, adapter="generic_plant")
+    assert _by_name(rep, "adapter").status == FAIL
+    assert _by_name(rep, "ingest").status == SKIP
+    assert _by_name(rep, "oee").status == SKIP
+    assert _by_name(rep, "sufficiency").status == SKIP
+    assert _by_name(rep, "rejection").status == SKIP
+    assert rep.go() is False
 
 
 # ---- run_doctor: boş veri / izolasyon --------------------------------------
