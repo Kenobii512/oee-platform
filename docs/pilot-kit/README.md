@@ -39,7 +39,8 @@ Bu, **Alt Proje A — Doküman Paketi**'dir (`docs/pilot-kit/`, 6 dosya).
 
 - **B — Pilot Doctor CLI: ✅ MEVCUT.** Faz 0–1 kontrollerini (hat doğrulama, adaptör, smoke ingest, OEE, H3 skoru, red oranı) otomatik çalıştırıp tek GO/NO-GO raporu üretir:
   `cd backend && python -m tools.pilot_doctor <veri-dizini> --adapter <profil>` (ayrıntı: [04-pilot-runbook.md](04-pilot-runbook.md) "Otomatik Kapı").
+- **C — Showcase: ✅ MEVCUT.** Faz 3 pilot raporunu (OEE + TL Pareto + öneri aralıkları + güven notu + 3 kriter tablosu) tek dosyalık HTML olarak üretir:
+  `cd backend && python -m tools.pilot_report <veri-dizini> [--adapter <profil>] -o rapor.html`.
+  Örnek satış raporu: `docs/showcase/ornek-pilot-raporu.html` · Tanıtım sayfası: `docs/showcase/landing.html` (deploy'da public **`/tanitim`**).
 
-Yakında gelecekler:
-
-- **C — Showcase:** Pilot sonu rapor artefaktını (tablo, grafik, TL özeti) üretecek şablon/araç.
+Pilot Kiti **A + B + C tamamlandı**.

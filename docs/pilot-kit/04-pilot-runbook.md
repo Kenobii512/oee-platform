@@ -99,9 +99,18 @@ bir veritabanına yapılır; gerçek sisteme dokunulmaz — kapıdan geçince ge
 **Hedef:** Pilot verilerini başarı kriterleriyle karşılaştırmak ve ilerleme kararı almak.
 
 1. Toplanan OEE verisini üç başarı kriteri karşısında değerlendir. Bkz. [05-basari-kriterleri.md](05-basari-kriterleri.md).
-2. **Pilot raporu** hazırla.
+2. **Pilot raporu** hazırla — artık **tek komutla**:
 
-> **Not:** Rapor artefakt şablonu, alt proje C (showcase) kapsamında sağlanacaktır.
+   ```bash
+   cd backend && python -m tools.pilot_report <veri-dizini> [--adapter <profil>] -o pilot-raporu.html
+   ```
+
+   Araç, tek dosyalık kendine-yeten bir HTML üretir: OEE bloğu, TL Pareto (güven
+   aralıklı), öneri kazanç aralıkları, trend, güven notu ve **3 başarı kriteri
+   tablosu**. Ölçülebilir kısımlar otomatik ✓/✗ işaretlenir; ekip onayı, saha
+   gözlemi ve **Genel karar (GO / İyileştir / Durdur)** alanları toplantıda elle
+   doldurulur. Yazdır → PDF için tarayıcı yazdırması yeterlidir.
+   Örnek çıktı: `docs/showcase/ornek-pilot-raporu.html` (deploy'da `/tanitim/ornek-rapor`).
 
 ---
 

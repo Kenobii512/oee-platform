@@ -43,6 +43,15 @@ Saha verisini platforma bağlamadan önce tek komutla denetler: hat doğrulama +
 smoke ingest (geçici DB) + OEE + veri-yeterlilik + red oranı → GO/NO-GO (exit 0/1).
 Ayrıntı: `docs/pilot-kit/04-pilot-runbook.md`.
 
+## Pilot Raporu (Faz 3 artefaktı)
+
+```bash
+cd backend && python -m tools.pilot_report <veri-dizini> [--adapter <profil>] -o rapor.html
+```
+Tek dosyalık, kendine-yeten HTML pilot raporu: OEE + TL Pareto (güven aralıklı) +
+öneri kazanç aralıkları + trend + 3 başarı kriteri tablosu. Örnek: `docs/showcase/`
+(deploy'da public `/tanitim` tanıtım sayfası + `/tanitim/ornek-rapor`).
+
 ## İlkeler
 
 - **Şema kutsaldır;** platform verinin simülatörden mi sahadan mı geldiğini bilmez.
