@@ -7,13 +7,15 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from app.ingest.adapter import AdapterError, adapt_dir_to_contract, load_adapter_config
+from app.ingest.adapter import (
+    AdapterError,
+    adapt_dir_to_contract,
+    load_adapter_config,
+    resolve_profile_path,
+)
 from app.ingest.loader import load_csv_dir
 
 router = APIRouter()
-
-# Eşleme profilleri repo-kökü config/adapters/ altında (app/api/ -> backend -> repo kökü).
-_ADAPTERS_DIR = Path(__file__).resolve().parents[3] / "config" / "adapters"
 
 
 class IngestRequest(BaseModel):
@@ -48,7 +50,7 @@ def _load(source: str, repo) -> dict:
 
 
 def _resolve_profile(adapter: str):
-    profile = _ADAPTERS_DIR / f"{adapter}.yaml"
+    profile = resolve_profile_path(adapter)
     if not profile.exists():
         raise FileNotFoundError(f"bilinmeyen adapter profili: {adapter!r} ({profile})")
     return load_adapter_config(profile)

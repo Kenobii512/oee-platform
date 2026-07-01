@@ -32,9 +32,14 @@ import yaml
 
 from app.analytics.confidence import data_sufficiency
 from app.analytics.oee import OeeResult, compute_oee
-from app.config import load_app_config, load_line_definition
+from app.config import line_definition_from_dict, load_app_config
 from app.config_validate import validate_line_dict
-from app.ingest.adapter import AdapterError, adapt_dir_to_contract, load_adapter_config
+from app.ingest.adapter import (
+    AdapterError,
+    adapt_dir_to_contract,
+    load_adapter_config,
+    resolve_profile_path,
+)
 from app.ingest.loader import load_csv_dir
 from app.ingest.report import LoadReport
 from app.models.contract import LineDefinition
@@ -163,7 +168,10 @@ def decide(checks: list[CheckResult]) -> bool:
 
 
 def _line_stage(line_path: Path) -> tuple[LineDefinition | None, CheckResult]:
-    """Hat YAML'ını oku + doğrula + yükle; (LineDefinition|None, kontrol) döner."""
+    """Hat YAML'ını oku + doğrula + kur; (LineDefinition|None, kontrol) döner.
+
+    Tek parse: doğrulanan dict ile LineDefinition'a kurulan dict AYNIDIR
+    (iki ayrı dosya okuması içerik/zaman sapmasına açıktı)."""
     try:
         with open(line_path, encoding="utf-8") as f:
             raw = yaml.safe_load(f)
@@ -173,21 +181,17 @@ def _line_stage(line_path: Path) -> tuple[LineDefinition | None, CheckResult]:
     if res.status != PASS:
         return None, res
     try:
-        return load_line_definition(line_path), res
+        return line_definition_from_dict(raw), res
     except (KeyError, TypeError, ValueError) as exc:
-        # Defans: doğrulayıcı ile yükleyici resmen bağlaşık değil.
+        # Defans: doğrulayıcı ile kurucu resmen bağlaşık değil.
         return None, CheckResult("line", FAIL, f"hat tanimi yuklenemedi: {exc}")
 
 
 _SKIP_NO_LINE = "hat tanimi gecersiz oldugu icin atlandi"
 _SKIP_ADAPTER_FAIL = "adapter eslemesi basarisiz oldugu icin atlandi"
 
-# Eşleme profilleri repo-kökü config/adapters/ altında (tools/ -> backend -> repo kökü).
-_ADAPTERS_DIR = Path(__file__).resolve().parents[2] / "config" / "adapters"
-
-
-def adapter_profile_path(name: str) -> Path:
-    return _ADAPTERS_DIR / f"{name}.yaml"
+# Profil çözümü ingest katmanında TEK kaynaktan (API ile aynı dizin/kural).
+adapter_profile_path = resolve_profile_path
 
 
 def _adapter_stage(name: str, data_dir: Path, tmp_path: Path) -> tuple[CheckResult, Path]:

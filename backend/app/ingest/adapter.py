@@ -36,6 +36,14 @@ _CONTRACT_EVENT_FIELDS = (
 _ADAPTED_FILE = "events.csv"
 _PASSTHROUGH_FILES = ("production.csv", "orders.csv")
 
+# Eşleme profilleri repo-kökü config/adapters/ altında (app/ingest/ -> backend -> kök).
+# TEK doğruluk kaynağı: hem API (ingest_routes) hem CLI (pilot_doctor) buradan çözer.
+_ADAPTERS_DIR = Path(__file__).resolve().parents[3] / "config" / "adapters"
+
+
+def resolve_profile_path(name: str) -> Path:
+    return _ADAPTERS_DIR / f"{name}.yaml"
+
 
 class AdapterError(ValueError):
     """Eşleme başarısız: eksik zorunlu kolon ya da eşlenemeyen değer (eyleme dönük mesaj)."""

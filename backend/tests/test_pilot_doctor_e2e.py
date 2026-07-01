@@ -5,6 +5,8 @@
 """
 import json
 
+import pytest
+
 from tests.conftest import DIRTY, FIXTURES, LINE_CONFIG, RAW
 from tools.pilot_doctor import FAIL, PASS, SKIP, main, run_doctor
 
@@ -15,19 +17,31 @@ def _by_name(rep, name: str):
     return next(c for c in rep.checks if c.name == name)
 
 
+# Ayni pipeline'i (temp DB + 1580 satir ingest) test basina yeniden kosmamak
+# icin salt-okunur assert'ler modul-kapsamli tek rapor uzerinden calisir.
+@pytest.fixture(scope="module")
+def baseline_report():
+    return run_doctor(BASELINE, LINE_CONFIG)
+
+
+@pytest.fixture(scope="module")
+def dirty_report():
+    return run_doctor(DIRTY / "type_corruption", LINE_CONFIG)
+
+
 # ---- run_doctor: mutlu yol -----------------------------------------------
 
 
-def test_baseline_is_go():
-    rep = run_doctor(BASELINE, LINE_CONFIG, adapter=None)
+def test_baseline_is_go(baseline_report):
+    rep = baseline_report
     assert rep.go() is True
     assert _by_name(rep, "oee").status == PASS
     assert _by_name(rep, "sufficiency").status == PASS
     assert _by_name(rep, "adapter").status == SKIP  # adapter verilmedi
 
 
-def test_baseline_surfaces_ground_truth_skipped():
-    rep = run_doctor(BASELINE, LINE_CONFIG, adapter=None)
+def test_baseline_surfaces_ground_truth_skipped(baseline_report):
+    rep = baseline_report
     assert rep.ingest is not None
     assert rep.ingest["skipped"] == ["ground_truth.csv"]  # firewall görünür
     assert "ground_truth.csv" in _by_name(rep, "ingest").detail
@@ -36,8 +50,8 @@ def test_baseline_surfaces_ground_truth_skipped():
 # ---- run_doctor: kirli veri / eşikler --------------------------------------
 
 
-def test_dirty_type_corruption_is_nogo():
-    rep = run_doctor(DIRTY / "type_corruption", LINE_CONFIG, adapter=None)
+def test_dirty_type_corruption_is_nogo(dirty_report):
+    rep = dirty_report
     assert rep.go() is False
     rej = _by_name(rep, "rejection")
     assert rej.status == FAIL  # ~%9.6 > %5
@@ -122,7 +136,7 @@ def test_adapter_malformed_profile_is_nogo_not_traceback(tmp_path, monkeypatch):
     bad_dir = tmp_path / "adapters"
     bad_dir.mkdir()
     (bad_dir / "bozuk.yaml").write_text("column_map: [acik, kalan", encoding="utf-8")
-    monkeypatch.setattr("tools.pilot_doctor._ADAPTERS_DIR", bad_dir)
+    monkeypatch.setattr("app.ingest.adapter._ADAPTERS_DIR", bad_dir)
     rep = run_doctor(RAW, LINE_CONFIG, adapter="bozuk")
     assert _by_name(rep, "adapter").status == FAIL
     assert rep.go() is False
@@ -132,7 +146,7 @@ def test_adapter_empty_profile_is_nogo_not_traceback(tmp_path, monkeypatch):
     bad_dir = tmp_path / "adapters"
     bad_dir.mkdir()
     (bad_dir / "bos.yaml").write_text("", encoding="utf-8")  # safe_load -> None
-    monkeypatch.setattr("tools.pilot_doctor._ADAPTERS_DIR", bad_dir)
+    monkeypatch.setattr("app.ingest.adapter._ADAPTERS_DIR", bad_dir)
     rep = run_doctor(RAW, LINE_CONFIG, adapter="bos")
     assert _by_name(rep, "adapter").status == FAIL
 
@@ -148,7 +162,7 @@ def test_adapter_invalid_timezone_is_adapter_fail(tmp_path, monkeypatch):
     (bad_dir / "kotu_tz.yaml").write_text(
         profile.replace("timezone: null", "timezone: Europe/Istanbulll"), encoding="utf-8"
     )
-    monkeypatch.setattr("tools.pilot_doctor._ADAPTERS_DIR", bad_dir)
+    monkeypatch.setattr("app.ingest.adapter._ADAPTERS_DIR", bad_dir)
     rep = run_doctor(RAW, LINE_CONFIG, adapter="kotu_tz")
     assert _by_name(rep, "adapter").status == FAIL
     assert "timezone" in _by_name(rep, "adapter").detail
