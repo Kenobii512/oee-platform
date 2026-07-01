@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-07-01 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 186/186 + frontend vitest 13/13 + simülatör 115/115 yeşil
+**Güncelleme:** 2026-07-01 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 225/225 + frontend vitest 13/13 + simülatör 115/115 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -38,6 +38,7 @@ Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıy
 | **H9** | Ops (loglama + timing middleware, tutarlı 400, perf smoke, `docs/deployment.md`) | ✓ |
 | **Pilot A** | Pilot kiti doküman paketi (`docs/pilot-kit/` 6 dosya) | ✓ |
 | **QC** | Entegrasyon cilası (data-quality yeterlilik ucu, adaptör temp temizliği, redo doğrulama, calendar_min, frontend yansımaları) | ✓ |
+| **Pilot B** | Pilot doctor CLI (`backend/tools/pilot_doctor.py`): Faz 0–1 GO/NO-GO kapısı otomasyonu — hat doğrulama + adaptör + smoke ingest (geçici DuckDB) + OEE + H3 yeterlilik + red oranı; `python -m tools.pilot_doctor <dizin> [--adapter] [--json]`, exit 0/1/2, `make doctor` | ✓ |
 
 ## API yüzeyi (mevcut)
 
@@ -121,7 +122,8 @@ Bozuk tarih/parametre (from/to/bucket) → 400 {detail} (H9).
   perf smoke (~12 hafta < 2s), `docs/deployment.md`. Yan düzeltme: `fetch_events` tarih filtresi CAST.
 
 **Sırada:** **pilot kiti / saha denemesi**. Olası ileri işler: simülatör destekli what-if (GainEstimator arayüzü hazır), çok-hatlı destek.
-**Pilot kiti A (doküman paketi) TAMAM** (`docs/pilot-kit/` — 6 dosya: değer önermesi, demo, veri-onboarding, runbook, başarı kriterleri, README); sırada B (pilot doctor CLI) + C (showcase).
+**Pilot kiti A (doküman paketi) TAMAM** (`docs/pilot-kit/` — 6 dosya: değer önermesi, demo, veri-onboarding, runbook, başarı kriterleri, README).
+**Pilot kiti B (pilot doctor CLI) TAMAM** (`backend/tools/pilot_doctor.py` — runbook Faz 0–1 kapısı tek komut; in-process + geçici DuckDB, gerçek DB'ye dokunmaz; eşikler `--min-sufficiency 0.6` / `--max-reject 0.05`, `confidence.yaml` 0.5 pano rozetidir ayrı amaç); sırada **C (showcase)**.
 
 ### G7 replay — artık dönem-doğru (G4.1 sonrası)
 Replay penceresi G4.1 ile **üretime de uygulanır** (carrier_id zaman atfı) → Availability + kayıp-zaman +
@@ -142,7 +144,8 @@ Yerelde backend kapısı: `make ci`.
 ```
 docker compose up --build          # http://localhost:8000  (React SPA, açılışta baseline yüklü)
                                    #   /legacy = eski Jinja pano
-# backend testleri:  cd backend && pytest -q          (186 test)
+# backend testleri:  cd backend && pytest -q          (225 test)
+# pilot doctor:       make doctor                      (Faz 0-1 GO/NO-GO; DATA=<dizin> ile)
 # frontend dev:      cd frontend && npm run dev        (Vite, backend'e proxy)
 # frontend testleri: cd frontend && npm run test       (vitest 13)
 ```

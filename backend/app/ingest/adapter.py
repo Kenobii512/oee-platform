@@ -11,6 +11,7 @@ değil, açık `AdapterError` verir. Yeni profil = yeni YAML, kod değil.
 """
 from __future__ import annotations
 
+import csv
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -30,6 +31,10 @@ _CONTRACT_EVENT_FIELDS = (
     "operator_entered_reason",
     "operator_entry_ts",
 )
+
+# Adapter verildiğinde sözleşmeye çevrilen dosya; diğerleri aynen kopyalanır.
+_ADAPTED_FILE = "events.csv"
+_PASSTHROUGH_FILES = ("production.csv", "orders.csv")
 
 
 class AdapterError(ValueError):
@@ -66,6 +71,33 @@ def load_adapter_config(path: str | Path) -> AdapterConfig:
 def apply_mapping(raw_rows: list[dict], mapping: AdapterConfig) -> list[dict]:
     """Ham satırları sözleşme events satırlarına çevirir (deterministik, satır bazlı)."""
     return [_map_row(raw, i, mapping) for i, raw in enumerate(raw_rows)]
+
+
+def adapt_dir_to_contract(raw_dir: str | Path, mapping: AdapterConfig, out_dir: Path) -> None:
+    """Ham dizini `out_dir`'a sözleşme dizini olarak yazar.
+
+    `events.csv` profil ile eşlenir; `production/orders` zaten sözleşme-şeklinde
+    kabul edilip aynen kopyalanır. `out_dir` çağıran tarafından yönetilir (temizlik dahil).
+    """
+    raw = Path(raw_dir)
+    raw_events = raw / _ADAPTED_FILE
+    if raw_events.exists():
+        with open(raw_events, newline="", encoding="utf-8-sig", errors="replace") as f:
+            rows = apply_mapping(list(csv.DictReader(f)), mapping)
+        _write_contract_events(out_dir / _ADAPTED_FILE, rows)
+
+    for name in _PASSTHROUGH_FILES:
+        src = raw / name
+        if src.exists():
+            (out_dir / name).write_bytes(src.read_bytes())
+
+
+def _write_contract_events(path: Path, rows: list[dict]) -> None:
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=_CONTRACT_EVENT_FIELDS, lineterminator="\n")
+        writer.writeheader()
+        for r in rows:
+            writer.writerow({k: r.get(k, "") for k in _CONTRACT_EVENT_FIELDS})
 
 
 def _map_row(raw: dict, idx: int, m: AdapterConfig) -> dict:
