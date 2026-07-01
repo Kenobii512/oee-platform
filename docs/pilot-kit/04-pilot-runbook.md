@@ -19,7 +19,7 @@ Pilot, yaklaşık iki haftalık bir süreçte üç canlı aşamadan oluşur: kic
 
 | Adım | Açıklama | Sorumlu |
 |------|-----------|---------|
-| 0.1 Hat tanımı | Üretim hattını tanımla; `POST /line/validate` isteği göndererek yanıtın `{"valid": true, "errors": []}` döndüğünü (tam olarak 1 darboğaz vb.) doğrula. | Tedarikçi |
+| 0.1 Hat tanımı | Üretim hattını tanımla; `POST /line/validate` isteği göndererek yanıtın `{"valid": true, "errors": []}` döndüğünü (tam olarak 1 darboğaz vb.) doğrula. Aynı doğrulama **Pilot Doctor**'ın `line` kontrolü olarak da koşar (aşağıya bakın). | Tedarikçi |
 | 0.2 Örnek ham dışa aktarım | Müşteriden **bir adet** örnek ham veri dışa aktarımı al (CSV / Excel). | Müşteri |
 | 0.3 Adaptör profili oluştur | Alınan örneği kullanarak H2 adaptör profilini inşa et. Bkz. [03-veri-onboarding.md](03-veri-onboarding.md). | Tedarikçi |
 | 0.4 Dağıtım | H9 adımına göre Render veya Docker ile sistemi dağıt. | Tedarikçi |
@@ -56,7 +56,29 @@ Pilot, yaklaşık iki haftalık bir süreçte üç canlı aşamadan oluşur: kic
 | **GO** ✅ | Tüm kontroller geçti → Faz 2'ye geç. |
 | **NO-GO** ❌ | Adaptörü veya kaynak veriyi düzelt ve Faz 1'i yeniden çalıştır. |
 
-> **Not:** Bu kapı, ilerleyen sürümlerde **B — Pilot Doctor** aracı ile otomatikleşecektir.
+#### Otomatik Kapı: Pilot Doctor CLI
+
+Bu kapı artık **tek komutla otomatik** çalışır:
+
+```bash
+cd backend && python -m tools.pilot_doctor <veri-dizini> --adapter <profil-adı>
+```
+
+Araç, Faz 0–1 kontrollerini (hat doğrulama, adaptör eşlemesi, smoke ingest, OEE
+anlamlılığı, H3 yeterlilik skoru, reddedilen satır oranı) sırayla koşar ve tek bir
+**GO / NO-GO** raporu üretir. Çıkış kodu: `0` = GO, `1` = NO-GO, `2` = kullanım hatası.
+Otomasyon/CI için `--json` bayrağı makine-okur çıktı verir. İngest tamamen **geçici**
+bir veritabanına yapılır; gerçek sisteme dokunulmaz — kapıdan geçince gerçek yüklemeyi
+`POST /ingest` ile yapın.
+
+> **Eşikler:** Doctor'ın varsayılanları bu runbook ile aynıdır: yeterlilik ≥ **0.6**
+> (`--min-sufficiency`), red oranı ≤ **%5** (`--max-reject`). Not: `config/confidence.yaml`
+> içindeki `sufficiency_threshold: 0.5` **panodaki "düşük güven" rozetinin** eşiğidir —
+> pilot kapısından ayrı bir amaca hizmet eder, karıştırmayın.
+>
+> **Örnek veri boyutu:** Faz 1'de kullanılan örnek dışa aktarım **en az bir tam vardiyayı**
+> kapsamalıdır; birkaç satırlık mini örnek, veri-yeterlilik kontrolünden (H3) doğal olarak
+> geçemez.
 
 ---
 

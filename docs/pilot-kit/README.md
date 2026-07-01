@@ -37,7 +37,9 @@ Bu kit, bir kaplama hattında yaklaşık 2 haftalık OEE pilot sürecini yürüt
 
 Bu, **Alt Proje A — Doküman Paketi**'dir (`docs/pilot-kit/`, 6 dosya).
 
+- **B — Pilot Doctor CLI: ✅ MEVCUT.** Faz 0–1 kontrollerini (hat doğrulama, adaptör, smoke ingest, OEE, H3 skoru, red oranı) otomatik çalıştırıp tek GO/NO-GO raporu üretir:
+  `cd backend && python -m tools.pilot_doctor <veri-dizini> --adapter <profil>` (ayrıntı: [04-pilot-runbook.md](04-pilot-runbook.md) "Otomatik Kapı").
+
 Yakında gelecekler:
 
-- **B — Pilot Doctor CLI:** Faz 0–1 kontrollerini (hat doğrulama, smoke ingest, H3 skoru, red oranı) otomatik çalıştıran komut satırı aracı.
 - **C — Showcase:** Pilot sonu rapor artefaktını (tablo, grafik, TL özeti) üretecek şablon/araç.

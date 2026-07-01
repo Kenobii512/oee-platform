@@ -28,10 +28,20 @@ Aynı imaj laptopta `localhost:8000` ve uzak sunucuda public URL ile çalışır
 ## Geliştirme
 
 ```bash
-cd backend && pip install -r requirements.txt && pytest -q     # 186 test
+cd backend && pip install -r requirements.txt && pytest -q     # 225 test
 cd frontend && npm install && npm run dev                      # Vite (backend'e :8000 proxy)
 cd frontend && npm run lint && npm run test && npm run build   # vitest + üretim build
 ```
+
+## Pilot Doctor (Faz 0–1 GO/NO-GO kapısı)
+
+```bash
+cd backend && python -m tools.pilot_doctor <veri-dizini> [--adapter <profil>] [--json]
+# ya da: make doctor DATA=<dizin>   (vars. baseline = kendi kendini doğrulama)
+```
+Saha verisini platforma bağlamadan önce tek komutla denetler: hat doğrulama + adaptör +
+smoke ingest (geçici DB) + OEE + veri-yeterlilik + red oranı → GO/NO-GO (exit 0/1).
+Ayrıntı: `docs/pilot-kit/04-pilot-runbook.md`.
 
 ## İlkeler
 
