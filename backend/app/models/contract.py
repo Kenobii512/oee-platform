@@ -60,6 +60,11 @@ class ProductionRow(BaseModel):
                 f"good_count + scrap_count ({self.good_count}+{self.scrap_count}) "
                 f"!= loaded_qty ({self.loaded_qty})"
             )
+        # redo, yüklenen ayrık parça sayısını aşamaz (aşarsa ilk-geçiş kalite < 0 sessizce 0'a kırpılır).
+        if self.redo_count > self.loaded_qty:
+            raise ValueError(
+                f"redo_count ({self.redo_count}) > loaded_qty ({self.loaded_qty})"
+            )
         return self
 
 

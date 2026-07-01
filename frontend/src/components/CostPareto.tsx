@@ -41,7 +41,12 @@ export default function CostPareto({ cost }: { cost: CostTree }) {
   )
 
   const data: ChartData<'bar' | 'line'> = {
-    labels: cats.map((c) => catLabel(c.category) + (c.kind === 'inferred' ? ' · çıkarımsal' : '')),
+    labels: cats.map(
+      (c) =>
+        catLabel(c.category) +
+        (c.kind === 'inferred' ? ' · çıkarımsal' : '') +
+        (c.low_confidence ? ' · düşük güven' : ''),
+    ),
     datasets: [
       {
         type: 'bar' as const,
@@ -73,10 +78,18 @@ export default function CostPareto({ cost }: { cost: CostTree }) {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (ctx) =>
-            ctx.dataset.type === 'line'
-              ? `Kümülatif %${ctx.raw as number}`
-              : (ctx.raw as number).toLocaleString('tr-TR') + ' ₺',
+          label: (ctx) => {
+            if (ctx.dataset.type === 'line') return `Kümülatif %${ctx.raw as number}`
+            const base = (ctx.raw as number).toLocaleString('tr-TR') + ' ₺'
+            // H3: çıkarım kanalında nokta yerine belirsizlik aralığı göster (sahte kesinlik yok).
+            const cat = cats[ctx.dataIndex]
+            if (cat?.tl_low != null && cat?.tl_high != null && cat.kind === 'inferred') {
+              const lo = Math.round(cat.tl_low).toLocaleString('tr-TR')
+              const hi = Math.round(cat.tl_high).toLocaleString('tr-TR')
+              return `${base}  (aralık: ${lo}–${hi} ₺)`
+            }
+            return base
+          },
         },
       },
     },

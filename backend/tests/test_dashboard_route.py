@@ -47,9 +47,10 @@ def test_data_quality_endpoint(tmp_path, monkeypatch):
         r = client.get("/data-quality/summary")
         assert r.status_code == 200
         body = r.json()
-        # G10: yalnız mikro duruş kapsamı (duruş sistemce otomatik bilinir).
-        assert set(body) == {"microstop_entry_coverage"}
+        # G10: mikro duruş kapsamı (duruş sistemce otomatik bilinir) + QC: H1/H3 yeterlilik.
         assert 0.0 < body["microstop_entry_coverage"] < 0.30
+        assert isinstance(body["sufficient"], bool)
+        assert 0.0 <= body["sufficiency_score"] <= 1.0
 
 
 def test_sample_data_dir_autoingest(tmp_path, monkeypatch):

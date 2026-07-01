@@ -21,7 +21,11 @@ export function qs(range: Range = {}): string {
 
 export async function getJSON<T>(path: string): Promise<T> {
   const r = await fetch(path)
-  if (!r.ok) throw new Error(`${path} -> ${r.status}`)
+  if (!r.ok) {
+    // Backend hataları {detail: "..."} döndürür (H9); kullanıcıya jenerik durum yerine mesajı göster.
+    const body = (await r.json().catch(() => null)) as { detail?: string } | null
+    throw new Error(body?.detail ?? `${path} -> ${r.status}`)
+  }
   return r.json() as Promise<T>
 }
 

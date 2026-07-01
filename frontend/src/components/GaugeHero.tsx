@@ -169,6 +169,12 @@ export default function GaugeHero({ oee, dq, costTotal, redoParts, trend }: Prop
               )}
               <div className="cs-dq">
                 Veri güvenilirliği · mikro-duruş girişi <strong>{pct(dq.microstop_entry_coverage)}</strong>
+                {dq.sufficiency_score != null && (
+                  <>
+                    {' '}· yeterlilik <strong>{pct(dq.sufficiency_score)}</strong>
+                    {dq.sufficient === false && ' (düşük)'}
+                  </>
+                )}
                 <span className="cs-dq-note">tek manuel girdi; gerisi sistemce</span>
               </div>
             </div>

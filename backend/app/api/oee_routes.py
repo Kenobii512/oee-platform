@@ -66,4 +66,6 @@ def get_oee(
     result = compute_oee(
         events, production, line, planned_downtime_min=planned, calendar_min=cal_min
     )
-    return asdict(result)
+    out = asdict(result)
+    out["calendar_min"] = cal_min  # utilization paydası (takvim dakikaları); şeffaflık için
+    return out

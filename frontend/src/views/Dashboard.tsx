@@ -80,11 +80,11 @@ export default function Dashboard() {
         </div>
       ) : (
         <main className="grid">
-          {scenario?.narrative && (
+          {scenario && (scenario.narrative || scenario.highlight) && (
             <div className="scenario-banner" role="note">
               <span className="sb-tag">Senaryo</span>
               <span className="sb-title">{scenario.title}</span>
-              <span className="sb-narr">{scenario.narrative}</span>
+              {scenario.narrative && <span className="sb-narr">{scenario.narrative}</span>}
               {scenario.highlight && HIGHLIGHT_LABEL[scenario.highlight] && (
                 <span className="sb-hl">👁 Neye bak: {HIGHLIGHT_LABEL[scenario.highlight]}</span>
               )}
