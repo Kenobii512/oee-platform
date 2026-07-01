@@ -36,6 +36,14 @@ _CONTRACT_EVENT_FIELDS = (
 _ADAPTED_FILE = "events.csv"
 _PASSTHROUGH_FILES = ("production.csv", "orders.csv")
 
+# Eşleme profilleri repo-kökü config/adapters/ altında (app/ingest/ -> backend -> kök).
+# TEK doğruluk kaynağı: hem API (ingest_routes) hem CLI (pilot_doctor) buradan çözer.
+_ADAPTERS_DIR = Path(__file__).resolve().parents[3] / "config" / "adapters"
+
+
+def resolve_profile_path(name: str) -> Path:
+    return _ADAPTERS_DIR / f"{name}.yaml"
+
 
 class AdapterError(ValueError):
     """Eşleme başarısız: eksik zorunlu kolon ya da eşlenemeyen değer (eyleme dönük mesaj)."""
@@ -54,18 +62,40 @@ class AdapterConfig:
 
 
 def load_adapter_config(path: str | Path) -> AdapterConfig:
-    with open(path, encoding="utf-8") as f:
-        raw = yaml.safe_load(f)
-    return AdapterConfig(
-        column_map=dict(raw.get("column_map", {})),
-        timestamp_format=raw.get("timestamp_format") or None,
-        timezone=raw.get("timezone") or None,
-        duration_unit=str(raw.get("duration_unit", "min")),
-        reason_map=dict(raw.get("reason_map", {})),
-        event_type_rule=dict(raw.get("event_type_rule", {})),
-        required=tuple(raw.get("required", [])),
-        defaults=dict(raw.get("defaults", {})),
-    )
+    """Profil YAML'ını yükler; İÇERİK hataları (bozuk YAML, yanlış tip, geçersiz
+    timezone) sessiz traceback değil, eyleme dönük `AdapterError` verir —
+    çağıranlar (CLI FAIL kontrolü, API 400) tek istisna türüne güvenir."""
+    name = Path(path).name
+    try:
+        with open(path, encoding="utf-8") as f:
+            raw = yaml.safe_load(f)
+    except yaml.YAMLError as exc:
+        raise AdapterError(f"profil YAML'i bozuk ({name}): {exc}") from None
+    if not isinstance(raw, dict):
+        raise AdapterError(f"profil bir YAML nesnesi (mapping) olmali ({name})")
+    tz = raw.get("timezone") or None
+    if tz:
+        # ZoneInfoNotFoundError KeyError'dan türer (ValueError DEĞİL) — burada
+        # fail-fast edilmezse eşleme sırasında satır başına yakalanmadan yükselir.
+        try:
+            ZoneInfo(str(tz))
+        except (KeyError, ValueError) as exc:
+            raise AdapterError(
+                f"gecersiz timezone ({name}): {tz!r} (IANA adi bekleniyor): {exc}"
+            ) from None
+    try:
+        return AdapterConfig(
+            column_map=dict(raw.get("column_map", {})),
+            timestamp_format=raw.get("timestamp_format") or None,
+            timezone=raw.get("timezone") or None,
+            duration_unit=str(raw.get("duration_unit", "min")),
+            reason_map=dict(raw.get("reason_map", {})),
+            event_type_rule=dict(raw.get("event_type_rule", {})),
+            required=tuple(raw.get("required", [])),
+            defaults=dict(raw.get("defaults", {})),
+        )
+    except (TypeError, ValueError) as exc:
+        raise AdapterError(f"profil alanlari hatali ({name}): {exc}") from None
 
 
 def apply_mapping(raw_rows: list[dict], mapping: AdapterConfig) -> list[dict]:

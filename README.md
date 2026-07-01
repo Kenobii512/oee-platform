@@ -37,7 +37,7 @@ cd frontend && npm run lint && npm run test && npm run build   # vitest + üreti
 
 ```bash
 cd backend && python -m tools.pilot_doctor <veri-dizini> [--adapter <profil>] [--json]
-# ya da: make doctor DATA=<dizin>   (vars. baseline = kendi kendini doğrulama)
+# ya da: make doctor DATA=<dizin>   (yol repo köküne göre; vars. baseline = öz-doğrulama)
 ```
 Saha verisini platforma bağlamadan önce tek komutla denetler: hat doğrulama + adaptör +
 smoke ingest (geçici DB) + OEE + veri-yeterlilik + red oranı → GO/NO-GO (exit 0/1).

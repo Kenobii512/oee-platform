@@ -32,9 +32,14 @@ import yaml
 
 from app.analytics.confidence import data_sufficiency
 from app.analytics.oee import OeeResult, compute_oee
-from app.config import load_line_definition
+from app.config import line_definition_from_dict, load_app_config
 from app.config_validate import validate_line_dict
-from app.ingest.adapter import AdapterError, adapt_dir_to_contract, load_adapter_config
+from app.ingest.adapter import (
+    AdapterError,
+    adapt_dir_to_contract,
+    load_adapter_config,
+    resolve_profile_path,
+)
 from app.ingest.loader import load_csv_dir
 from app.ingest.report import LoadReport
 from app.models.contract import LineDefinition
@@ -138,11 +143,19 @@ def check_rejection(report: LoadReport, maximum: float) -> CheckResult:
 
 
 def check_ingest(report: LoadReport) -> CheckResult:
-    """Smoke ingest: en az bir satir kabul edildi mi (runbook 1.1)."""
+    """Smoke ingest: en az bir satir kabul edildi mi (runbook 1.1).
+
+    Dosya-duzeyi ret (row=-1: tum dosya okunamadi) tek satir sayilip red-orani
+    esiginin altinda maskelenemez — toptan dosya kaybi dogrudan ingest FAIL'idir.
+    """
     total = sum(report.accepted.values())
     parts = " ".join(f"{k}={v}" for k, v in sorted(report.accepted.items()))
     skipped = ", ".join(report.skipped) if report.skipped else "-"
     detail = f"accepted: {parts or 'yok'} | skipped: {skipped}"
+    lost_files = sorted({r["file"] for r in report.rejected if r.get("row") == -1})
+    if lost_files:
+        detail = f"dosya tamamen okunamadi: {', '.join(lost_files)} | {detail}"
+        return CheckResult("ingest", FAIL, detail)
     return CheckResult("ingest", PASS if total > 0 else FAIL, detail)
 
 
@@ -155,7 +168,10 @@ def decide(checks: list[CheckResult]) -> bool:
 
 
 def _line_stage(line_path: Path) -> tuple[LineDefinition | None, CheckResult]:
-    """Hat YAML'ını oku + doğrula + yükle; (LineDefinition|None, kontrol) döner."""
+    """Hat YAML'ını oku + doğrula + kur; (LineDefinition|None, kontrol) döner.
+
+    Tek parse: doğrulanan dict ile LineDefinition'a kurulan dict AYNIDIR
+    (iki ayrı dosya okuması içerik/zaman sapmasına açıktı)."""
     try:
         with open(line_path, encoding="utf-8") as f:
             raw = yaml.safe_load(f)
@@ -165,37 +181,37 @@ def _line_stage(line_path: Path) -> tuple[LineDefinition | None, CheckResult]:
     if res.status != PASS:
         return None, res
     try:
-        return load_line_definition(line_path), res
+        return line_definition_from_dict(raw), res
     except (KeyError, TypeError, ValueError) as exc:
-        # Defans: doğrulayıcı ile yükleyici resmen bağlaşık değil.
+        # Defans: doğrulayıcı ile kurucu resmen bağlaşık değil.
         return None, CheckResult("line", FAIL, f"hat tanimi yuklenemedi: {exc}")
 
 
 _SKIP_NO_LINE = "hat tanimi gecersiz oldugu icin atlandi"
-_SKIP_NO_DATA = "veri yok (ingest bos satir kabul etti) - atlandi"
 _SKIP_ADAPTER_FAIL = "adapter eslemesi basarisiz oldugu icin atlandi"
 
-# Eşleme profilleri repo-kökü config/adapters/ altında (tools/ -> backend -> repo kökü).
-_ADAPTERS_DIR = Path(__file__).resolve().parents[2] / "config" / "adapters"
-
-
-def adapter_profile_path(name: str) -> Path:
-    return _ADAPTERS_DIR / f"{name}.yaml"
+# Profil çözümü ingest katmanında TEK kaynaktan (API ile aynı dizin/kural).
+adapter_profile_path = resolve_profile_path
 
 
 def _adapter_stage(name: str, data_dir: Path, tmp_path: Path) -> tuple[CheckResult, Path]:
     """Ham dizini profil ile sözleşmeye çevirir; (kontrol, ingest_dizini) döner.
 
     Profil dosyasının VARLIĞI `main`'de doğrulanır (yoksa kullanım hatası, exit 2);
-    burada içerik/eşleme hataları FAIL kontrolüne dönüşür.
+    içerik/eşleme hataları (bozuk profil YAML'ı dahil) FAIL kontrolüne dönüşür.
     """
-    mapping = load_adapter_config(adapter_profile_path(name))
     out = tmp_path / "adapted"
     out.mkdir()
     try:
+        mapping = load_adapter_config(adapter_profile_path(name))
         adapt_dir_to_contract(data_dir, mapping, out)
     except AdapterError as exc:
         return CheckResult("adapter", FAIL, f"adapter eslemesi basarisiz: {exc}"), data_dir
+    if not (out / "events.csv").exists():
+        # Sessiz no-op "uygulandi" diyemez: girdi bulunamadiysa sorun ADAPTER
+        # asamasindadir, asagi akista (ingest) degil.
+        detail = f"ham dizinde events.csv yok ({data_dir}) - adapter uygulanacak dosya bulunamadi"
+        return CheckResult("adapter", FAIL, detail), data_dir
     return CheckResult("adapter", PASS, f"profil '{name}' uygulandi -> sozlesme dizini"), out
 
 
@@ -236,21 +252,35 @@ def run_doctor(
         repo.connect()
         repo.init_schema()
         try:
-            report = load_csv_dir(ingest_dir, repo)
+            # Kütüphane sözleşmesi simetrik: olmayan dizin exception değil FAIL.
+            try:
+                report = load_csv_dir(ingest_dir, repo)
+                ingest_check = check_ingest(report)
+            except NotADirectoryError:
+                report = LoadReport()
+                ingest_check = CheckResult(
+                    "ingest", FAIL, f"veri dizini yok ya da dizin degil: {ingest_dir}"
+                )
             events = repo.fetch_events()
             production = repo.fetch_production()
         finally:
             repo.close()
 
-    checks.append(check_ingest(report))
+    checks.append(ingest_check)
 
     oee_dict: dict | None = None
     if line_def is None:
         checks.append(CheckResult("oee", SKIP, _SKIP_NO_LINE))
         checks.append(CheckResult("sufficiency", SKIP, _SKIP_NO_LINE))
     elif not events or not production:
-        checks.append(CheckResult("oee", SKIP, _SKIP_NO_DATA))
-        checks.append(CheckResult("sufficiency", SKIP, _SKIP_NO_DATA))
+        # Veri eksikliği bir kapı İHLALİDİR (SKIP nötr kalıp GO'ya izin veremez):
+        # OEE/yeterlilik hesaplanamadan Faz 1 kapısı geçilemez.
+        detail = (
+            f"hesaplanamadi - veri eksik (events={len(events)}, "
+            f"production={len(production)})"
+        )
+        checks.append(CheckResult("oee", FAIL, detail))
+        checks.append(CheckResult("sufficiency", FAIL, detail))
     else:
         oee_res = compute_oee(events, production, line_def)
         oee_dict = asdict(oee_res)
@@ -258,7 +288,11 @@ def run_doctor(
         checks.append(check_sufficiency(data_sufficiency(events, production, line_def), min_sufficiency))
 
     checks.append(check_rejection(report, max_reject))
-    return DoctorReport(checks=checks, ingest=report.to_dict(), oee=oee_dict)
+    # to_dict errors'u 50'de kirpar; rapor TAM listeyi tasir (insan-okur cikti
+    # --max-errors ile dilimler, --json tum retleri verir - rejected_count zaten sayar).
+    ingest_dict = report.to_dict()
+    ingest_dict["errors"] = list(report.rejected)
+    return DoctorReport(checks=checks, ingest=ingest_dict, oee=oee_dict)
 
 
 # ---- insan-okur rapor ----------------------------------------------------
@@ -295,7 +329,10 @@ def format_report(
 
 # ---- CLI -------------------------------------------------------------------
 
-_DEFAULT_LINE = Path(__file__).resolve().parents[2] / "config" / "line_default.yaml"
+
+def _eprint(msg: str) -> None:
+    """Kullanim hatalari da ASCII: cp1252 stderr'de Turkce yol UnicodeEncodeError atmasin."""
+    print(_ascii(msg), file=sys.stderr)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -304,14 +341,17 @@ def main(argv: list[str] | None = None) -> int:
         description="Faz 0-1 pilot hazirlik kontrolleri: tek GO/NO-GO raporu.",
     )
     parser.add_argument("data_dir", help="sozlesme CSV dizini (adapter verilirse ham dizin)")
-    parser.add_argument("--line", default=str(_DEFAULT_LINE), help="hat tanimi YAML yolu")
+    parser.add_argument("--line", default=None,
+                        help="hat tanimi YAML yolu (vars. OEE_LINE_CONFIG env ya da "
+                             "config/line_default.yaml - sunucuyla ayni cozum)")
     parser.add_argument("--adapter", default=None, help="config/adapters/<AD>.yaml profili")
     parser.add_argument("--min-sufficiency", type=float, default=DEFAULT_MIN_SUFFICIENCY,
                         help="H3 veri-yeterlilik esigi (vars. 0.6)")
     parser.add_argument("--max-reject", type=float, default=DEFAULT_MAX_REJECT,
                         help="kirli-satir orani esigi (vars. 0.05)")
     parser.add_argument("--max-errors", type=int, default=5,
-                        help="raporda gosterilecek ilk N ret detayi (vars. 5)")
+                        help="insan-okur raporda gosterilecek ilk N ret detayi (vars. 5); "
+                             "--json TUM retleri icerir")
     parser.add_argument("--json", action="store_true", dest="as_json",
                         help="makine-okur JSON cikti")
     args = parser.parse_args(argv)
@@ -319,17 +359,18 @@ def main(argv: list[str] | None = None) -> int:
     # Kullanim hatalari (exit 2): kontroller kosmadan once, eksik dosya/dizin/profil.
     data_dir = Path(args.data_dir)
     if not data_dir.is_dir():
-        print(f"HATA: veri dizini yok ya da dizin degil: {data_dir}", file=sys.stderr)
+        _eprint(f"HATA: veri dizini yok ya da dizin degil: {data_dir}")
         return 2
-    line_path = Path(args.line)
+    # Hat tanimi varsayilani sunucuyla AYNI kaynaktan (OEE_LINE_CONFIG dahil) —
+    # env-yapilandirilmis kurulumda doctor yanlis hatti dogrulamasin.
+    line_path = Path(args.line) if args.line else Path(load_app_config().line_config_path)
     if not line_path.is_file():
-        print(f"HATA: hat tanimi dosyasi yok: {line_path}", file=sys.stderr)
+        _eprint(f"HATA: hat tanimi dosyasi yok: {line_path}")
         return 2
     if args.adapter and not adapter_profile_path(args.adapter).is_file():
-        print(
+        _eprint(
             f"HATA: bilinmeyen adapter profili: {args.adapter!r} "
-            f"({adapter_profile_path(args.adapter)})",
-            file=sys.stderr,
+            f"({adapter_profile_path(args.adapter)})"
         )
         return 2
 

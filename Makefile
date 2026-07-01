@@ -9,6 +9,7 @@ lint:
 ci: lint test
 
 # Pilot Doctor: Faz 0-1 GO/NO-GO kapisi (vars. baseline = kendi kendini dogrulama).
-DATA ?= tests/fixtures/baseline
+# DATA repo kokune gore verilir; abspath cd backend oncesi mutlaklastirir.
+DATA ?= backend/tests/fixtures/baseline
 doctor:
-	cd backend && python -m tools.pilot_doctor $(DATA)
+	cd backend && python -m tools.pilot_doctor "$(abspath $(DATA))"

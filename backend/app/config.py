@@ -57,6 +57,12 @@ def load_app_config() -> AppConfig:
 def load_line_definition(path: str | Path) -> LineDefinition:
     with open(path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
+    return line_definition_from_dict(raw)
+
+
+def line_definition_from_dict(raw: dict) -> LineDefinition:
+    """Ayrıştırılmış hat dict'inden LineDefinition kurar (dosyayı yeniden okumadan);
+    `config_validate.validate_line_dict` ile aynı ham dict'i paylaşan çağıranlar için."""
     tanks = [
         TankDef(
             id=t["id"],

@@ -43,3 +43,31 @@ def test_non_numeric_duration_raises():
     ]
     with pytest.raises(AdapterError):
         apply_mapping(raw, _cfg())
+
+
+# ---- profil İÇERİK hataları: sessiz traceback değil AdapterError -------------
+
+
+def test_malformed_profile_yaml_raises_adapter_error(tmp_path):
+    p = tmp_path / "bozuk.yaml"
+    p.write_text("column_map: [acik, kalan", encoding="utf-8")  # kapanmayan flow -> YAMLError
+    with pytest.raises(AdapterError):
+        load_adapter_config(p)
+
+
+def test_empty_profile_raises_adapter_error(tmp_path):
+    p = tmp_path / "bos.yaml"
+    p.write_text("", encoding="utf-8")  # safe_load -> None (dict değil)
+    with pytest.raises(AdapterError):
+        load_adapter_config(p)
+
+
+def test_invalid_timezone_raises_adapter_error_at_load(tmp_path):
+    # ZoneInfoNotFoundError KeyError'dan türer; yakalanmazsa eşleme sırasında
+    # satır-başına traceback olur. Profil yüklemede fail-fast AdapterError.
+    p = tmp_path / "kotu_tz.yaml"
+    src = (ADAPTERS / "generic_plant.yaml").read_text(encoding="utf-8")
+    p.write_text(src.replace("timezone: null", "timezone: Europe/Istanbulll"), encoding="utf-8")
+    with pytest.raises(AdapterError) as exc:
+        load_adapter_config(p)
+    assert "timezone" in str(exc.value)
