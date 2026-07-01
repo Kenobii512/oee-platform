@@ -75,6 +75,11 @@ export interface TrendPoint {
 export interface DataQuality {
   // G10: operatörün tek manuel girdisi mikro duruş (duruş sistemce otomatik bilinir).
   microstop_entry_coverage: number
+  // QC/H1+H3: veri-yeterlilik (pencerede çıkarım/OEE güvenilir mi).
+  sufficient?: boolean
+  sufficiency_score?: number // 0..1
+  event_count?: number
+  span_min?: number
 }
 
 export interface ScenarioInfo {

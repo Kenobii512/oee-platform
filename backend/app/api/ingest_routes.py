@@ -28,36 +28,42 @@ class IngestRequest(BaseModel):
 @router.post("/ingest")
 def ingest(req: IngestRequest, request: Request) -> dict:
     repo = request.app.state.repo
-    source = req.path
-    if req.adapter:
+    if not req.adapter:
+        return _load(req.path, repo)
+    # Adapter: ham -> sözleşme geçici dizine; TemporaryDirectory çıkışta temizler (sızıntı yok).
+    try:
+        mapping = _resolve_profile(req.adapter)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    with tempfile.TemporaryDirectory(prefix="oee_adapt_") as tmp:
         try:
-            source = _adapt_to_contract(req.path, req.adapter)
-        except FileNotFoundError as exc:
-            raise HTTPException(status_code=400, detail=str(exc))
+            _adapt_to_contract(req.path, mapping, Path(tmp))
         except AdapterError as exc:
             raise HTTPException(status_code=400, detail=f"adapter eşleme hatası: {exc}")
+        return _load(tmp, repo)
+
+
+def _load(source: str, repo) -> dict:
     try:
-        report = load_csv_dir(source, repo)
+        return load_csv_dir(source, repo).to_dict()
     except NotADirectoryError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
-    return report.to_dict()
 
 
-def _adapt_to_contract(raw_dir: str, adapter: str) -> str:
-    """Ham dizini sözleşme dizinine çevirir; geçici dizin yolunu döndürür.
-
-    `events.csv` profil ile eşlenir; `production/orders` zaten sözleşme-şeklinde
-    kabul edilip aynen kopyalanır. Geçici dizin TemporaryDirectory yerine kalıcı
-    mkdtemp ile açılır (load_csv_dir tüketene kadar yaşamalı; süreç sonunda OS temizler).
-    """
+def _resolve_profile(adapter: str):
     profile = _ADAPTERS_DIR / f"{adapter}.yaml"
     if not profile.exists():
         raise FileNotFoundError(f"bilinmeyen adapter profili: {adapter!r} ({profile})")
-    mapping = load_adapter_config(profile)
+    return load_adapter_config(profile)
 
+
+def _adapt_to_contract(raw_dir: str, mapping, out_dir: Path) -> None:
+    """Ham dizini `out_dir`'a sözleşme dizini olarak yazar.
+
+    `events.csv` profil ile eşlenir; `production/orders` zaten sözleşme-şeklinde
+    kabul edilip aynen kopyalanır. `out_dir` çağıran tarafından yönetilir (temizlik dahil).
+    """
     raw = Path(raw_dir)
-    out_dir = Path(tempfile.mkdtemp(prefix="oee_adapt_"))
-
     raw_events = raw / _ADAPTED_FILE
     if raw_events.exists():
         with open(raw_events, newline="", encoding="utf-8-sig", errors="replace") as f:
@@ -68,7 +74,6 @@ def _adapt_to_contract(raw_dir: str, adapter: str) -> str:
         src = raw / name
         if src.exists():
             (out_dir / name).write_bytes(src.read_bytes())
-    return str(out_dir)
 
 
 _EVENT_FIELDS = (
