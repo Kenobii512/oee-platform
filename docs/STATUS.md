@@ -107,6 +107,7 @@ GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
   perf smoke (~12 hafta < 2s), `docs/deployment.md`. Yan düzeltme: `fetch_events` tarih filtresi CAST.
 
 **Sırada:** **pilot kiti / saha denemesi**. Olası ileri işler: simülatör destekli what-if (GainEstimator arayüzü hazır), çok-hatlı destek.
+**Pilot kiti A (doküman paketi) TAMAM** (`docs/pilot-kit/` — 6 dosya: değer önermesi, demo, veri-onboarding, runbook, başarı kriterleri, README); sırada B (pilot doctor CLI) + C (showcase).
 
 ### G7 replay — artık dönem-doğru (G4.1 sonrası)
 Replay penceresi G4.1 ile **üretime de uygulanır** (carrier_id zaman atfı) → Availability + kayıp-zaman +
