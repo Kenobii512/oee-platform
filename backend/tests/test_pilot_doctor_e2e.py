@@ -276,3 +276,32 @@ def test_main_json_nogo_consistent(capsys):
     payload = json.loads(capsys.readouterr().out)
     assert payload["go"] is False
     assert payload["exit_code"] == 1
+
+
+def test_main_line_default_honors_env(tmp_path, monkeypatch, capsys):
+    # Kurulum OEE_LINE_CONFIG ile hat YAML'ini gosterir; doctor --line'siz
+    # calisirken AYNI hatti dogrulamali (demo line_default.yaml'i degil).
+    bad = tmp_path / "env_line.yaml"
+    bad.write_text("line:\n  id: hat-env\ntanks: []\n", encoding="utf-8")  # gecersiz
+    monkeypatch.setenv("OEE_LINE_CONFIG", str(bad))
+    assert main([str(BASELINE)]) == 1  # env'deki hat gecersiz -> NO-GO
+    assert "line" in capsys.readouterr().out
+
+
+def test_main_max_errors_not_capped_at_50(capsys):
+    # LoadReport.to_dict errors'u 50'de kirpar; --max-errors 200 sessizce 50'ye
+    # dusmemeli - tam ret listesi rapora/json'a akmali (dirty ~237 ret).
+    assert main([str(DIRTY / "type_corruption"), "--json", "--max-errors", "200"]) == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ingest"]["rejected_count"] > 50
+    assert len(payload["ingest"]["errors"]) > 50  # 50 tavani kalkti
+
+
+def test_main_usage_error_output_is_ascii(tmp_path, capsys):
+    # Exit-2 mesajlari da ASCII olmali (cp1252 konsolda tam ihtiyac aninda
+    # UnicodeEncodeError atmasin) - Turkce karakterli yol katlanir.
+    missing = tmp_path / "Masaüstü-ığş" / "veri"
+    assert main([str(missing)]) == 2
+    err = capsys.readouterr().err
+    err.encode("ascii")  # raise etmemeli
+    assert "HATA" in err

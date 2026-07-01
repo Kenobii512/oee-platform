@@ -32,7 +32,7 @@ import yaml
 
 from app.analytics.confidence import data_sufficiency
 from app.analytics.oee import OeeResult, compute_oee
-from app.config import load_line_definition
+from app.config import load_app_config, load_line_definition
 from app.config_validate import validate_line_dict
 from app.ingest.adapter import AdapterError, adapt_dir_to_contract, load_adapter_config
 from app.ingest.loader import load_csv_dir
@@ -284,7 +284,11 @@ def run_doctor(
         checks.append(check_sufficiency(data_sufficiency(events, production, line_def), min_sufficiency))
 
     checks.append(check_rejection(report, max_reject))
-    return DoctorReport(checks=checks, ingest=report.to_dict(), oee=oee_dict)
+    # to_dict errors'u 50'de kirpar; rapor TAM listeyi tasir (insan-okur cikti
+    # --max-errors ile dilimler, --json tum retleri verir - rejected_count zaten sayar).
+    ingest_dict = report.to_dict()
+    ingest_dict["errors"] = list(report.rejected)
+    return DoctorReport(checks=checks, ingest=ingest_dict, oee=oee_dict)
 
 
 # ---- insan-okur rapor ----------------------------------------------------
@@ -321,7 +325,10 @@ def format_report(
 
 # ---- CLI -------------------------------------------------------------------
 
-_DEFAULT_LINE = Path(__file__).resolve().parents[2] / "config" / "line_default.yaml"
+
+def _eprint(msg: str) -> None:
+    """Kullanim hatalari da ASCII: cp1252 stderr'de Turkce yol UnicodeEncodeError atmasin."""
+    print(_ascii(msg), file=sys.stderr)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -330,14 +337,17 @@ def main(argv: list[str] | None = None) -> int:
         description="Faz 0-1 pilot hazirlik kontrolleri: tek GO/NO-GO raporu.",
     )
     parser.add_argument("data_dir", help="sozlesme CSV dizini (adapter verilirse ham dizin)")
-    parser.add_argument("--line", default=str(_DEFAULT_LINE), help="hat tanimi YAML yolu")
+    parser.add_argument("--line", default=None,
+                        help="hat tanimi YAML yolu (vars. OEE_LINE_CONFIG env ya da "
+                             "config/line_default.yaml - sunucuyla ayni cozum)")
     parser.add_argument("--adapter", default=None, help="config/adapters/<AD>.yaml profili")
     parser.add_argument("--min-sufficiency", type=float, default=DEFAULT_MIN_SUFFICIENCY,
                         help="H3 veri-yeterlilik esigi (vars. 0.6)")
     parser.add_argument("--max-reject", type=float, default=DEFAULT_MAX_REJECT,
                         help="kirli-satir orani esigi (vars. 0.05)")
     parser.add_argument("--max-errors", type=int, default=5,
-                        help="raporda gosterilecek ilk N ret detayi (vars. 5)")
+                        help="insan-okur raporda gosterilecek ilk N ret detayi (vars. 5); "
+                             "--json TUM retleri icerir")
     parser.add_argument("--json", action="store_true", dest="as_json",
                         help="makine-okur JSON cikti")
     args = parser.parse_args(argv)
@@ -345,17 +355,18 @@ def main(argv: list[str] | None = None) -> int:
     # Kullanim hatalari (exit 2): kontroller kosmadan once, eksik dosya/dizin/profil.
     data_dir = Path(args.data_dir)
     if not data_dir.is_dir():
-        print(f"HATA: veri dizini yok ya da dizin degil: {data_dir}", file=sys.stderr)
+        _eprint(f"HATA: veri dizini yok ya da dizin degil: {data_dir}")
         return 2
-    line_path = Path(args.line)
+    # Hat tanimi varsayilani sunucuyla AYNI kaynaktan (OEE_LINE_CONFIG dahil) —
+    # env-yapilandirilmis kurulumda doctor yanlis hatti dogrulamasin.
+    line_path = Path(args.line) if args.line else Path(load_app_config().line_config_path)
     if not line_path.is_file():
-        print(f"HATA: hat tanimi dosyasi yok: {line_path}", file=sys.stderr)
+        _eprint(f"HATA: hat tanimi dosyasi yok: {line_path}")
         return 2
     if args.adapter and not adapter_profile_path(args.adapter).is_file():
-        print(
+        _eprint(
             f"HATA: bilinmeyen adapter profili: {args.adapter!r} "
-            f"({adapter_profile_path(args.adapter)})",
-            file=sys.stderr,
+            f"({adapter_profile_path(args.adapter)})"
         )
         return 2
 
