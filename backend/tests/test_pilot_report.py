@@ -7,7 +7,7 @@ import pytest
 
 from app.config import load_line_definition
 from tests.conftest import FIXTURES, LINE_CONFIG, RAW
-from tools.pilot_report import build_report_data
+from tools.pilot_report import build_report_data, render_html
 
 SCENARIOS = FIXTURES / "scenarios"
 STORM = SCENARIOS / "breakdown_storm"
@@ -86,3 +86,75 @@ def test_adapter_raw_report_data(line_def_m):
     data = build_report_data(RAW, line_def_m, adapter="generic_plant")
     assert data["has_data"] is True
     assert data["quality"]["accepted"].get("events", 0) > 0
+
+
+# ---- render_html: kendine-yeten tek dosya ------------------------------------
+
+
+@pytest.fixture(scope="module")
+def storm_html(storm_data):
+    data = dict(storm_data)
+    data["meta"] = {**storm_data["meta"], "generated_at": "2026-07-02 12:00"}
+    return render_html(data)
+
+
+def test_render_is_self_contained(storm_html):
+    assert storm_html.lstrip().lower().startswith("<!doctype html")
+    # Harici istek yok: CDN/font/stylesheet/script kaynağı bulunmaz.
+    assert "http://" not in storm_html
+    assert "https://" not in storm_html
+    assert "<link" not in storm_html
+    assert "@import" not in storm_html
+    assert "<script" not in storm_html
+
+
+def test_render_has_faz3_sections(storm_html):
+    for text in (
+        "Pilot Raporu",
+        "OEE",
+        "En büyük kayıplar",
+        "TL fırsatı",
+        "Güven notu",
+        "Başarı kriterleri",
+        "üst sınır",  # önerilerin örtüşme çekincesi
+    ):
+        assert text in storm_html, text
+
+
+def test_render_criteria_marks_and_fillables(storm_html):
+    # Otomatik kısımlar isaretli, insan alanları boş.
+    assert "✓" in storm_html
+    assert "☐ GO" in storm_html and "☐ İyileştir" in storm_html and "☐ Durdur" in storm_html
+    assert "____" in storm_html  # elle doldurulacak alan
+
+
+def test_render_pareto_bars_and_turkish_labels(storm_html):
+    assert storm_html.count('class="bar"') == 5  # 5 kayıp kategorisi
+    assert "Duruş" in storm_html  # catLabel karşılığı (ham kod değil)
+    assert "₺" in storm_html  # para standardı
+
+
+def test_render_trend_needs_history_note(storm_data):
+    data = dict(storm_data)
+    data["meta"] = {**storm_data["meta"], "generated_at": "x"}
+    data["trend"] = storm_data["trend"][:2]  # <3 nokta
+    html_out = render_html(data)
+    assert "yeterli geçmiş yok" in html_out
+
+
+def test_render_escapes_untrusted_text(storm_data):
+    data = dict(storm_data)
+    data["meta"] = {**storm_data["meta"], "line_name": "<script>alert(1)</script>",
+                    "generated_at": "x"}
+    html_out = render_html(data)
+    assert "<script>alert(1)</script>" not in html_out
+    assert "&lt;script&gt;" in html_out
+
+
+def test_render_empty_data_shows_placeholder(tmp_path, line_def_m):
+    empty = tmp_path / "bos"
+    empty.mkdir()
+    data = build_report_data(empty, line_def_m)
+    data["meta"] = {**data["meta"], "generated_at": "x"}
+    html_out = render_html(data)
+    assert "veri yok" in html_out  # çökme yok, bölümler işaretli
