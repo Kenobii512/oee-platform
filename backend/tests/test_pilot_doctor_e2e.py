@@ -105,6 +105,55 @@ def test_adapter_mapping_error_skips_downstream(tmp_path):
     assert rep.go() is False
 
 
+def test_adapter_missing_events_csv_fails_adapter(tmp_path):
+    # Ham dizinde events.csv yoksa adapter "uygulandi" diyemez (sessiz no-op
+    # PASS'i teshisi ingest katmanina yanlis yonlendiriyordu).
+    d = tmp_path / "yanlis_ad"
+    d.mkdir()
+    (d / "machine_log.csv").write_text("a,b\n1,2\n", encoding="utf-8")
+    rep = run_doctor(d, LINE_CONFIG, adapter="generic_plant")
+    assert _by_name(rep, "adapter").status == FAIL
+    assert "events.csv" in _by_name(rep, "adapter").detail
+    assert rep.go() is False
+
+
+def test_adapter_malformed_profile_is_nogo_not_traceback(tmp_path, monkeypatch):
+    # Profil dosyasi VAR ama icerigi bozuk -> traceback degil adapter FAIL.
+    bad_dir = tmp_path / "adapters"
+    bad_dir.mkdir()
+    (bad_dir / "bozuk.yaml").write_text("column_map: [acik, kalan", encoding="utf-8")
+    monkeypatch.setattr("tools.pilot_doctor._ADAPTERS_DIR", bad_dir)
+    rep = run_doctor(RAW, LINE_CONFIG, adapter="bozuk")
+    assert _by_name(rep, "adapter").status == FAIL
+    assert rep.go() is False
+
+
+def test_adapter_empty_profile_is_nogo_not_traceback(tmp_path, monkeypatch):
+    bad_dir = tmp_path / "adapters"
+    bad_dir.mkdir()
+    (bad_dir / "bos.yaml").write_text("", encoding="utf-8")  # safe_load -> None
+    monkeypatch.setattr("tools.pilot_doctor._ADAPTERS_DIR", bad_dir)
+    rep = run_doctor(RAW, LINE_CONFIG, adapter="bos")
+    assert _by_name(rep, "adapter").status == FAIL
+
+
+def test_adapter_invalid_timezone_is_adapter_fail(tmp_path, monkeypatch):
+    # ZoneInfoNotFoundError KeyError'dan turer; AdapterError'a cevrilmezse hem
+    # CLI'yi hem POST /ingest'i (500) dusuruyordu -> profil yuklemede fail-fast.
+    from tests.conftest import ADAPTERS
+
+    profile = (ADAPTERS / "generic_plant.yaml").read_text(encoding="utf-8")
+    bad_dir = tmp_path / "adapters"
+    bad_dir.mkdir()
+    (bad_dir / "kotu_tz.yaml").write_text(
+        profile.replace("timezone: null", "timezone: Europe/Istanbulll"), encoding="utf-8"
+    )
+    monkeypatch.setattr("tools.pilot_doctor._ADAPTERS_DIR", bad_dir)
+    rep = run_doctor(RAW, LINE_CONFIG, adapter="kotu_tz")
+    assert _by_name(rep, "adapter").status == FAIL
+    assert "timezone" in _by_name(rep, "adapter").detail
+
+
 # ---- run_doctor: boş veri / izolasyon --------------------------------------
 
 

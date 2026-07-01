@@ -29,7 +29,8 @@ def ingest(req: IngestRequest, request: Request) -> dict:
     # Adapter: ham -> sözleşme geçici dizine; TemporaryDirectory çıkışta temizler (sızıntı yok).
     try:
         mapping = _resolve_profile(req.adapter)
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, AdapterError) as exc:
+        # AdapterError: profil dosyası var ama içeriği bozuk (YAML/tip/timezone) — 500 değil 400.
         raise HTTPException(status_code=400, detail=str(exc))
     with tempfile.TemporaryDirectory(prefix="oee_adapt_") as tmp:
         try:

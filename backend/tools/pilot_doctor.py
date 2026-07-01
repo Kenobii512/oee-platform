@@ -194,15 +194,20 @@ def _adapter_stage(name: str, data_dir: Path, tmp_path: Path) -> tuple[CheckResu
     """Ham dizini profil ile sözleşmeye çevirir; (kontrol, ingest_dizini) döner.
 
     Profil dosyasının VARLIĞI `main`'de doğrulanır (yoksa kullanım hatası, exit 2);
-    burada içerik/eşleme hataları FAIL kontrolüne dönüşür.
+    içerik/eşleme hataları (bozuk profil YAML'ı dahil) FAIL kontrolüne dönüşür.
     """
-    mapping = load_adapter_config(adapter_profile_path(name))
     out = tmp_path / "adapted"
     out.mkdir()
     try:
+        mapping = load_adapter_config(adapter_profile_path(name))
         adapt_dir_to_contract(data_dir, mapping, out)
     except AdapterError as exc:
         return CheckResult("adapter", FAIL, f"adapter eslemesi basarisiz: {exc}"), data_dir
+    if not (out / "events.csv").exists():
+        # Sessiz no-op "uygulandi" diyemez: girdi bulunamadiysa sorun ADAPTER
+        # asamasindadir, asagi akista (ingest) degil.
+        detail = f"ham dizinde events.csv yok ({data_dir}) - adapter uygulanacak dosya bulunamadi"
+        return CheckResult("adapter", FAIL, detail), data_dir
     return CheckResult("adapter", PASS, f"profil '{name}' uygulandi -> sozlesme dizini"), out
 
 
