@@ -138,11 +138,19 @@ def check_rejection(report: LoadReport, maximum: float) -> CheckResult:
 
 
 def check_ingest(report: LoadReport) -> CheckResult:
-    """Smoke ingest: en az bir satir kabul edildi mi (runbook 1.1)."""
+    """Smoke ingest: en az bir satir kabul edildi mi (runbook 1.1).
+
+    Dosya-duzeyi ret (row=-1: tum dosya okunamadi) tek satir sayilip red-orani
+    esiginin altinda maskelenemez — toptan dosya kaybi dogrudan ingest FAIL'idir.
+    """
     total = sum(report.accepted.values())
     parts = " ".join(f"{k}={v}" for k, v in sorted(report.accepted.items()))
     skipped = ", ".join(report.skipped) if report.skipped else "-"
     detail = f"accepted: {parts or 'yok'} | skipped: {skipped}"
+    lost_files = sorted({r["file"] for r in report.rejected if r.get("row") == -1})
+    if lost_files:
+        detail = f"dosya tamamen okunamadi: {', '.join(lost_files)} | {detail}"
+        return CheckResult("ingest", FAIL, detail)
     return CheckResult("ingest", PASS if total > 0 else FAIL, detail)
 
 
@@ -172,7 +180,6 @@ def _line_stage(line_path: Path) -> tuple[LineDefinition | None, CheckResult]:
 
 
 _SKIP_NO_LINE = "hat tanimi gecersiz oldugu icin atlandi"
-_SKIP_NO_DATA = "veri yok (ingest bos satir kabul etti) - atlandi"
 _SKIP_ADAPTER_FAIL = "adapter eslemesi basarisiz oldugu icin atlandi"
 
 # Eşleme profilleri repo-kökü config/adapters/ altında (tools/ -> backend -> repo kökü).
@@ -236,21 +243,35 @@ def run_doctor(
         repo.connect()
         repo.init_schema()
         try:
-            report = load_csv_dir(ingest_dir, repo)
+            # Kütüphane sözleşmesi simetrik: olmayan dizin exception değil FAIL.
+            try:
+                report = load_csv_dir(ingest_dir, repo)
+                ingest_check = check_ingest(report)
+            except NotADirectoryError:
+                report = LoadReport()
+                ingest_check = CheckResult(
+                    "ingest", FAIL, f"veri dizini yok ya da dizin degil: {ingest_dir}"
+                )
             events = repo.fetch_events()
             production = repo.fetch_production()
         finally:
             repo.close()
 
-    checks.append(check_ingest(report))
+    checks.append(ingest_check)
 
     oee_dict: dict | None = None
     if line_def is None:
         checks.append(CheckResult("oee", SKIP, _SKIP_NO_LINE))
         checks.append(CheckResult("sufficiency", SKIP, _SKIP_NO_LINE))
     elif not events or not production:
-        checks.append(CheckResult("oee", SKIP, _SKIP_NO_DATA))
-        checks.append(CheckResult("sufficiency", SKIP, _SKIP_NO_DATA))
+        # Veri eksikliği bir kapı İHLALİDİR (SKIP nötr kalıp GO'ya izin veremez):
+        # OEE/yeterlilik hesaplanamadan Faz 1 kapısı geçilemez.
+        detail = (
+            f"hesaplanamadi - veri eksik (events={len(events)}, "
+            f"production={len(production)})"
+        )
+        checks.append(CheckResult("oee", FAIL, detail))
+        checks.append(CheckResult("sufficiency", FAIL, detail))
     else:
         oee_res = compute_oee(events, production, line_def)
         oee_dict = asdict(oee_res)

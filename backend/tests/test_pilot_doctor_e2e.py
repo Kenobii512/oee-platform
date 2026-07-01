@@ -115,8 +115,54 @@ def test_empty_data_dir_is_nogo_not_crash(tmp_path):
     assert rep.go() is False
     assert _by_name(rep, "ingest").status == FAIL
     assert _by_name(rep, "rejection").status == FAIL  # "hic satir yok"
-    assert _by_name(rep, "oee").status == SKIP  # veri yok -> hesap yok
-    assert _by_name(rep, "sufficiency").status == SKIP
+    # Veri eksikligi bir kapi ihlalidir: SKIP notr kalip GO'ya izin veremez.
+    assert _by_name(rep, "oee").status == FAIL
+    assert _by_name(rep, "sufficiency").status == FAIL
+
+
+def test_events_only_dir_is_nogo(tmp_path):
+    # production.csv eksik -> OEE/yeterlilik hesaplanamaz; SAHTE GO OLMAMALI.
+    d = tmp_path / "yalniz_events"
+    d.mkdir()
+    (d / "events.csv").write_bytes((BASELINE / "events.csv").read_bytes())
+    rep = run_doctor(d, LINE_CONFIG, adapter=None)
+    assert rep.go() is False
+    assert _by_name(rep, "oee").status == FAIL
+    assert _by_name(rep, "sufficiency").status == FAIL
+    assert "production" in _by_name(rep, "oee").detail  # neyin eksik oldugu okunur
+
+
+def test_production_only_dir_is_nogo(tmp_path):
+    d = tmp_path / "yalniz_production"
+    d.mkdir()
+    (d / "production.csv").write_bytes((BASELINE / "production.csv").read_bytes())
+    (d / "orders.csv").write_bytes((BASELINE / "orders.csv").read_bytes())
+    rep = run_doctor(d, LINE_CONFIG, adapter=None)
+    assert rep.go() is False
+    assert _by_name(rep, "oee").status == FAIL
+
+
+def test_wholly_unreadable_events_csv_is_nogo(tmp_path):
+    # Dosya-duzeyi CSV hatasi (csv.Error: alan limiti asimi) tek ret satiri sayilip
+    # %5 esiginin altinda kalarak toptan dosya kaybini maskeleyemez.
+    d = tmp_path / "bozuk_events"
+    d.mkdir()
+    giant = "a" * 200_000  # csv.field_size_limit (131072) ustu -> csv.Error
+    (d / "events.csv").write_text(f"timestamp,line_id\n{giant},hat1\n", encoding="utf-8")
+    (d / "production.csv").write_bytes((BASELINE / "production.csv").read_bytes())
+    (d / "orders.csv").write_bytes((BASELINE / "orders.csv").read_bytes())
+    rep = run_doctor(d, LINE_CONFIG, adapter=None)
+    assert rep.go() is False
+    ing = _by_name(rep, "ingest")
+    assert ing.status == FAIL
+    assert "events.csv" in ing.detail
+
+
+def test_missing_data_dir_run_doctor_returns_report(tmp_path):
+    # Kutuphane sozlesmesi simetrik: olmayan dizin exception degil NO-GO raporu.
+    rep = run_doctor(tmp_path / "yok", LINE_CONFIG, adapter=None)
+    assert rep.go() is False
+    assert _by_name(rep, "ingest").status == FAIL
 
 
 def test_no_db_files_left_in_cwd(tmp_path, monkeypatch):

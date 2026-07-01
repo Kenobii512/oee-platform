@@ -132,6 +132,16 @@ def test_check_ingest_zero_rows_fails():
     assert check_ingest(LoadReport()).status == FAIL
 
 
+def test_check_ingest_file_level_rejection_fails():
+    # Dosya-düzeyi ret (row=-1, tüm dosya okunamadı) tek satır sayılıp maskelenemez:
+    # production 100 kabul olsa da events'in TOPTAN kaybı ingest FAIL olmalı.
+    rep = LoadReport(accepted={"production": 100})
+    rep.add_rejection("events.csv", -1, "CSV okunamadi: NUL")
+    res = check_ingest(rep)
+    assert res.status == FAIL
+    assert "events.csv" in res.detail
+
+
 # ---- decide / rapor ------------------------------------------------------
 
 
