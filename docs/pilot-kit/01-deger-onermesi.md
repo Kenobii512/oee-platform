@@ -41,7 +41,7 @@ Platformun güven mimarisini şeffaf tutuyoruz — neyin ölçüldüğünü, ney
 
 **Çıkarılan kayıplar (model)**
 - Gizli hız kaybı: hat nominal hızda değilken oluşan fark.
-- Doluluk kaybı: hat çalışırken parça üretmediği süre.
+- Doluluk kaybı: askılara nominal kapasiteden az parça yüklenmesinden kaynaklanan parça kaybı.
 
 Verinin azaldığı durumlarda (kısa vardiya, eksik sinyal) ilgili kalem otomatik olarak **"Düşük Güven"** rozeti alır. Sessizce yanlış bir sayı göstermeyiz; belirsizliği açıkça işaretleriz.
 

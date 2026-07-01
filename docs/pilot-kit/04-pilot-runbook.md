@@ -19,7 +19,7 @@ Pilot, yaklaşık iki haftalık bir süreçte üç canlı aşamadan oluşur: kic
 
 | Adım | Açıklama | Sorumlu |
 |------|-----------|---------|
-| 0.1 Hat tanımı | Üretim hattını tanımla; `POST /line/validate` isteği göndererek yanıtın `green` döndüğünü (tam olarak 1 darboğaz vb.) doğrula. | Tedarikçi |
+| 0.1 Hat tanımı | Üretim hattını tanımla; `POST /line/validate` isteği göndererek yanıtın `{"valid": true, "errors": []}` döndüğünü (tam olarak 1 darboğaz vb.) doğrula. | Tedarikçi |
 | 0.2 Örnek ham dışa aktarım | Müşteriden **bir adet** örnek ham veri dışa aktarımı al (CSV / Excel). | Müşteri |
 | 0.3 Adaptör profili oluştur | Alınan örneği kullanarak H2 adaptör profilini inşa et. Bkz. [03-veri-onboarding.md](03-veri-onboarding.md). | Tedarikçi |
 | 0.4 Dağıtım | H9 adımına göre Render veya Docker ile sistemi dağıt. | Tedarikçi |

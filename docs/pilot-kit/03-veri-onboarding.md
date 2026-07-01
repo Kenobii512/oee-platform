@@ -62,7 +62,7 @@ Hurdanın olmadığı (no-scrap) tesislerde `scrap_count = 0` ve `good_count = l
 |-------|-----|----------|
 | `order_id` | string | İş emri kimliği |
 | `product_id` | string | Ürün/tarif kimliği |
-| `target_cycle` | float (dakika) | Nominal çevrim süresi — Performance paydası payda referansı |
+| `target_cycle` | float (dakika) | Nominal çevrim süresi (ürün başvurusu). Not: OEE Performance hesabı bu alanı değil, hat tanımındaki tank sürelerini (`time_min`/`time_max`) kullanır. |
 | `planned_qty` | int | Planlanan toplam parça adedi |
 
 ---
@@ -212,10 +212,10 @@ Platform, bozuk/eksik/yanlış-tip satırlara **çökmez.** Hatalı satırlar `L
   "rejected_count": 4,
   "skipped": ["ground_truth_events.csv"],
   "errors": [
-    "events.csv satır 17: duration negatif olamaz: -5.0",
-    "events.csv satır 31: event_type geçersiz değer: 'RINSE'",
-    "production.csv satır 8: good_count + scrap_count (80+30) != loaded_qty (100)",
-    "events.csv satır 55: zorunlu alan eksik: 'ts'"
+    {"file": "events.csv", "row": 17, "error": "duration negatif olamaz: -5.0"},
+    {"file": "events.csv", "row": 31, "error": "event_type gecersiz deger: 'RINSE'"},
+    {"file": "production.csv", "row": 8, "error": "good_count + scrap_count (80+30) != loaded_qty (100)"},
+    {"file": "events.csv", "row": 55, "error": "zorunlu alan eksik: 'ts'"}
   ]
 }
 ```
@@ -223,7 +223,7 @@ Platform, bozuk/eksik/yanlış-tip satırlara **çökmez.** Hatalı satırlar `L
 - **`accepted`**: sözleşmeyi geçen ve veritabanına yazılan satır sayıları (dosya başına).
 - **`rejected_count`**: toplam reddedilen satır adedi.
 - **`skipped`**: `ground_truth*` gibi güvenlik sınırı kapsamındaki atlanmış dosyalar.
-- **`errors`**: her hata için dosya adı, satır numarası ve neden.
+- **`errors`**: her hata için `file` (dosya adı), `row` (satır numarası) ve `error` (neden) alanlarını içeren nesne listesi.
 
 Bir dosyada bozuk satırlar olsa bile diğer dosyalar ve aynı dosyanın geçerli satırları yüklenir. OEE hesaplaması kısmi veriyle de çalışır.
 
