@@ -24,6 +24,7 @@ from app.api.oee_routes import router as oee_router
 from app.api.recommend_routes import router as recommend_router
 from app.api.replay_routes import router as replay_router
 from app.api.scenario_routes import router as scenario_router
+from app.api.showcase_routes import router as showcase_router
 from app.api.trend_routes import router as trend_router
 from app.config import load_app_config
 from app.ingest.loader import load_csv_dir
@@ -128,6 +129,7 @@ app.include_router(scenario_router)
 app.include_router(line_router)
 app.include_router(replay_router)
 app.include_router(dashboard_router)
+app.include_router(showcase_router)
 
 
 @app.get("/health")

@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-07-01 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 225/225 + frontend vitest 13/13 + simülatör 115/115 yeşil
+**Güncelleme:** 2026-07-02 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 263/263 + frontend vitest 13/13 + simülatör 115/115 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -39,6 +39,7 @@ Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıy
 | **Pilot A** | Pilot kiti doküman paketi (`docs/pilot-kit/` 6 dosya) | ✓ |
 | **QC** | Entegrasyon cilası (data-quality yeterlilik ucu, adaptör temp temizliği, redo doğrulama, calendar_min, frontend yansımaları) | ✓ |
 | **Pilot B** | Pilot doctor CLI (`backend/tools/pilot_doctor.py`): Faz 0–1 GO/NO-GO kapısı otomasyonu — hat doğrulama + adaptör + smoke ingest (geçici DuckDB) + OEE + H3 yeterlilik + red oranı; `python -m tools.pilot_doctor <dizin> [--adapter] [--json]`, exit 0/1/2, `make doctor` | ✓ |
+| **Pilot C** | Showcase: `backend/tools/pilot_report.py` Faz 3 pilot raporu (tek dosya HTML + satır içi SVG: OEE, TL Pareto bantlı, öneri aralıkları, trend, güven notu, 3 kriter tablosu otomatik ✓/✗ + elle alanlar; `--generated-at` ile bayt-eş üretim); örnek rapor `docs/showcase/ornek-pilot-raporu.html` (speed_bottleneck); landing `docs/showcase/landing.html` + public `GET /tanitim` | ✓ |
 
 ## API yüzeyi (mevcut)
 
@@ -55,6 +56,8 @@ GET  /scenarios                        -> {scenarios:[{id, title, description, e
 POST /scenarios/{id}/activate          -> {activated, ingest}  (repo.reset() + o senaryoyu ingest)
 GET  /replay/stream?scenario=&speed=&steps=  -> SSE: büyüyen 'şimdiye kadar' snapshot'ları (oee, cost, gain, event_count)
 POST /line/validate  {hat-tanımı dict}  -> {valid: bool, errors: [str]}
+GET  /tanitim                          -> showcase landing (public, auth istisnası; docs/showcase/landing.html)
+GET  /tanitim/ornek-rapor              -> örnek pilot raporu HTML (public)
 GET  /                                 -> React SPA (build varsa) ya da Jinja fallback (HTML)
 GET  /legacy                           -> Jinja panosu (her zaman; SPA fallback)
 ```
@@ -121,9 +124,11 @@ Bozuk tarih/parametre (from/to/bucket) → 400 {detail} (H9).
 - **H9 — Ops:** loglama (`logging_setup` + timing middleware), tutarlı 400 (`_params` + global handler),
   perf smoke (~12 hafta < 2s), `docs/deployment.md`. Yan düzeltme: `fetch_events` tarih filtresi CAST.
 
-**Sırada:** **pilot kiti / saha denemesi**. Olası ileri işler: simülatör destekli what-if (GainEstimator arayüzü hazır), çok-hatlı destek.
-**Pilot kiti A (doküman paketi) TAMAM** (`docs/pilot-kit/` — 6 dosya: değer önermesi, demo, veri-onboarding, runbook, başarı kriterleri, README).
-**Pilot kiti B (pilot doctor CLI) TAMAM** (`backend/tools/pilot_doctor.py` — runbook Faz 0–1 kapısı tek komut; in-process + geçici DuckDB, gerçek DB'ye dokunmaz; eşikler `--min-sufficiency 0.6` / `--max-reject 0.05`, `confidence.yaml` 0.5 pano rozetidir ayrı amaç); sırada **C (showcase)**.
+**Sırada:** **saha denemesi / Render deploy**. Olası ileri işler: simülatör destekli what-if (GainEstimator arayüzü hazır), çok-hatlı destek, pilot_report HTTP modu (canlı sunucudan çekme).
+**Pilot Kiti A + B + C TAMAM:**
+- **A (doküman paketi):** `docs/pilot-kit/` — 6 dosya (değer önermesi, demo, veri-onboarding, runbook, başarı kriterleri, README).
+- **B (pilot doctor CLI):** `backend/tools/pilot_doctor.py` — Faz 0–1 kapısı tek komut; in-process + geçici DuckDB; eşikler `--min-sufficiency 0.6` / `--max-reject 0.05` (`confidence.yaml` 0.5 pano rozetidir, ayrı amaç).
+- **C (showcase):** `backend/tools/pilot_report.py` — Faz 3 raporu tek dosya HTML; örnek rapor + landing `docs/showcase/`; public `GET /tanitim` (+ `/tanitim/ornek-rapor`).
 
 ### G7 replay — artık dönem-doğru (G4.1 sonrası)
 Replay penceresi G4.1 ile **üretime de uygulanır** (carrier_id zaman atfı) → Availability + kayıp-zaman +
@@ -144,7 +149,7 @@ Yerelde backend kapısı: `make ci`.
 ```
 docker compose up --build          # http://localhost:8000  (React SPA, açılışta baseline yüklü)
                                    #   /legacy = eski Jinja pano
-# backend testleri:  cd backend && pytest -q          (225 test)
+# backend testleri:  cd backend && pytest -q          (263 test)
 # pilot doctor:       make doctor                      (Faz 0-1 GO/NO-GO; DATA=<dizin> ile)
 # frontend dev:      cd frontend && npm run dev        (Vite, backend'e proxy)
 # frontend testleri: cd frontend && npm run test       (vitest 13)

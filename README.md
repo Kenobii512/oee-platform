@@ -28,7 +28,7 @@ Aynı imaj laptopta `localhost:8000` ve uzak sunucuda public URL ile çalışır
 ## Geliştirme
 
 ```bash
-cd backend && pip install -r requirements.txt && pytest -q     # 225 test
+cd backend && pip install -r requirements.txt && pytest -q     # 263 test
 cd frontend && npm install && npm run dev                      # Vite (backend'e :8000 proxy)
 cd frontend && npm run lint && npm run test && npm run build   # vitest + üretim build
 ```
@@ -42,6 +42,15 @@ cd backend && python -m tools.pilot_doctor <veri-dizini> [--adapter <profil>] [-
 Saha verisini platforma bağlamadan önce tek komutla denetler: hat doğrulama + adaptör +
 smoke ingest (geçici DB) + OEE + veri-yeterlilik + red oranı → GO/NO-GO (exit 0/1).
 Ayrıntı: `docs/pilot-kit/04-pilot-runbook.md`.
+
+## Pilot Raporu (Faz 3 artefaktı)
+
+```bash
+cd backend && python -m tools.pilot_report <veri-dizini> [--adapter <profil>] -o rapor.html
+```
+Tek dosyalık, kendine-yeten HTML pilot raporu: OEE + TL Pareto (güven aralıklı) +
+öneri kazanç aralıkları + trend + 3 başarı kriteri tablosu. Örnek: `docs/showcase/`
+(deploy'da public `/tanitim` tanıtım sayfası + `/tanitim/ornek-rapor`).
 
 ## İlkeler
 
