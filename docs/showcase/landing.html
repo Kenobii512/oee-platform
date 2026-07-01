@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OEE Platform — Kaybı gör, paraya çevir</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #edf1f5; color: #16202b;
+         font: 400 0.95rem/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .page { max-width: 880px; margin: 0 auto; padding: 40px 22px 70px; }
+  .kicker { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em;
+            text-transform: uppercase; color: #1f5da6; }
+  /* Display: Archivo (kuruluysa; harici istek yok, system-ui'ye düşer); gövdeden ayrışır. */
+  h1, h2, .kicker, .step .n { font-family: Archivo, "Segoe UI", system-ui, sans-serif; }
+  h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -0.01em;
+       line-height: 1.08; margin: 8px 0 12px; }
+  .lede { font-size: 1.05rem; color: #58626f; max-width: 620px; }
+  h2 { font-size: 0.76rem; font-weight: 700; letter-spacing: 0.15em;
+       text-transform: uppercase; color: #58626f;
+       border-bottom: 1px solid #e2e7ec; padding-bottom: 7px; margin: 44px 0 16px; }
+  section.card { background: #ffffff; border: 1px solid #e2e7ec; border-radius: 12px;
+                 padding: 20px 22px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .cell { background: #f2f5f8; border-radius: 10px; padding: 14px 16px; }
+  .cell h3 { margin: 0 0 6px; font-size: 0.95rem; letter-spacing: -0.01em; }
+  .cell p { margin: 0; font-size: 0.86rem; color: #58626f; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  th { text-align: left; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+       color: #58626f; border-bottom: 1px solid #e2e7ec; padding: 6px 8px; }
+  td { border-bottom: 1px solid #e2e7ec; padding: 9px 8px; }
+  td.num { font-family: ui-monospace, Consolas, monospace; white-space: nowrap; }
+  .badge { display: inline-block; font-size: 0.68rem; font-weight: 700;
+           letter-spacing: 0.08em; text-transform: uppercase; border-radius: 4px;
+           padding: 2px 7px; }
+  .badge.gorunur { background: #eaf1f8; color: #1a4f8e; }
+  .badge.cikarimsal { background: #f6efe2; color: #b5832f; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .step { background: #ffffff; border: 1px solid #e2e7ec; border-radius: 10px; padding: 14px; }
+  .step .n { font-size: 1.4rem; font-weight: 800; color: #1f5da6; }
+  .step b { display: block; margin: 4px 0 2px; }
+  .step span { font-size: 0.82rem; color: #58626f; }
+  .cta { display: inline-block; background: #1f5da6; color: #ffffff; font-weight: 700;
+         padding: 12px 22px; border-radius: 8px; text-decoration: none; margin-top: 6px; }
+  .cta.ghost { background: transparent; color: #1f5da6; border: 2px solid #1f5da6; }
+  .anti { background: #f6efe2; border-radius: 8px; padding: 10px 14px; margin: 14px 0 2px;
+          color: #58626f; font-size: 0.88rem; }
+  .hero { display: flex; gap: 26px; align-items: center; flex-wrap: wrap; }
+  .hero > div:first-child { flex: 1 1 380px; }
+  .hero svg { flex: 0 0 240px; }
+  footer { margin-top: 50px; color: #677080; font-size: 0.8rem;
+           border-top: 1px solid #e2e7ec; padding-top: 14px; }
+  @media print { body { background: #fff; } }
+</style>
+</head>
+<body><div class="page">
+
+<div class="hero">
+  <div>
+    <div class="kicker">OEE Platform · Kaplama Hatları</div>
+    <h1>Hattınız nerede para yakıyor?<br>İki haftada, sayıyla.</h1>
+    <p class="lede">Excel ve manuel takip kayıpları göstermez: duruşlar tahminle yazılır,
+    hız kaybı ve eksik doluluk hiç görünmez. Bu platform hattın kendi verisinden
+    <b>en büyük kaybı bulur, TL'ye çevirir ve ne yapılacağını önerir</b>. Abartısız,
+    güven aralığıyla.</p>
+    <p>
+      <a class="cta" href="/tanitim/ornek-rapor">Örnek pilot raporunu gör</a>
+      &nbsp;
+      <a class="cta ghost" href="#pilot">2 haftalık pilot</a>
+    </p>
+  </div>
+  <svg viewBox="0 0 220 150" role="img" aria-label="OEE gostergesi">
+    <path d="M 25 130 A 85 85 0 0 1 195 130" fill="none" stroke="#e2e7ec" stroke-width="16" stroke-linecap="round"/>
+    <path d="M 25 130 A 85 85 0 0 1 132 49" fill="none" stroke="#1f5da6" stroke-width="16" stroke-linecap="round"/>
+    <text x="110" y="112" text-anchor="middle" style="font:800 34px system-ui" fill="#16202b">60,1%</text>
+    <text x="110" y="132" text-anchor="middle" style="font:700 10px system-ui; letter-spacing:2px" fill="#58626f">OEE</text>
+  </svg>
+</div>
+
+<h2>Tek bakışta ne görürsünüz</h2>
+<section class="card">
+  <table>
+    <thead><tr><th>Gösterge</th><th>Örnek</th><th>Ne anlatır</th></tr></thead>
+    <tbody>
+      <tr><td><b>OEE</b></td><td class="num">60,1%</td>
+          <td>Hattın gerçek verimi: kullanılabilirlik × performans × ilk-geçiş kalitesi.</td></tr>
+      <tr><td><b>En büyük kayıp</b></td><td>Hız kaybı <span class="badge cikarimsal">çıkarımsal</span></td>
+          <td>Kayıp ağacında TL'ye göre 1 numara; çoğu zaman kimsenin takip etmediği kalem.</td></tr>
+      <tr><td><b>TL karşılığı</b></td><td class="num">3.525 – 5.392 ₺</td>
+          <td>Kaybın vardiya başına para karşılığı, alt–üst sınır aralığıyla.</td></tr>
+      <tr><td><b>Öneri</b></td><td>Darboğaz banyo süresini standartlaştır</td>
+          <td>Kural tabanlı, veriye dayalı ilk adım, tahmini kazanç aralığıyla birlikte.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<h2>Neden güvenilir</h2>
+<section class="card">
+  <div class="grid">
+    <div class="cell">
+      <h3><span class="badge gorunur">görünür</span> vs <span class="badge cikarimsal">çıkarımsal</span></h3>
+      <p>Doğrudan ölçülen kayıplar (duruş, mikro duruş, yeniden işleme) ile veriden
+      türetilenler (hız kaybı, eksik doluluk) raporda açıkça ayrılır: hangisine ne kadar
+      güveneceğinizi bilirsiniz.</p>
+    </div>
+    <div class="cell">
+      <h3>Güven aralığı</h3>
+      <p>Çıkarımsal kalemler tek sayı değil <b>aralıkla</b> raporlanır. Veri azaldıkça aralık
+      genişler ve kalem "düşük güven" işareti alır. Sistem bilmediğini söyler.</p>
+    </div>
+    <div class="cell">
+      <h3>Tek manuel girdi</h3>
+      <p>Operatörden istenen tek şey mikro duruş nedeni. Gerisi sistem verisinden gelir;
+      Excel disiplinine bağımlılık yok.</p>
+    </div>
+  </div>
+  <p class="anti"><b>Abartı yok:</b> kazanç tahminleri üst sınırdır ve kalemler örtüşebilir.
+  Bu platform kesinlik değil <b>görünürlük</b> satar; karar sizde kalır.</p>
+</section>
+
+<h2 id="pilot">2 haftalık pilot nasıl işler</h2>
+<div class="steps">
+  <div class="step"><div class="n">0</div><b>Kickoff (1 gün)</b>
+    <span>Hat tanımı + örnek ham veri + adaptör profili. Kod yazılmaz, YAML eşlenir.</span></div>
+  <div class="step"><div class="n">1</div><b>Smoke (1–2 gün)</b>
+    <span>Otomatik GO/NO-GO kapısı: veri kalitesi eşiği geçmeden pilot başlamaz.</span></div>
+  <div class="step"><div class="n">2</div><b>Toplama (2 hafta)</b>
+    <span>Vardiya sonu export → pano. Trend birikir, kayıplar netleşir.</span></div>
+  <div class="step"><div class="n">3</div><b>Rapor + karar</b>
+    <span>Örnekteki gibi tek dosyalık pilot raporu; 3 ölçülebilir kritere karşı GO kararı.</span></div>
+</div>
+
+<p style="margin-top:26px">
+  <a class="cta" href="/tanitim/ornek-rapor">Örnek pilot raporu</a>
+</p>
+
+<footer>OEE Platform · pilot kiti showcase. Bu sayfa ve örnek rapor, ürünün kendisi gibi
+tek dosyadır; bağımlılık ve izleme kodu içermez.</footer>
+
+</div></body>
+</html>

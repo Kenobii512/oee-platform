@@ -20,7 +20,7 @@ import os
 import urllib.parse
 
 COOKIE = "oee_auth"
-_PUBLIC = ("/login", "/logout", "/health")
+_PUBLIC = ("/login", "/logout", "/health", "/tanitim")
 
 
 def _pass() -> str:
