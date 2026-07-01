@@ -21,6 +21,9 @@ Exit kodları: 0 = GO, 1 = NO-GO, 2 = kullanım hatası.
 """
 from __future__ import annotations
 
+import argparse
+import json
+import sys
 import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -280,11 +283,81 @@ def format_report(
         lines.append(f"[{c.status}] {c.name:<11} {c.detail}")
         if c.status == FAIL and c.name == "rejection" and rep.ingest:
             for err in (rep.ingest.get("errors") or [])[:max_errors]:
-                lines.append(f"    - {err.get('file')}:{err.get('row')}: {err.get('error')}")
+                # Çok satırlı doğrulama mesajını tek satıra sıkıştır (okunabilirlik).
+                msg = " ".join(str(err.get("error", "")).split())
+                if len(msg) > 160:
+                    msg = msg[:157] + "..."
+                lines.append(f"    - {err.get('file')}:{err.get('row')}: {msg}")
     verdict = "GO (exit 0)" if rep.go() else "NO-GO (exit 1)"
     lines += ["", f"SONUC: {verdict}"]
     return _ascii("\n".join(lines))
 
 
-if __name__ == "__main__":  # pragma: no cover - CLI Task 5'te geliyor
-    raise SystemExit(2)
+# ---- CLI -------------------------------------------------------------------
+
+_DEFAULT_LINE = Path(__file__).resolve().parents[2] / "config" / "line_default.yaml"
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="pilot_doctor",
+        description="Faz 0-1 pilot hazirlik kontrolleri: tek GO/NO-GO raporu.",
+    )
+    parser.add_argument("data_dir", help="sozlesme CSV dizini (adapter verilirse ham dizin)")
+    parser.add_argument("--line", default=str(_DEFAULT_LINE), help="hat tanimi YAML yolu")
+    parser.add_argument("--adapter", default=None, help="config/adapters/<AD>.yaml profili")
+    parser.add_argument("--min-sufficiency", type=float, default=DEFAULT_MIN_SUFFICIENCY,
+                        help="H3 veri-yeterlilik esigi (vars. 0.6)")
+    parser.add_argument("--max-reject", type=float, default=DEFAULT_MAX_REJECT,
+                        help="kirli-satir orani esigi (vars. 0.05)")
+    parser.add_argument("--max-errors", type=int, default=5,
+                        help="raporda gosterilecek ilk N ret detayi (vars. 5)")
+    parser.add_argument("--json", action="store_true", dest="as_json",
+                        help="makine-okur JSON cikti")
+    args = parser.parse_args(argv)
+
+    # Kullanim hatalari (exit 2): kontroller kosmadan once, eksik dosya/dizin/profil.
+    data_dir = Path(args.data_dir)
+    if not data_dir.is_dir():
+        print(f"HATA: veri dizini yok ya da dizin degil: {data_dir}", file=sys.stderr)
+        return 2
+    line_path = Path(args.line)
+    if not line_path.is_file():
+        print(f"HATA: hat tanimi dosyasi yok: {line_path}", file=sys.stderr)
+        return 2
+    if args.adapter and not adapter_profile_path(args.adapter).is_file():
+        print(
+            f"HATA: bilinmeyen adapter profili: {args.adapter!r} "
+            f"({adapter_profile_path(args.adapter)})",
+            file=sys.stderr,
+        )
+        return 2
+
+    rep = run_doctor(
+        data_dir,
+        line_path,
+        adapter=args.adapter,
+        min_sufficiency=args.min_sufficiency,
+        max_reject=args.max_reject,
+    )
+    exit_code = 0 if rep.go() else 1
+    if args.as_json:
+        payload = {
+            "exit_code": exit_code,
+            "data_dir": str(data_dir),
+            "line_config": str(line_path),
+            "adapter": args.adapter,
+            "thresholds": {
+                "min_sufficiency": args.min_sufficiency,
+                "max_reject": args.max_reject,
+            },
+            **rep.to_dict(),
+        }
+        print(json.dumps(payload))  # ensure_ascii varsayilani cp1252-guvenli
+    else:
+        print(format_report(rep, str(data_dir), str(line_path), args.adapter, args.max_errors))
+    return exit_code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

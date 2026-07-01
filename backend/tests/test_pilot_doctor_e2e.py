@@ -3,8 +3,10 @@
 `run_doctor` gerçek dosyalarla koşar; gerçek `oee.duckdb`'ye asla dokunmaz
 (cwd'de DB kalıntısı testi). CLI (`main`) testleri exit kodu + stdout üstünden.
 """
+import json
+
 from tests.conftest import DIRTY, FIXTURES, LINE_CONFIG, RAW
-from tools.pilot_doctor import FAIL, PASS, SKIP, run_doctor
+from tools.pilot_doctor import FAIL, PASS, SKIP, main, run_doctor
 
 BASELINE = FIXTURES / "baseline"
 
@@ -121,3 +123,61 @@ def test_no_db_files_left_in_cwd(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     run_doctor(BASELINE, LINE_CONFIG, adapter=None)
     assert list(tmp_path.glob("*.duckdb*")) == []  # gercek/kalinti DB yok
+
+
+# ---- CLI main: exit kodları + çıktı -----------------------------------------
+
+
+def test_main_baseline_is_exit_0_go(capsys):
+    assert main([str(BASELINE)]) == 0
+    out = capsys.readouterr().out
+    assert "SONUC: GO" in out
+    out.encode("ascii")  # cp1252 konsol guvenligi
+
+
+def test_main_dirty_is_exit_1(capsys):
+    assert main([str(DIRTY / "type_corruption")]) == 1
+    assert "SONUC: NO-GO" in capsys.readouterr().out
+
+
+def test_main_max_reject_override(capsys):
+    assert main([str(DIRTY / "type_corruption"), "--max-reject", "0.5"]) == 0
+
+
+def test_main_min_sufficiency_override(capsys):
+    assert main([str(BASELINE), "--min-sufficiency", "1.01"]) == 1
+
+
+def test_main_missing_data_dir_is_usage_error(tmp_path, capsys):
+    assert main([str(tmp_path / "yok")]) == 2
+
+
+def test_main_missing_line_file_is_usage_error(tmp_path, capsys):
+    assert main([str(BASELINE), "--line", str(tmp_path / "yok.yaml")]) == 2
+
+
+def test_main_unknown_adapter_is_usage_error(capsys):
+    assert main([str(RAW), "--adapter", "yok_profil"]) == 2
+    assert "yok_profil" in capsys.readouterr().err
+
+
+def test_main_json_output_shape(capsys):
+    assert main([str(BASELINE), "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["go"] is True
+    assert payload["exit_code"] == 0
+    assert payload["thresholds"] == {"min_sufficiency": 0.6, "max_reject": 0.05}
+    assert [c["name"] for c in payload["checks"]] == [
+        "line", "adapter", "ingest", "oee", "sufficiency", "rejection",
+    ]
+    assert payload["ingest"]["skipped"] == ["ground_truth.csv"]
+    assert 0.0 < payload["oee"]["oee"] <= 1.0
+    assert payload["adapter"] is None
+    assert payload["data_dir"] == str(BASELINE)
+
+
+def test_main_json_nogo_consistent(capsys):
+    assert main([str(DIRTY / "type_corruption"), "--json"]) == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["go"] is False
+    assert payload["exit_code"] == 1
