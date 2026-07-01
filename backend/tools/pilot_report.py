@@ -18,12 +18,16 @@ Tasarım (bkz. docs/superpowers/specs/2026-07-02-pilot-kiti-C-showcase-design.md
 """
 from __future__ import annotations
 
+import argparse
 import html as _html
 import math
+import sys
 import tempfile
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
+
+import yaml
 
 from app.analytics.confidence import data_sufficiency
 from app.analytics.cost import to_tl
@@ -33,16 +37,28 @@ from app.analytics.oee import compute_oee
 from app.analytics.recommend import RatioGainEstimator, generate_recommendations
 from app.analytics.trend import bucket_oee_series
 from app.config import (
+    line_definition_from_dict,
     load_app_config,
     load_confidence_config,
     load_cost_config,
     load_recommend_config,
 )
-from app.ingest.adapter import adapt_dir_to_contract, load_adapter_config, resolve_profile_path
+from app.config_validate import validate_line_dict
+from app.ingest.adapter import (
+    AdapterError,
+    adapt_dir_to_contract,
+    load_adapter_config,
+    resolve_profile_path,
+)
 from app.ingest.loader import load_csv_dir
 from app.models.contract import LineDefinition
 from app.store.duckdb_repo import DuckDBRepository
-from tools.pilot_doctor import DEFAULT_MAX_REJECT, DEFAULT_MIN_SUFFICIENCY, rejection_rate
+from tools.pilot_doctor import (
+    DEFAULT_MAX_REJECT,
+    DEFAULT_MIN_SUFFICIENCY,
+    _eprint,
+    rejection_rate,
+)
 
 # K1 eşiği (05-basari-kriterleri): çıkarımsal kalem TL'de toplamın en az %15'i.
 K1_MIN_TL_SHARE = 0.15
@@ -520,3 +536,81 @@ OEE Platform pilot kiti (Faz 3 artefaktı) · Yazdır → PDF için tarayıcı y
 </div></body>
 </html>
 """
+
+
+# ---- CLI -------------------------------------------------------------------
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="pilot_report",
+        description="Faz 3 pilot raporu: tek dosya, kendine-yeten HTML artefakti.",
+    )
+    parser.add_argument("data_dir", help="sozlesme CSV dizini (adapter verilirse ham dizin)")
+    parser.add_argument("--adapter", default=None, help="config/adapters/<AD>.yaml profili")
+    parser.add_argument("--line", default=None,
+                        help="hat tanimi YAML (vars. OEE_LINE_CONFIG env ya da "
+                             "config/line_default.yaml - sunucuyla ayni cozum)")
+    parser.add_argument("--from", dest="frm", default=None,
+                        help="pencere baslangici (ISO, orn. 2026-01-06)")
+    parser.add_argument("--to", dest="to", default=None, help="pencere sonu (ISO)")
+    parser.add_argument("--bucket", choices=("day", "week"), default="day",
+                        help="trend kovasi (vars. day)")
+    parser.add_argument("-o", "--out", default="pilot-raporu.html",
+                        help="cikti HTML yolu (vars. ./pilot-raporu.html)")
+    parser.add_argument("--generated-at", default=None,
+                        help="kunyedeki uretim zamanini sabitle (tekrar-uretilebilir "
+                             "ornek/test icin); vars. simdiki zaman")
+    args = parser.parse_args(argv)
+
+    # Kullanim hatalari (exit 2): rapor uretilemeden once dogrulanir.
+    data_dir = Path(args.data_dir)
+    if not data_dir.is_dir():
+        _eprint(f"HATA: veri dizini yok ya da dizin degil: {data_dir}")
+        return 2
+    line_path = Path(args.line) if args.line else Path(load_app_config().line_config_path)
+    if not line_path.is_file():
+        _eprint(f"HATA: hat tanimi dosyasi yok: {line_path}")
+        return 2
+    if args.adapter and not resolve_profile_path(args.adapter).is_file():
+        _eprint(f"HATA: bilinmeyen adapter profili: {args.adapter!r}")
+        return 2
+    try:
+        frm = datetime.fromisoformat(args.frm) if args.frm else None
+        to = datetime.fromisoformat(args.to) if args.to else None
+    except ValueError as exc:
+        _eprint(f"HATA: tarih ISO bicimde olmali (orn. 2026-01-06): {exc}")
+        return 2
+
+    # Hat tanimi: rapor gecerli hat olmadan uretilemez (teshis icin pilot_doctor kullanin).
+    try:
+        with open(line_path, encoding="utf-8") as f:
+            raw = yaml.safe_load(f)
+    except (OSError, yaml.YAMLError) as exc:
+        _eprint(f"HATA: hat YAML okunamadi/bozuk: {exc}")
+        return 2
+    errors = validate_line_dict(raw) if isinstance(raw, dict) else ["kok yapi nesne degil"]
+    if errors:
+        _eprint("HATA: hat tanimi gecersiz: " + "; ".join(errors))
+        return 2
+    line = line_definition_from_dict(raw)
+
+    try:
+        data = build_report_data(
+            data_dir, line, adapter=args.adapter, frm=frm, to=to, bucket=args.bucket
+        )
+    except AdapterError as exc:
+        _eprint(f"HATA: adapter eslemesi basarisiz (once pilot_doctor kosun): {exc}")
+        return 2
+
+    data["meta"]["generated_at"] = args.generated_at or datetime.now().strftime(
+        "%Y-%m-%d %H:%M"
+    )
+    out = Path(args.out)
+    out.write_text(render_html(data), encoding="utf-8", newline="\n")
+    print(f"OK: {out}")  # ASCII konsol mesaji (cp1252 guvenli)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

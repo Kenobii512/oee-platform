@@ -7,7 +7,7 @@ import pytest
 
 from app.config import load_line_definition
 from tests.conftest import FIXTURES, LINE_CONFIG, RAW
-from tools.pilot_report import build_report_data, render_html
+from tools.pilot_report import build_report_data, main, render_html
 
 SCENARIOS = FIXTURES / "scenarios"
 STORM = SCENARIOS / "breakdown_storm"
@@ -158,3 +158,38 @@ def test_render_empty_data_shows_placeholder(tmp_path, line_def_m):
     data["meta"] = {**data["meta"], "generated_at": "x"}
     html_out = render_html(data)
     assert "veri yok" in html_out  # çökme yok, bölümler işaretli
+
+
+# ---- CLI main ------------------------------------------------------------
+
+
+def test_main_writes_report_file(tmp_path, capsys):
+    out = tmp_path / "rapor.html"
+    assert main([str(STORM), "-o", str(out)]) == 0
+    assert out.exists()
+    text = out.read_text(encoding="utf-8")
+    assert "Pilot Raporu" in text
+    capsys.readouterr().out.encode("ascii")  # konsol mesaji ASCII
+
+
+def test_main_deterministic_with_generated_at(tmp_path):
+    a, b = tmp_path / "a.html", tmp_path / "b.html"
+    args = [str(STORM), "--generated-at", "2026-07-02 12:00"]
+    assert main([*args, "-o", str(a)]) == 0
+    assert main([*args, "-o", str(b)]) == 0
+    assert a.read_bytes() == b.read_bytes()  # bayt-es tekrar uretilebilir
+
+
+def test_main_missing_dir_is_usage_error(tmp_path, capsys):
+    assert main([str(tmp_path / "yok")]) == 2
+    err = capsys.readouterr().err
+    err.encode("ascii")
+    assert "HATA" in err
+
+
+def test_main_unknown_adapter_is_usage_error(capsys):
+    assert main([str(STORM), "--adapter", "yok_profil"]) == 2
+
+
+def test_main_bad_date_is_usage_error(capsys):
+    assert main([str(STORM), "--from", "31-02-2026"]) == 2
