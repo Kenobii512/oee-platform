@@ -37,13 +37,28 @@ def _line():
     return load_line_definition(LINE_CONFIG)
 
 
-def test_oee_parity_distribution(tmp_path):
+@pytest.fixture(scope="module")
+def multiseed_data(tmp_path_factory):
+    """Her seed fixture'ı BİR kez ingest edilip (events, production) olarak paylaşılır.
+
+    QC: iki test aynı 10 seed'i ayrı ayrı taze DuckDB'ye yüklüyordu — suite'in
+    en pahalı iki kalemi (~110s) tek yüklemeye (~55s) indi. Davranış birebir.
+    """
+    base = tmp_path_factory.mktemp("multiseed")
+    data = {}
+    for s in SEEDS:
+        repo = load_fixture_into_repo(MULTISEED / f"seed_{s}", str(base / f"s{s}.duckdb"))
+        data[s] = (repo.fetch_events(), repo.fetch_production())
+        repo.close()
+    return data
+
+
+def test_oee_parity_distribution(multiseed_data):
     line = _line()
     diffs = []
     for s in SEEDS:
-        repo = load_fixture_into_repo(MULTISEED / f"seed_{s}", str(tmp_path / f"s{s}.duckdb"))
-        res = compute_oee(repo.fetch_events(), repo.fetch_production(), line)
-        repo.close()
+        events, production = multiseed_data[s]
+        res = compute_oee(events, production, line)
         g = GOLDEN["per_seed"][str(s)]
         d = abs(res.oee - g["oee"])
         diffs.append(d)
@@ -51,14 +66,13 @@ def test_oee_parity_distribution(tmp_path):
     assert mean(diffs) <= PARITY_TOL, f"ortalama OEE sapması {mean(diffs):.4f} > {PARITY_TOL}"
 
 
-def test_inferred_recovery_distribution(tmp_path):
+def test_inferred_recovery_distribution(multiseed_data):
     line = _line()
     recoveries = {c: [] for c in INFERRED}
     for s in SEEDS:
         seed_dir = MULTISEED / f"seed_{s}"
-        repo = load_fixture_into_repo(seed_dir, str(tmp_path / f"r{s}.duckdb"))
-        tree = extract_loss_tree(repo.fetch_events(), repo.fetch_production(), line)
-        repo.close()
+        events, production = multiseed_data[s]
+        tree = extract_loss_tree(events, production, line)
         for cat in INFERRED:
             truth = truth_value_from(seed_dir / "ground_truth.csv", cat)
             if truth > 0:

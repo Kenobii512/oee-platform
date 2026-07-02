@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-07-02 · **Repo:** `Kenobii512/oee-platform` · **Test:** backend 263/263 + frontend vitest 13/13 + simülatör 115/115 yeşil
+**Güncelleme:** 2026-07-02 · **Repo:** `Kenobii512/oee-platform` · **Test:** backend 269/269 + frontend vitest 13/13 + simülatör 115/115 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -149,7 +149,7 @@ Yerelde backend kapısı: `make ci`.
 ```
 docker compose up --build          # http://localhost:8000  (React SPA, açılışta baseline yüklü)
                                    #   /legacy = eski Jinja pano
-# backend testleri:  cd backend && pytest -q          (263 test)
+# backend testleri:  cd backend && pytest -q          (269 test)
 # pilot doctor:       make doctor                      (Faz 0-1 GO/NO-GO; DATA=<dizin> ile)
 # frontend dev:      cd frontend && npm run dev        (Vite, backend'e proxy)
 # frontend testleri: cd frontend && npm run test       (vitest 13)

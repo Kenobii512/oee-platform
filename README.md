@@ -27,7 +27,7 @@ Aynı imaj laptopta `localhost:8000` ve uzak sunucuda public URL ile çalışır
 ## Geliştirme
 
 ```bash
-cd backend && pip install -r requirements.txt && pytest -q     # 263 test
+cd backend && pip install -r requirements.txt && pytest -q     # 269 test
 cd frontend && npm install && npm run dev                      # Vite (backend'e :8000 proxy)
 cd frontend && npm run lint && npm run test && npm run build   # vitest + üretim build
 ```

@@ -1,4 +1,4 @@
-.PHONY: test lint ci doctor clean
+.PHONY: test lint ci doctor clean frontend-sync
 
 test:
 	cd backend && pytest -q
@@ -17,3 +17,10 @@ doctor:
 # Yereldeki basibos DuckDB dosyalarini temizle (eski .duckdb -> BinderException tuzagi).
 clean:
 	cd backend && rm -f *.duckdb *.duckdb.wal
+
+# React build'ini backend'in sundugu dizine kopyala (native calistirma icin;
+# Docker kendi stage'inde uretir). QC bulgusu: bayat dist 9 gunluk UI sunuyordu.
+frontend-sync:
+	cd frontend && npm run build
+	rm -rf backend/app/frontend_dist
+	cp -r frontend/dist backend/app/frontend_dist
