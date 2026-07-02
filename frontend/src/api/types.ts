@@ -11,6 +11,7 @@ export interface Oee {
   final_yield?: number // Σ good / Σ loaded (no-scrap → ≈%100)
   utilization?: number
   planned_downtime_min?: number
+  calendar_min?: number | null // H8: utilization paydası (takvim dk); şeffaflık için
 }
 
 export interface LossCat {
@@ -93,6 +94,7 @@ export interface ScenarioInfo {
 
 export interface ScenarioCatalog {
   scenarios: ScenarioInfo[]
+  active?: string | null // açılış auto-ingest'i ya da son aktivasyon (pano başlangıç seçimi)
 }
 
 /** Tarih filtresi: ISO-benzeri "YYYY-MM-DD HH:MM" (datetime-local 'T' → boşluk). */

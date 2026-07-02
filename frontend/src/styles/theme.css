@@ -155,13 +155,13 @@ body {
   font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
   display: flex; flex-direction: column; gap: 5px;
 }
-.controls input, .controls select {
+.controls input {
   background: var(--bg-3); color: var(--ink); border: 1px solid var(--line);
   border-radius: var(--r-ctl); padding: 8px 10px; font: inherit; font-size: 0.8rem;
   transition: border-color 0.35s var(--ease), box-shadow 0.35s var(--ease);
 }
-.controls input:hover, .controls select:hover { border-color: var(--line-strong); }
-.controls input:focus, .controls select:focus {
+.controls input:hover { border-color: var(--line-strong); }
+.controls input:focus {
   outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31, 93, 166, 0.16);
 }
 
@@ -190,7 +190,6 @@ button { font: inherit; cursor: pointer; }
 .empty.error { border-color: var(--line-strong); }
 .empty.error strong { color: var(--loss); }
 .empty .retry { margin-left: 0.75rem; padding: 7px 14px; font-size: 0.8rem; }
-.hidden { display: none !important; }
 
 /* ---- Izgara ---- */
 .grid {
@@ -576,4 +575,14 @@ canvas { max-height: 268px; }
   .controls label { flex: 1 1 45%; }
   .controls input { width: 100%; }
   .controls > button { flex: 1 1 100%; width: 100%; }
+}
+
+/* Alt sorgu hatası: kart sessizce kaybolmak yerine yerinde uyarı bırakır. */
+.card-error {
+  padding: 18px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-panel, 10px);
+  background: var(--surface-inset, #f2f5f8);
 }

@@ -20,7 +20,12 @@ _BACKEND_ROOT = Path(__file__).resolve().parents[2]
 @router.get("/scenarios")
 def list_scenarios(request: Request) -> dict:
     cat = load_scenario_catalog(request.app.state.config.scenario_config_path)
-    return {"scenarios": [s.__dict__ for s in cat]}
+    # `active`: pano ilk açılışta hangi veri setine baktığını gösterebilsin
+    # (açılış auto-ingest'i lifespan'de, aktivasyon aşağıda set eder).
+    return {
+        "scenarios": [s.__dict__ for s in cat],
+        "active": getattr(request.app.state, "active_scenario", None),
+    }
 
 
 @router.post("/scenarios/{scenario_id}/activate")
@@ -35,4 +40,5 @@ def activate_scenario(scenario_id: str, request: Request) -> dict:
     repo = request.app.state.repo
     repo.reset()  # senaryo değişiminde veri birikmesin (temiz başlangıç)
     report = load_csv_dir(data_dir, repo)
+    request.app.state.active_scenario = scenario_id
     return {"activated": scenario_id, "ingest": report.to_dict()}

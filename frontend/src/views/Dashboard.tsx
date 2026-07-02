@@ -15,6 +15,15 @@ import Recommendations from '../components/Recommendations'
 import TopBar, { type View } from '../components/TopBar'
 import TrendChart from '../components/TrendChart'
 
+/** Alt sorgu hatasında kartın sessizce kaybolması yerine yerinde küçük uyarı. */
+function CardError({ label }: { label: string }) {
+  return (
+    <section className="shell card-error" role="alert">
+      {label} alınamadı — sunucu loglarına bakın.
+    </section>
+  )
+}
+
 function isEmpty(oee?: Oee): boolean {
   return !oee || (oee.availability === 0 && oee.performance === 0 && oee.quality === 0)
 }
@@ -32,10 +41,13 @@ export default function Dashboard() {
   const [range, setRange] = useState<Range>({})
   const [view, setView] = useState<View>('detay')
   const [activeScenario, setActiveScenario] = useState<string | undefined>()
+  const [actError, setActError] = useState<string | undefined>()
 
   const oeeQ = useQuery({ queryKey: ['oee', range], queryFn: () => api.oee(range) })
   const scenQ = useQuery({ queryKey: ['scenarios'], queryFn: api.scenarios })
-  const scenario = scenQ.data?.scenarios.find((s) => s.id === activeScenario)
+  // Kullanıcı seçimi > backend'in bildirdiği aktif set (açılış auto-ingest'i).
+  const currentScenario = activeScenario ?? scenQ.data?.active ?? undefined
+  const scenario = scenQ.data?.scenarios.find((s) => s.id === currentScenario)
   const empty = isEmpty(oeeQ.data)
   const enabled = !oeeQ.isLoading && !empty
 
@@ -46,10 +58,16 @@ export default function Dashboard() {
   const dqQ = useQuery({ queryKey: ['dq'], queryFn: api.dataQuality, enabled })
 
   async function activateScenario(id: string) {
-    await api.activateScenario(id)
-    setActiveScenario(id)
-    setRange({}) // senaryo değişiminde filtreleri sıfırla
-    await qc.invalidateQueries()
+    // QC: başarısız aktivasyon sessizce yutuluyordu (dropdown değişmiş görünürdü).
+    try {
+      await api.activateScenario(id)
+      setActError(undefined)
+      setActiveScenario(id)
+      setRange({}) // senaryo değişiminde filtreleri sıfırla
+      await qc.invalidateQueries()
+    } catch (e) {
+      setActError(e instanceof Error ? e.message : String(e))
+    }
   }
 
   const detay = view === 'detay'
@@ -61,7 +79,14 @@ export default function Dashboard() {
         onViewChange={setView}
         onApply={setRange}
         onActivateScenario={activateScenario}
+        activeScenario={currentScenario}
       />
+
+      {actError && (
+        <div className="empty error" role="alert">
+          <strong>Senaryo etkinleştirilemedi.</strong> {actError}
+        </div>
+      )}
 
       {oeeQ.isLoading ? (
         <GridSkeleton cards={4} label="Pano yükleniyor" />
@@ -103,6 +128,7 @@ export default function Dashboard() {
             />
           )}
           {detay && trendQ.data && <TrendChart series={trendQ.data} />}
+          {detay && trendQ.isError && <CardError label="OEE trendi" />}
 
           <div className="zone-head">Kayıplar</div>
           {lossQ.data && (
@@ -118,10 +144,13 @@ export default function Dashboard() {
               legend={false}
             />
           )}
+          {lossQ.isError && <CardError label="Kayıp ağacı" />}
           {costQ.data && <CostPareto cost={costQ.data} />}
+          {costQ.isError && <CardError label="Maliyet Pareto'su" />}
 
           <div className="zone-head">Aksiyon</div>
           {recQ.data && <Recommendations rec={recQ.data} />}
+          {recQ.isError && <CardError label="Öneriler" />}
 
           {detay && dqQ.data && (
             <>

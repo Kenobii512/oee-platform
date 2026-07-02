@@ -12,9 +12,10 @@ interface Props {
   onViewChange: (v: View) => void
   onApply: (range: Range) => void
   onActivateScenario: (id: string) => void
+  activeScenario?: string
 }
 
-export default function TopBar({ view, onViewChange, onApply, onActivateScenario }: Props) {
+export default function TopBar({ view, onViewChange, onApply, onActivateScenario, activeScenario }: Props) {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
 
@@ -42,7 +43,7 @@ export default function TopBar({ view, onViewChange, onApply, onActivateScenario
         </div>
       </div>
       <div className="controls">
-        <ScenarioDropdown onSelect={onActivateScenario} />
+        <ScenarioDropdown onSelect={onActivateScenario} value={activeScenario} />
         <label>
           Başlangıç
           <input type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
