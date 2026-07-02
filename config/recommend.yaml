@@ -9,12 +9,12 @@ categories:
   DOWNTIME:
     recovery_ratio: 0.30
     title: "Duruşları azalt"
-    action: "En sık duruş nedeni {detail}. MTBF artır: yedek-parça hazırlığı + önleyici bakım planı."
+    action: "Duruşlar {detail}. MTBF artır: yedek-parça hazırlığı + önleyici bakım planı."
     assumption: "Duruş TL'sinin ~%{pct} kadarı önleyici bakımla geri kazanılabilir varsayımı."
   MICROSTOP:
     recovery_ratio: 0.20
     title: "Mikro duruşları düşür"
-    action: "Mikro duruşlar {detail} yoğun; çevrim/akış iyileştir. Operatör neden-giriş kapsamı düşük olabilir (/data-quality) — kök-neden için veri kalitesi de ele alınmalı."
+    action: "Mikro duruşlar {detail}; çevrim/akış iyileştir. Operatör neden-giriş kapsamı düşük olabilir (/data-quality) — kök-neden için veri kalitesi de ele alınmalı."
     assumption: "Mikro duruş TL'sinin ~%{pct} kadarı akış iyileştirmesiyle geri kazanılabilir varsayımı."
   SPEED_LOSS:
     recovery_ratio: 0.15
