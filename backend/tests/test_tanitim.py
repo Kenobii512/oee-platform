@@ -43,3 +43,12 @@ def test_tanitim_missing_file_is_404(monkeypatch, tmp_path):
     monkeypatch.setattr("app.api.showcase_routes._SHOWCASE_DIR", tmp_path / "yok")
     with TestClient(app) as c:
         assert c.get("/tanitim").status_code == 404
+
+
+def test_og_card_served_as_png(monkeypatch, tmp_path):
+    monkeypatch.delenv("OEE_AUTH_PASS", raising=False)
+    monkeypatch.setenv("OEE_DUCKDB_PATH", str(tmp_path / "t4.duckdb"))
+    with TestClient(app) as c:
+        r = c.get("/tanitim/og-card.png")
+        assert r.status_code == 200
+        assert r.headers["content-type"] == "image/png"

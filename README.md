@@ -1,12 +1,26 @@
 # OEE Platform
 
-Kaplama hattı için OEE/verimlilik platformu. Genel CSV'leri (events/production/orders)
-DuckDB'ye yükler ve OEE'yi **yalnızca genel veriden** hesaplar; kaybı bulur, TL'ye çevirir
-ve önceliklendirilmiş öneriler üretir. Pano **React 19 + Vite SPA**; canlı (hızlandırılmış)
-replay dahil.
+**Hattınız nerede para yakıyor?** Kaplama hattı için OEE/verimlilik platformu: genel
+CSV'leri (events/production/orders) DuckDB'ye yükler, OEE'yi **yalnızca genel veriden**
+hesaplar; en büyük kaybı bulur, **₺'ye çevirir** ve güven aralıklı öneriler üretir.
+Pano **React 19 + Vite SPA**; **SSE ile canlı (hızlandırılmış) replay** dahil.
+
+![Pano + canlı replay demo](docs/media/demo.gif)
+
+![Backend](https://img.shields.io/badge/backend-FastAPI%20%2B%20DuckDB-1f5da6)
+![Frontend](https://img.shields.io/badge/frontend-React%2019%20%2B%20Vite-1f5da6)
+![Tests](https://img.shields.io/badge/tests-269%20backend%20%C2%B7%2013%20frontend-237a5c)
+![Python](https://img.shields.io/badge/python-3.11-58626f)
+
+```bash
+docker compose up --build      # http://localhost:8000 — pano açılışta dolu gelir
+```
+
+**Gezinti:** canlı pano `/` · hızlandırılmış replay (pano içinde sekme) · tanıtım
+sayfası `/tanitim` · örnek pilot raporu `/tanitim/ornek-rapor` · sağlık `/health`.
 
 > **Proje durumu / yol haritası:** [`docs/STATUS.md`](docs/STATUS.md) — tamamlanan görevler
-> (G1–G5 · Dalga 1 G6·G11·G9 · Dalga 2 G8·GR·G7 · Dalga 3 G12·G4.1·G10·Perf-UI · Hazırlık H1–H9 · Pilot Kiti A), API yüzeyi,
+> (G1–G5 · Dalga 1 G6·G11·G9 · Dalga 2 G8·GR·G7 · Dalga 3 G12·G4.1·G10·Perf-UI · Hazırlık H1–H9 · Pilot Kiti A+B+C), API yüzeyi,
 > mimari kararlar, bilinen sınırlamalar. **Veri sözleşmesi:** [`docs/data-contract.md`](docs/data-contract.md).
 
 > **Frontend tasarımı (UI):** Pano "**The Foundry Gauge**" — açık/kurumsal endüstriyel
@@ -50,6 +64,12 @@ cd backend && python -m tools.pilot_report <veri-dizini> [--adapter <profil>] -o
 Tek dosyalık, kendine-yeten HTML pilot raporu: OEE + TL Pareto (güven aralıklı) +
 öneri kazanç aralıkları + trend + 3 başarı kriteri tablosu. Örnek: `docs/showcase/`
 (deploy'da public `/tanitim` tanıtım sayfası + `/tanitim/ornek-rapor`).
+
+## Ekran görüntüleri
+
+| Pano (Control Strip hero) | Canlı Replay |
+|---|---|
+| ![Pano](docs/media/pano.png) | ![Replay](docs/media/replay.png) |
 
 ## İlkeler
 
