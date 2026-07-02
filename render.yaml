@@ -25,3 +25,7 @@ services:
         sync: false          # secret — Render Dashboard → Environment'tan gir
       - key: OEE_AUTH_SECRET
         generateValue: true  # çerez imza anahtarı (Render otomatik üretir)
+      # İngest yolu kısıtı: auth KAPALI kalsa bile POST /ingest yalnız bu kökün
+      # altındaki dizinleri okuyabilir (keyfi sunucu dizini okutulamaz).
+      - key: OEE_INGEST_ROOT
+        value: /app/tests/fixtures

@@ -1,6 +1,7 @@
 """POST /ingest -> LoadReport. Opsiyonel `adapter` ile ham format -> sözleşme dönüşümü (H2)."""
 from __future__ import annotations
 
+import os
 import tempfile
 from pathlib import Path
 
@@ -23,9 +24,28 @@ class IngestRequest(BaseModel):
     adapter: str | None = None
 
 
+def _check_ingest_root(path: str) -> None:
+    """OEE_INGEST_ROOT set'liyse ingest yolu onun altında olmalı.
+
+    Auth kapalı public deploy'da keyfi sunucu dizininin CSV diye okutulmasını
+    engeller; env yoksa davranış eskisi gibi serbesttir (yerel/pilot kolaylığı).
+    """
+    root = os.environ.get("OEE_INGEST_ROOT")
+    if not root:
+        return
+    try:
+        Path(path).resolve().relative_to(Path(root).resolve())
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"ingest yolu izinli kokun (OEE_INGEST_ROOT) disinda: {path}",
+        )
+
+
 @router.post("/ingest")
 def ingest(req: IngestRequest, request: Request) -> dict:
     repo = request.app.state.repo
+    _check_ingest_root(req.path)
     if not req.adapter:
         return _load(req.path, repo)
     # Adapter: ham -> sözleşme geçici dizine; TemporaryDirectory çıkışta temizler (sızıntı yok).
