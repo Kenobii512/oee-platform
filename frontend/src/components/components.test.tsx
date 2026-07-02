@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import type { DataQuality, LossCat, Oee, Recommendations as RecData } from '../api/types'
 import { catLabel } from '../styles/theme'
@@ -111,5 +112,41 @@ describe('LossTreeChart', () => {
   it('legend={false} ile alt hatch notunu gizler', () => {
     const { container } = render(<LossTreeChart eyebrow="Kayıp" cats={cats} legend={false} />)
     expect(container.querySelector('.prop-note')).toBeNull()
+  })
+})
+
+// ---- WhatIf: slider degisimi /whatif sorgusuna yansir --------------------
+
+import WhatIf from './WhatIf'
+
+describe('WhatIf', () => {
+  it('pasifken ipucu gosterir, slider degisince /whatif cagirir', async () => {
+    const calls: string[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      calls.push(String(url))
+      return {
+        ok: true,
+        json: async () => ({
+          baseline: { availability: 0.8, performance: 0.8, quality: 0.9, oee: 0.576 },
+          adjusted: { availability: 0.9, performance: 0.8, quality: 0.9, oee: 0.648 },
+          gain: { total_tl: 100, total_tl_low: 50, total_tl_high: 100, per_category: [] },
+        }),
+      } as unknown as Response
+    }))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={qc}>
+        <WhatIf range={{}} />
+      </QueryClientProvider>,
+    )
+    expect(screen.getByText(/kayd.r.c.larla/i)).toBeInTheDocument()
+    const slider = screen.getByLabelText('Duruş azaltım yüzdesi')
+    fireEvent.change(slider, { target: { value: '30' } })
+    await waitFor(() => expect(calls.some((u) => u.includes('/whatif?'))).toBe(true), {
+      timeout: 2000,
+    })
+    expect(calls.find((u) => u.includes('/whatif?'))).toContain('downtime=0.3')
+    await waitFor(() => expect(screen.getByText('What-if')).toBeInTheDocument())
+    vi.unstubAllGlobals()
   })
 })

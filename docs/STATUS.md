@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-07-02 · **Repo:** `Kenobii512/oee-platform` · **Test:** backend 269/269 + frontend vitest 13/13 + simülatör 115/115 yeşil
+**Güncelleme:** 2026-07-02 · **Repo:** `Kenobii512/oee-platform` · **Test:** backend 279/279 + frontend vitest 13/13 + simülatör 115/115 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -39,6 +39,7 @@ Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıy
 | **Pilot A** | Pilot kiti doküman paketi (`docs/pilot-kit/` 6 dosya) | ✓ |
 | **QC** | Entegrasyon cilası (data-quality yeterlilik ucu, adaptör temp temizliği, redo doğrulama, calendar_min, frontend yansımaları) | ✓ |
 | **Pilot B** | Pilot doctor CLI (`backend/tools/pilot_doctor.py`): Faz 0–1 GO/NO-GO kapısı otomasyonu — hat doğrulama + adaptör + smoke ingest (geçici DuckDB) + OEE + H3 yeterlilik + red oranı; `python -m tools.pilot_doctor <dizin> [--adapter] [--json]`, exit 0/1/2, `make doctor` | ✓ |
+| **What-if** | Analitik what-if: `analytics/whatif.py` + `GET /whatif` (azaltım oranları → önce/sonra A/P/Q/OEE + TL kazanç bantlı; oee.py yardımcılarıyla, formül kopyası yok) + pano Detay'da slider paneli ("Önerilen değerler" = recommend oranları; 300ms debounce; örtüşme çekincesi) | ✓ |
 | **Pilot C** | Showcase: `backend/tools/pilot_report.py` Faz 3 pilot raporu (tek dosya HTML + satır içi SVG: OEE, TL Pareto bantlı, öneri aralıkları, trend, güven notu, 3 kriter tablosu otomatik ✓/✗ + elle alanlar; `--generated-at` ile bayt-eş üretim); örnek rapor `docs/showcase/ornek-pilot-raporu.html` (speed_bottleneck); landing `docs/showcase/landing.html` + public `GET /tanitim` | ✓ |
 
 ## API yüzeyi (mevcut)
@@ -56,6 +57,8 @@ GET  /scenarios                        -> {scenarios:[{id, title, description, e
 POST /scenarios/{id}/activate          -> {activated, ingest}  (repo.reset() + o senaryoyu ingest)
 GET  /replay/stream?scenario=&speed=&steps=  -> SSE: büyüyen 'şimdiye kadar' snapshot'ları (oee, cost, gain, event_count)
 POST /line/validate  {hat-tanımı dict}  -> {valid: bool, errors: [str]}
+GET  /whatif?downtime=&microstop=&speed_loss=&quality_redo=&fill_loss=[&from&to]
+                                       -> {baseline, adjusted, gain}  (azaltım oranı 0..1; analitik what-if)
 GET  /tanitim                          -> showcase landing (public, auth istisnası; docs/showcase/landing.html)
 GET  /tanitim/ornek-rapor              -> örnek pilot raporu HTML (public)
 GET  /                                 -> React SPA (build varsa) ya da Jinja fallback (HTML)
@@ -149,7 +152,7 @@ Yerelde backend kapısı: `make ci`.
 ```
 docker compose up --build          # http://localhost:8000  (React SPA, açılışta baseline yüklü)
                                    #   /legacy = eski Jinja pano
-# backend testleri:  cd backend && pytest -q          (269 test)
+# backend testleri:  cd backend && pytest -q          (279 test)
 # pilot doctor:       make doctor                      (Faz 0-1 GO/NO-GO; DATA=<dizin> ile)
 # frontend dev:      cd frontend && npm run dev        (Vite, backend'e proxy)
 # frontend testleri: cd frontend && npm run test       (vitest 13)

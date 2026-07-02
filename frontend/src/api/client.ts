@@ -9,6 +9,8 @@ import type {
   Recommendations,
   ScenarioCatalog,
   TrendPoint,
+  WhatIfReductions,
+  WhatIfResult,
 } from './types'
 
 export function qs(range: Range = {}): string {
@@ -42,6 +44,13 @@ export const api = {
   },
   dataQuality: () => getJSON<DataQuality>('/data-quality/summary'),
   scenarios: () => getJSON<ScenarioCatalog>('/scenarios'),
+  whatif: (red: WhatIfReductions, range?: Range) => {
+    const r = qs(range)
+    const p = new URLSearchParams(r ? r.slice(1) : '')
+    for (const [k, v] of Object.entries(red)) if (v > 0) p.set(k, String(v))
+    const q = p.toString()
+    return getJSON<WhatIfResult>(`/whatif${q ? `?${q}` : ''}`)
+  },
   activateScenario: async (id: string): Promise<void> => {
     const r = await fetch(`/scenarios/${id}/activate`, { method: 'POST' })
     if (!r.ok) throw new Error(`activate ${id} -> ${r.status}`)

@@ -111,3 +111,40 @@ export interface ReplaySnapshot {
   total_estimated_gain_tl: number
   event_count: number
 }
+
+// What-if analitiği (GET /whatif): azaltım oranları → önce/sonra + TL kazanç.
+export interface WhatIfComponents {
+  availability: number
+  performance: number
+  quality: number
+  oee: number
+}
+
+export interface WhatIfGainItem {
+  category: string
+  reduction: number
+  gain_tl: number
+  gain_tl_low: number
+  gain_tl_high: number
+  kind: Kind
+}
+
+export interface WhatIfResult {
+  baseline: WhatIfComponents
+  adjusted: WhatIfComponents
+  gain: {
+    total_tl: number
+    total_tl_low: number
+    total_tl_high: number
+    per_category: WhatIfGainItem[]
+  }
+}
+
+/** Slider anahtarları — /whatif query paramlarıyla birebir. */
+export type WhatIfReductions = {
+  downtime: number
+  microstop: number
+  speed_loss: number
+  quality_redo: number
+  fill_loss: number
+}
