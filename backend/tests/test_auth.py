@@ -43,3 +43,28 @@ def test_auth_gates_and_login_flow(monkeypatch, tmp_path):
         c.get("/logout", follow_redirects=False)
         r = c.get("/oee", headers={"accept": "application/json"}, follow_redirects=False)
         assert r.status_code == 401
+
+
+def test_token_expires(monkeypatch):
+    # QC: eski token sabit ve suresizdi; calinan cerez parola degisene dek gecerliydi.
+    import time as _time
+
+    from app import auth
+
+    monkeypatch.setenv("OEE_AUTH_PASS", "gizli123")
+    tok = auth.make_token()
+    assert auth.verify(tok) is True
+    # 13 saat sonrasina isinlan -> 12h TTL asilir, token gecersiz
+    real = _time.time
+    monkeypatch.setattr("app.auth.time.time", lambda: real() + 13 * 3600)
+    assert auth.verify(tok) is False
+
+
+def test_token_tamper_rejected(monkeypatch):
+    from app import auth
+
+    monkeypatch.setenv("OEE_AUTH_PASS", "gizli123")
+    tok = auth.make_token()
+    exp, sig = tok.split(":", 1)
+    forged = f"{int(exp) + 999999}:{sig}"  # expiry uzatilmis ama imza eski
+    assert auth.verify(forged) is False

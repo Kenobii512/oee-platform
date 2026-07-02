@@ -110,7 +110,7 @@ def _evaluate_criteria(
     raporda boş bırakılır — burada değerlendirilmez.
     """
     if losses is None or recs is None or reject_rate is None:
-        na = {"auto_pass": None, "detail": "veri yok - degerlendirilemedi"}
+        na = {"auto_pass": None, "detail": "veri yok — değerlendirilemedi"}
         return {"k1": dict(na), "k2": dict(na), "k3": dict(na)}
 
     cats = losses["categories"]
@@ -125,7 +125,7 @@ def _evaluate_criteria(
         None,
     )
     if inferred_top is None or total <= 0:
-        k1 = {"auto_pass": False, "detail": "cikarimsal (inferred) kalem TL uretmedi"}
+        k1 = {"auto_pass": False, "detail": "çıkarımsal (inferred) kalem TL üretmedi"}
     else:
         idx, cat = inferred_top
         share = cat["tl"] / total
@@ -133,9 +133,9 @@ def _evaluate_criteria(
         k1 = {
             "auto_pass": ok,
             "detail": (
-                f"en buyuk cikarimsal kalem {cat['category']}: Pareto sira {idx + 1} "
-                f"(ust {top_third} icinde{'' if idx < top_third else ' DEGIL'}), "
-                f"TL payi %{share * 100:.0f} (esik %{K1_MIN_TL_SHARE * 100:.0f})"
+                f"en büyük çıkarımsal kalem {cat['category']}: Pareto sıra {idx + 1} "
+                f"(üst {top_third} içinde{'' if idx < top_third else ' DEĞİL'}), "
+                f"TL payı %{share * 100:.0f} (eşik %{K1_MIN_TL_SHARE * 100:.0f})"
             ),
         }
 
@@ -146,8 +146,8 @@ def _evaluate_criteria(
     k2 = {
         "auto_pass": k2_ok,
         "detail": (
-            f"toplam tahmini kazanc {recs['total_gain_tl']:.0f} TL; "
-            f"{len(items)} oneride aralik (low-high) dolu"
+            f"toplam tahmini kazanç {recs['total_gain_tl']:.0f} TL; "
+            f"{len(items)} öneride aralık (low–high) dolu"
         ),
     }
 
@@ -155,9 +155,9 @@ def _evaluate_criteria(
     k3 = {
         "auto_pass": k3_ok,
         "detail": (
-            f"red orani %{reject_rate * 100:.1f} (esik %{DEFAULT_MAX_REJECT * 100:.0f}); "
-            f"H3 yeterlilik {sufficiency:.2f} (esik {DEFAULT_MIN_SUFFICIENCY}); "
-            "guven bandi tum cikarimsal kalemlerde dolu"
+            f"red oranı %{reject_rate * 100:.1f} (eşik %{DEFAULT_MAX_REJECT * 100:.0f}); "
+            f"H3 yeterlilik {sufficiency:.2f} (eşik {DEFAULT_MIN_SUFFICIENCY}); "
+            "güven bandı tüm çıkarımsal kalemlerde dolu"
         ),
     }
     return {"k1": k1, "k2": k2, "k3": k3}
@@ -271,6 +271,7 @@ _esc = _html.escape
 _C = {
     "accent": "#1f5da6",
     "amber": "#b5832f",
+    "inferred": "#535f8a",
     "green": "#237a5c",
     "red": "#a8443a",
     "bg": "#edf1f5",
@@ -296,6 +297,18 @@ def _pct_fmt(v: float, digits: int = 1) -> str:
     return f"{v * 100:.{digits}f}".replace(".", ",") + "%"
 
 
+
+def _inline_code(text: str) -> str:
+    """Kaçışlanmış metindeki `x` parçalarını <code> çipine çevirir (pano ile aynı dil)."""
+    out = _esc(text)
+    while "`" in out:
+        a = out.find("`")
+        b = out.find("`", a + 1)
+        if b < 0:
+            break
+        out = out[:a] + "<code>" + out[a + 1:b] + "</code>" + out[b + 1:]
+    return out
+
 def _svg_pareto(categories: list[dict]) -> str:
     """TL Pareto: yatay çubuklar (azalan) + tl_low-tl_high aralık çizgisi."""
     w, bar_h, gap, label_w, pad = 680, 26, 12, 150, 8
@@ -305,7 +318,7 @@ def _svg_pareto(categories: list[dict]) -> str:
     for i, c in enumerate(categories):
         y = pad + i * (bar_h + gap)
         bw = max(1.0, c["tl"] * scale)
-        color = _C["accent"] if c["kind"] == "visible" else _C["amber"]
+        color = _C["accent"] if c["kind"] == "visible" else _C["inferred"]
         lo_x = label_w + c["tl_low"] * scale
         hi_x = label_w + c["tl_high"] * scale
         badge = "" if c["kind"] == "visible" else " (çıkarımsal)"
@@ -408,7 +421,7 @@ def _sec_recs(recs: dict | None) -> str:
         return _NO_DATA
     rows = "".join(
         f"<tr><td><b>{_esc(r['title'])}</b><br><span class=\"muted\">"
-        f"{_esc(r['action'])}</span></td>"
+        f"{_inline_code(r['action'])}</span></td>"
         f"<td class=\"num\">{_esc(_tl_fmt(r['estimated_gain_tl_low']))} – "
         f"{_esc(_tl_fmt(r['estimated_gain_tl_high']))}</td></tr>"
         for r in recs["items"]

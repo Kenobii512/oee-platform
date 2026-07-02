@@ -75,3 +75,21 @@ def test_no_guarantee_language():
     for r in recs:
         text = (r["action"] + " " + r["assumption"]).lower()
         assert not any(b in text for b in banned), r
+
+
+def test_real_config_actions_have_no_duplicated_words():
+    # QC bulgusu: detail "istasyonunda yogun" + sablon "{detail} yogun" -> "yogun yogun".
+    # Gercek config/recommend.yaml ile uc detail varyantinin da duzgun cumle kurdugunu dogrula.
+    from app.config import load_app_config, load_recommend_config
+
+    cfg = load_recommend_config(load_app_config().recommend_config_path)
+    cases = [
+        EVENTS,  # by_reason yolu (DOWNTIME) + by_station yolu (MICROSTOP, reason yok)
+        [{"event_type": "MICROSTOP", "duration": 5.0, "reason_code": None, "station_id": None}],
+    ]
+    for events in cases:
+        recs = generate_recommendations(COST, events, cfg, RatioGainEstimator(cfg))
+        for r in recs:
+            words = r["action"].replace(";", " ").replace(".", " ").split()
+            dups = [a for a, b in zip(words, words[1:]) if a == b]
+            assert not dups, f"{r['category']}: tekrarli kelime {dups} -> {r['action']!r}"

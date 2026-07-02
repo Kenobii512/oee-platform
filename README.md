@@ -10,12 +10,11 @@ replay dahil.
 > mimari kararlar, bilinen sınırlamalar. **Veri sözleşmesi:** [`docs/data-contract.md`](docs/data-contract.md).
 
 > **Frontend tasarımı (UI):** Pano "**The Foundry Gauge**" — açık/kurumsal endüstriyel
-> gösterge sistemi. Tasarım dili ve kuralları kök dizindeki `DESIGN.md` + `PRODUCT.md`'de
-> (Stitch formatı + `.impeccable/` sidecar). İmza: **Control Strip hero** (OEE gauge + A×P×Q
+> gösterge sistemi. Renk/tipografi token'ları `frontend/src/styles/theme.ts` + `theme.css`'te
+> (tek doğruluk kaynağı repo içinde). İmza: **Control Strip hero** (OEE gauge + A×P×Q
 > kanal kaskadı + toplam kayıp), anlatısal bölgeler (Durum/Kayıplar/Aksiyon/Veri), zengin
 > senaryo dropdown'u, birleşik header (Pano/Replay mod + Özet/Detay görünüm). Türkçe ondalık
-> virgül (`theme.ts` `num1`/`pct`). Bu dosyalar `oee-platform/` git deposunun bir üst
-> dizinindedir (ayrı tutulur).
+> virgül (`theme.ts` `num1`/`pct`).
 
 ## Çalıştırma (Docker)
 
@@ -28,7 +27,7 @@ Aynı imaj laptopta `localhost:8000` ve uzak sunucuda public URL ile çalışır
 ## Geliştirme
 
 ```bash
-cd backend && pip install -r requirements.txt && pytest -q     # 263 test
+cd backend && pip install -r requirements.txt && pytest -q     # 269 test
 cd frontend && npm install && npm run dev                      # Vite (backend'e :8000 proxy)
 cd frontend && npm run lint && npm run test && npm run build   # vitest + üretim build
 ```

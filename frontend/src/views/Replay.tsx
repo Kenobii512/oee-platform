@@ -15,7 +15,9 @@ import ScenarioDropdown from '../components/ScenarioDropdown'
 import { C, gridAxis } from '../styles/theme'
 
 const STEPS = 60
-const SPEEDS = [100, 500, 1000]
+// QC: 100/500/1000'de tick (0.2s/speed) hesaplama süresinin altında kalıyor,
+// üç seçenek gözle ayırt edilemiyordu. 1/2/5 -> 200/100/40ms: fark görünür.
+const SPEEDS = [1, 2, 5]
 
 export default function Replay() {
   const { isLoading: catalogLoading } = useQuery({
@@ -24,7 +26,7 @@ export default function Replay() {
   })
   const esRef = useRef<EventSource | null>(null)
   const [scenario, setScenario] = useState('breakdown_storm')
-  const [speed, setSpeed] = useState(500)
+  const [speed, setSpeed] = useState(1)
   const [running, setRunning] = useState(false)
   const [done, setDone] = useState(false)
   const [snap, setSnap] = useState<ReplaySnapshot | null>(null)

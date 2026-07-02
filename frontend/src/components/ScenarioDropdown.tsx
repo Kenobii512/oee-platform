@@ -17,7 +17,9 @@ interface Props {
 export default function ScenarioDropdown({ onSelect, value, disabled }: Props) {
   const { data, isError } = useQuery({ queryKey: ['scenarios'], queryFn: api.scenarios })
   const [open, setOpen] = useState(false)
-  const [sel, setSel] = useState<string | undefined>(value)
+  // Kullanıcı seçimi > dışarıdan gelen değer (backend 'active' sorgusu sonradan dolar).
+  const [picked, setPicked] = useState<string | undefined>()
+  const sel = picked ?? value
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function ScenarioDropdown({ onSelect, value, disabled }: Props) {
                 type="button"
                 className={`dd-opt${s.id === sel ? ' sel' : ''}`}
                 onClick={() => {
-                  setSel(s.id)
+                  setPicked(s.id)
                   onSelect(s.id)
                   setOpen(false)
                 }}

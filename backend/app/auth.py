@@ -17,6 +17,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import os
+import time
 import urllib.parse
 
 COOKIE = "oee_auth"
@@ -40,14 +41,31 @@ def enabled() -> bool:
     return bool(_pass())
 
 
+# Token ömrü: çerez max_age ile aynı (12 saat). Süre TOKEN'ın içinde imzalıdır —
+# yalnız tarayıcı tarafına güvenmek çalınan çerezi parola değişene dek geçerli kılıyordu.
+TOKEN_TTL_S = 60 * 60 * 12
+
+
+def _sign(exp: int) -> str:
+    return hmac.new(_secret(), f"oee-authed:{exp}".encode(), hashlib.sha256).hexdigest()
+
+
 def make_token() -> str:
-    return hmac.new(_secret(), b"oee-authed", hashlib.sha256).hexdigest()
+    exp = int(time.time()) + TOKEN_TTL_S
+    return f"{exp}:{_sign(exp)}"
 
 
 def verify(token: str | None) -> bool:
-    if not token:
+    if not token or ":" not in token:
         return False
-    return hmac.compare_digest(token, make_token())
+    exp_raw, sig = token.split(":", 1)
+    try:
+        exp = int(exp_raw)
+    except ValueError:
+        return False
+    if time.time() > exp:
+        return False
+    return hmac.compare_digest(sig, _sign(exp))
 
 
 def check_credentials(username: str, password: str) -> bool:

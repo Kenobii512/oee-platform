@@ -45,9 +45,13 @@ async def lifespan(app: FastAPI):
     app.state.repo = repo
     app.state.config = cfg
     # Demo kolaylığı: SAMPLE_DATA_DIR verilirse açılışta otomatik ingest.
+    app.state.active_scenario = None
     sample = os.environ.get("SAMPLE_DATA_DIR")
     if sample and Path(sample).is_dir():
         load_csv_dir(sample, repo)
+        # Dizin adı katalogdaki bir senaryo id'siyse panoda "aktif" gösterilir
+        # (scenarios/baseline -> "baseline"); değilse None kalır — zararsız.
+        app.state.active_scenario = Path(sample).name
     try:
         yield
     finally:

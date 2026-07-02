@@ -3,7 +3,7 @@
 # expected_top_loss: kalibrasyon kapısının (test_scenarios_dominant_loss) hedefi.
 #   Doğal-eksen kuralı: adlı kayıp, KENDİ ekseninde (dakika/parça) en yüksek değere sahip.
 #   Zaman kanalları (DOWNTIME/MICROSTOP/SPEED_LOSS) dakika ekseninde; malzeme kanalları
-#   (FILL_LOSS/QUALITY_REDO/QUALITY_SCRAP) parça ekseninde yarışır.
+#   (FILL_LOSS/QUALITY_REDO) parça ekseninde yarışır.
 # H6 demo: narrative = bir cümlelik hikâye; highlight = panoda vurgulanacak grafik
 #   (cost | loss_tree | trend | oee).
 scenarios:

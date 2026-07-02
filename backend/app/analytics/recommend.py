@@ -47,13 +47,15 @@ def _top_reason_detail(events: list[dict], category: str) -> str:
         station = e.get("station_id")
         if station:
             by_station[station] += dur
+    # Dönen metin TAM yüklem öbeğidir; şablonlar "{detail}" sonrası ek yüklem KOYMAZ
+    # (eski "{detail} yoğun" kalıbı "istasyonunda yoğun yoğun" üretiyordu).
     if by_reason:
         top = max(by_reason, key=by_reason.get)
-        return f"`{top}` (en yüksek süre payı)"
+        return f"`{top}` nedeninde yoğunlaşıyor (en yüksek süre payı)"
     if by_station:
         top = max(by_station, key=by_station.get)
-        return f"`{top}` istasyonunda yoğun"
-    return "neden kaydı yetersiz (operatör giriş kapsamı düşük)"
+        return f"`{top}` istasyonunda yoğunlaşıyor"
+    return "için neden kaydı yetersiz (operatör giriş kapsamı düşük)"
 
 
 def generate_recommendations(
