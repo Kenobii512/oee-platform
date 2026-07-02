@@ -5,3 +5,4 @@ __pycache__/
 *.duckdb.wal
 .pytest_cache/
 backend/app/frontend_dist/
+.superpowers/

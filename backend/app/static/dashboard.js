@@ -37,13 +37,13 @@ function renderKpis(oee, dq) {
   document.getElementById("kpi-a").textContent = pct(oee.availability);
   document.getElementById("kpi-p").textContent = pct(oee.performance);
   document.getElementById("kpi-q").textContent = pct(oee.quality);
+  // G10 sonrası tek manuel girdi = mikro duruş; downtime kapsamı API'den kalktı.
   document.getElementById("kpi-dq").textContent =
-    "Duruş " + pct(dq.downtime_entry_coverage) + " · Mikro " + pct(dq.microstop_entry_coverage);
+    "Mikro duruş " + pct(dq.microstop_entry_coverage);
   document.getElementById("dq-detail").innerHTML =
     "Operatör neden-giriş kapsamı:<br>" +
-    "• DOWNTIME: <strong>" + pct(dq.downtime_entry_coverage) + "</strong><br>" +
     "• MICROSTOP: <strong>" + pct(dq.microstop_entry_coverage) + "</strong> " +
-    "<span class='muted'>(mikro duruşta düşük olması beklenir — içgörü, kusur değil)</span>";
+    "<span class='muted'>(tek manuel girdi; duruş nedeni sistemce yazılır)</span>";
 }
 
 function renderWaterfall(oee) {

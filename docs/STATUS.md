@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-07-02 · **Repo:** `Kenobii512/oee-platform` (private) · **Test:** backend 263/263 + frontend vitest 13/13 + simülatör 115/115 yeşil
+**Güncelleme:** 2026-07-02 · **Repo:** `Kenobii512/oee-platform` · **Test:** backend 263/263 + frontend vitest 13/13 + simülatör 115/115 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"

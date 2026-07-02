@@ -1,4 +1,4 @@
-.PHONY: test lint ci doctor
+.PHONY: test lint ci doctor clean
 
 test:
 	cd backend && pytest -q
@@ -13,3 +13,7 @@ ci: lint test
 DATA ?= backend/tests/fixtures/baseline
 doctor:
 	cd backend && python -m tools.pilot_doctor "$(abspath $(DATA))"
+
+# Yereldeki basibos DuckDB dosyalarini temizle (eski .duckdb -> BinderException tuzagi).
+clean:
+	cd backend && rm -f *.duckdb *.duckdb.wal
