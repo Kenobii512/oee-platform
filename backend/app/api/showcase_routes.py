@@ -17,11 +17,11 @@ router = APIRouter()
 _SHOWCASE_DIR = Path(__file__).resolve().parents[3] / "docs" / "showcase"
 
 
-def _serve(name: str) -> FileResponse:
+def _serve(name: str, media_type: str = "text/html") -> FileResponse:
     path = _SHOWCASE_DIR / name
     if not path.is_file():
         raise HTTPException(status_code=404, detail=f"showcase dosyası yok: {name}")
-    return FileResponse(path, media_type="text/html")
+    return FileResponse(path, media_type=media_type)
 
 
 @router.get("/tanitim")
@@ -32,3 +32,9 @@ def tanitim() -> FileResponse:
 @router.get("/tanitim/ornek-rapor")
 def ornek_rapor() -> FileResponse:
     return _serve("ornek-pilot-raporu.html")
+
+
+@router.get("/tanitim/og-card.png")
+def og_card() -> FileResponse:
+    """Sosyal önizleme görseli (landing'in og:image'ı buna göreli işaret eder)."""
+    return _serve("og-card.png", media_type="image/png")

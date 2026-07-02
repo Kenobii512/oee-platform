@@ -103,6 +103,8 @@ interface Props {
 }
 
 export default function GaugeHero({ oee, dq, costTotal, redoParts, trend }: Props) {
+  // TL toplamı da kanallar gibi count-up alır (görsel dil tutarlılığı).
+  const costAnim = useCountUp(costTotal ?? 0)
   const deltaPP = (oee.oee - TARGET) * 100
   const below = deltaPP < 0
   const spark = trend?.map((t) => t.oee) ?? []
@@ -158,7 +160,7 @@ export default function GaugeHero({ oee, dq, costTotal, redoParts, trend }: Prop
             <div className="cs-cost">
               <div className="cs-cost-main">
                 <span className="cs-cost-k">Toplam kayıp</span>
-                <strong>{costTotal != null ? `${tl(costTotal)} ₺` : '—'}</strong>
+                <strong>{costTotal != null ? `${tl(costAnim)} ₺` : '—'}</strong>
                 <span className="cs-cost-u">/ vardiya</span>
               </div>
               {oee.utilization != null && (
