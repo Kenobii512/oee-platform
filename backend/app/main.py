@@ -26,6 +26,7 @@ from app.api.replay_routes import router as replay_router
 from app.api.scenario_routes import router as scenario_router
 from app.api.showcase_routes import router as showcase_router
 from app.api.trend_routes import router as trend_router
+from app.api.whatif_routes import router as whatif_router
 from app.config import load_app_config
 from app.ingest.loader import load_csv_dir
 from app.logging_setup import setup_logging
@@ -134,6 +135,7 @@ app.include_router(line_router)
 app.include_router(replay_router)
 app.include_router(dashboard_router)
 app.include_router(showcase_router)
+app.include_router(whatif_router)
 
 
 @app.get("/health")
