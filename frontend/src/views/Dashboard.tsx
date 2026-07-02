@@ -14,6 +14,7 @@ import LossTreeChart from '../components/LossTreeChart'
 import Recommendations from '../components/Recommendations'
 import TopBar, { type View } from '../components/TopBar'
 import TrendChart from '../components/TrendChart'
+import WhatIf from '../components/WhatIf'
 
 /** Alt sorgu hatasında kartın sessizce kaybolması yerine yerinde küçük uyarı. */
 function CardError({ label }: { label: string }) {
@@ -151,6 +152,7 @@ export default function Dashboard() {
           <div className="zone-head">Aksiyon</div>
           {recQ.data && <Recommendations rec={recQ.data} />}
           {recQ.isError && <CardError label="Öneriler" />}
+          {detay && <WhatIf range={range} rec={recQ.data} />}
 
           {detay && dqQ.data && (
             <>
