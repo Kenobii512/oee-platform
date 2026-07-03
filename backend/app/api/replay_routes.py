@@ -29,13 +29,8 @@ router = APIRouter()
 _BASE_TICK = 0.2  # saniye/snapshot @ speed=1
 
 
-@router.get("/replay/stream")
-async def replay_stream(
-    request: Request,
-    scenario: str = Query(...),
-    speed: float = Query(1.0, gt=0),
-    steps: int = Query(60, gt=0, le=600),
-) -> StreamingResponse:
+def _resolve_scenario_dir(request: Request, scenario: str):
+    """Senaryo id → (cfg, veri klasörü); bilinmeyen senaryo/klasör 404. stream+timeline ortak."""
     cfg = request.app.state.config
     cat = {s.id: s for s in load_scenario_catalog(cfg.scenario_config_path)}
     info = cat.get(scenario)
@@ -44,6 +39,17 @@ async def replay_stream(
     data_dir = (_BACKEND_ROOT / info.data_dir).resolve()
     if not data_dir.is_dir():
         raise HTTPException(status_code=404, detail=f"veri yok: {info.data_dir}")
+    return cfg, data_dir
+
+
+@router.get("/replay/stream")
+async def replay_stream(
+    request: Request,
+    scenario: str = Query(...),
+    speed: float = Query(1.0, gt=0),
+    steps: int = Query(60, gt=0, le=600),
+) -> StreamingResponse:
+    cfg, data_dir = _resolve_scenario_dir(request, scenario)
 
     # İZOLASYON: replay paylaşılan repo'yu (pano /oee aynı tabloları okur) ASLA değiştirmez.
     # Her istek için ayrı in-memory DuckDB; akış bitince atılır → pano verisi temiz kalır.
@@ -69,3 +75,39 @@ async def replay_stream(
             temp.close()  # in-memory DB'yi serbest bırak (paylaşılan repo'ya dokunulmadı)
 
     return StreamingResponse(gen(), media_type="text/event-stream")
+
+
+@router.get("/replay/timeline")
+async def replay_timeline(request: Request, scenario: str = Query(...)) -> dict:
+    """Ham olay dökümü + hat tanımı (canlı hat şeridi). İş kuralı YOK; frontend
+    indirgeyici tüketir. FIREWALL: ground_truth alınmaz; stream ile aynı izolasyon
+    (in-memory DuckDB, paylaşılan repo'ya dokunulmaz)."""
+    cfg, data_dir = _resolve_scenario_dir(request, scenario)
+
+    def build() -> dict:
+        temp = DuckDBRepository(":memory:")
+        temp.connect()
+        try:
+            temp.init_schema()
+            load_csv_dir(data_dir, temp)
+            events = temp.fetch_events(None, None)
+        finally:
+            temp.close()
+        line = load_line_definition(cfg.line_config_path)
+        evs = sorted(events, key=lambda e: str(e["timestamp"]))
+        return {
+            "line": [{"id": t.id, "name": t.name} for t in line.tanks],
+            "events": [
+                {
+                    "timestamp": str(e["timestamp"]),
+                    "carrier_id": e.get("carrier_id") or None,
+                    "station_id": e.get("station_id") or None,
+                    "event_type": e["event_type"],
+                    "duration": float(e["duration"]),
+                    "reason_code": e.get("reason_code") or None,
+                }
+                for e in evs
+            ],
+        }
+
+    return await asyncio.to_thread(build)
