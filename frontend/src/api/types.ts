@@ -12,6 +12,11 @@ export interface Oee {
   utilization?: number
   planned_downtime_min?: number
   calendar_min?: number | null // H8: utilization paydası (takvim dk); şeffaflık için
+  // Vardiya künyesi bağlamı (spec 2026-07-03); eski backend yanıtlarında bulunmayabilir.
+  loaded_qty?: number
+  good_count?: number // nihai iyi; kartta gösterilmez (no-scrap → ≈yüklenen)
+  redo_count?: number
+  span_min?: number // gözlem penceresi (dk)
 }
 
 export interface LossCat {

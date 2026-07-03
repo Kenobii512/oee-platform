@@ -613,3 +613,17 @@ canvas { max-height: 268px; }
 .wi-gain strong { font-size: 1.05rem; }
 .wi-note { display: block; font-size: 0.75rem; color: var(--muted); }
 .wi-hint { color: var(--muted); font-size: 0.85rem; }
+
+/* ── Vardiya Künyesi: hairline satırlar, sağa yaslı tabular değerler ── */
+.kn-rows { margin: 0; }
+.kn-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 7px 2px; border-bottom: 1px solid var(--line); font-size: 0.9rem;
+}
+.kn-row:last-child { border-bottom: 0; }
+.kn-row dt { color: var(--muted); }
+.kn-row dd {
+  margin: 0; font-family: var(--mono);
+  font-variant-numeric: tabular-nums; color: var(--ink);
+}
+.kn-sep { border-top: 2px solid var(--line); margin-top: 4px; }

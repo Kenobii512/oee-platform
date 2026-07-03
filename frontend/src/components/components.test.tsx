@@ -3,7 +3,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { DataQuality, LossCat, Oee, Recommendations as RecData } from '../api/types'
-import { catLabel } from '../styles/theme'
+import { catLabel, hm } from '../styles/theme'
+import ShiftSummary from './ShiftSummary'
 import GaugeHero from './GaugeHero'
 import LossTreeChart from './LossTreeChart'
 import Recommendations from './Recommendations'
@@ -148,5 +149,37 @@ describe('WhatIf', () => {
     expect(calls.find((u) => u.includes('/whatif?'))).toContain('downtime=0.3')
     await waitFor(() => expect(screen.getByText('What-if')).toBeInTheDocument())
     vi.unstubAllGlobals()
+  })
+})
+
+describe('ShiftSummary (Vardiya Künyesi)', () => {
+  const FULL: Oee = { ...OEE, loaded_qty: 1240, good_count: 1240, redo_count: 72, span_min: 480 }
+
+  it('pencere + sayıları gösterir; ilk geçiş = yüklenen − redo', () => {
+    render(<ShiftSummary oee={FULL} />)
+    expect(screen.getByText('Vardiya Künyesi')).toBeInTheDocument()
+    expect(screen.getByText('8 s 00 dk')).toBeInTheDocument()
+    expect(screen.getByText('1.240 parça')).toBeInTheDocument() // yüklenen
+    expect(screen.getByText('1.168 parça')).toBeInTheDocument() // ilk geçiş = 1240−72
+    expect(screen.getByText('72 parça')).toBeInTheDocument() // redo
+  })
+
+  it('bağlam alanları yokken hiç render olmaz (eski yanıt uyumu)', () => {
+    const { container } = render(<ShiftSummary oee={OEE} />)
+    expect(container.firstChild).toBeNull()
+  })
+
+  it('loaded_qty=0 iken hiç render olmaz', () => {
+    const { container } = render(<ShiftSummary oee={{ ...FULL, loaded_qty: 0 }} />)
+    expect(container.firstChild).toBeNull()
+  })
+})
+
+describe('hm süre biçimi', () => {
+  it('90 dk altı düz dakika, üstü saatli biçim; yuvarlama taşması yok', () => {
+    expect(hm(75)).toBe('75 dk')
+    expect(hm(480)).toBe('8 s 00 dk')
+    expect(hm(479.6)).toBe('8 s 00 dk') // toplam önce yuvarlanır; "7 s 60 dk" olmamalı
+    expect(hm(150)).toBe('2 s 30 dk')
   })
 })
