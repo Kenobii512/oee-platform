@@ -46,6 +46,17 @@ export const pct = (x: number): string => num1(x * 100) + '%'
 /** TL tam sayı tr biçimi (binlik ayraç). */
 export const tl = (x: number): string => Math.round(x).toLocaleString('tr-TR')
 
+/** Tam sayı tr biçimi (binlik ayraç): 1240 → "1.240". */
+export const num0 = (x: number): string => Math.round(x).toLocaleString('tr-TR')
+
+/** Dakika → süre etiketi: 75 → "75 dk"; 480 → "8 s 00 dk" (≥90 dk saatli biçim).
+ *  Önce toplam yuvarlanır ki "7 s 60 dk" gibi taşma olmasın. */
+export const hm = (min: number): string => {
+  const t = Math.round(min)
+  if (t < 90) return `${t} dk`
+  return `${Math.floor(t / 60)} s ${String(t % 60).padStart(2, '0')} dk`
+}
+
 // Chart.js paylaşılan eksen/bar stilleri.
 export const gridAxis = { color: C.grid, drawTicks: false }
 export const barStyle = {

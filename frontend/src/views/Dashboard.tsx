@@ -12,6 +12,7 @@ import GridSkeleton from '../components/GridSkeleton'
 import Info from '../components/Info'
 import LossTreeChart from '../components/LossTreeChart'
 import Recommendations from '../components/Recommendations'
+import ShiftSummary from '../components/ShiftSummary'
 import TopBar, { type View } from '../components/TopBar'
 import TrendChart from '../components/TrendChart'
 import WhatIf from '../components/WhatIf'
@@ -130,6 +131,7 @@ export default function Dashboard() {
           )}
           {detay && trendQ.data && <TrendChart series={trendQ.data} />}
           {detay && trendQ.isError && <CardError label="OEE trendi" />}
+          {detay && oeeQ.data && <ShiftSummary oee={oeeQ.data} />}
 
           <div className="zone-head">Kayıplar</div>
           {lossQ.data && (
