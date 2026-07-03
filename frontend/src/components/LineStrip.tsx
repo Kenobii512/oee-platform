@@ -40,7 +40,7 @@ export default function LineStrip({ timeline, targetTo, tickMs, running }: Props
 
   if (!tl || clock == null) {
     return (
-      <Card eyebrow="Canlı Hat" className="card-wide ls-card">
+      <Card eyebrow="Vinç Rayı ve Tanklar" className="card-wide ls-card">
         <p className="muted">
           Oynat'a basın — hat canlanacak: askılar tanklarda ilerler, duruşlar kızarır,
           redo askıları geri döner.
@@ -95,7 +95,7 @@ export default function LineStrip({ timeline, targetTo, tickMs, running }: Props
   }
 
   return (
-    <Card eyebrow="Canlı Hat" className="card-wide ls-card">
+    <Card eyebrow="Vinç Rayı ve Tanklar" className="card-wide ls-card">
       <div className="ls-head">
         <span className="ls-clock" aria-label="Sanal saat">
           {clockLabel}

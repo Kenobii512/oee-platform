@@ -636,24 +636,24 @@ canvas { max-height: 268px; }
 .ls-clock {
   font-family: var(--mono); font-variant-numeric: tabular-nums;
   font-size: 0.85rem; color: var(--ink);
-  border: 1px solid var(--line); padding: 2px 8px; background: var(--surface-inset);
+  border: 1px solid var(--line); padding: 2px 8px; background: var(--bg-3);
 }
 .ls-counters { display: flex; gap: 14px; font-size: 0.85rem; color: var(--muted); }
 .ls-counters strong {
   color: var(--ink); font-family: var(--mono); font-variant-numeric: tabular-nums;
 }
-.ls-cnt-redo strong { color: #a8443a; }
+.ls-cnt-redo strong { color: #b25a35; }
 .ls-scroll { overflow-x: auto; }
 .ls-svg { display: block; width: 100%; min-width: 900px; height: auto; }
 .ls-paused { opacity: 0.85; }
 .ls-rail { stroke: var(--line-strong, #cdd4dc); stroke-width: 2; }
-.ls-return { stroke: #a8443a; stroke-width: 1; stroke-dasharray: 4 4; opacity: 0.45; }
-.ls-cap rect { fill: var(--surface-inset); stroke: var(--line); }
+.ls-return { stroke: #b25a35; stroke-width: 1; stroke-dasharray: 4 4; opacity: 0.55; }
+.ls-cap rect { fill: var(--bg-3); stroke: var(--line); }
 .ls-cap text, .ls-tankname {
   font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
   fill: var(--muted); text-anchor: middle;
 }
-.ls-vessel { fill: var(--surface); stroke: var(--line-strong, #cdd4dc); }
+.ls-vessel { fill: var(--bg-2); stroke: var(--line-strong, #cdd4dc); }
 .ls-liquid { fill: var(--steel); transition: fill 150ms linear; }
 .ls-tank-isliyor .ls-liquid { fill: #dbe7f4; } /* accent-soft tonu: işlem sürüyor */
 .ls-tank-bekliyor .ls-liquid { fill: #f2e8d5; } /* threshold-amber tonu: vinç bekleniyor */
@@ -673,7 +673,7 @@ canvas { max-height: 268px; }
   font-variant-numeric: tabular-nums;
 }
 .ls-chip-bekliyor rect { stroke: #b5832f; stroke-width: 1.5; }
-.ls-chip-redo rect { fill: #a8443a; }
+.ls-chip-redo rect { fill: #b25a35; }
 @media (max-width: 768px) {
   .ls-head { flex-direction: column; gap: 6px; align-items: flex-start; }
 }
