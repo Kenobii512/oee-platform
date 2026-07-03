@@ -10,6 +10,7 @@ import type { ReplaySnapshot } from '../api/types'
 import Card from '../components/Card'
 import CostPareto from '../components/CostPareto'
 import GridSkeleton from '../components/GridSkeleton'
+import LineStrip from '../components/LineStrip'
 import ReplayHero from '../components/ReplayHero'
 import ScenarioDropdown from '../components/ScenarioDropdown'
 import { C, gridAxis } from '../styles/theme'
@@ -26,6 +27,11 @@ export default function Replay() {
   })
   const esRef = useRef<EventSource | null>(null)
   const [scenario, setScenario] = useState('breakdown_storm')
+  const timelineQ = useQuery({
+    queryKey: ['replay-timeline', scenario],
+    queryFn: () => api.replayTimeline(scenario),
+    staleTime: Infinity,
+  })
   const [speed, setSpeed] = useState(1)
   const [running, setRunning] = useState(false)
   const [done, setDone] = useState(false)
@@ -62,6 +68,15 @@ export default function Replay() {
 
   // Bileşen söküldüğünde akışı kapat.
   useEffect(() => () => stop(), [])
+
+  // Senaryo değişince önceki koşunun kalıntıları temizlenir — LineStrip yeni senaryonun
+  // timeline'ını eski koşunun sanal saatiyle birleştirip yanıltıcı bir an göstermesin.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSnap(null)
+    setSeries([])
+    setDone(false)
+  }, [scenario])
 
   const progress = Math.round((series.length / STEPS) * 100)
 
@@ -123,6 +138,14 @@ export default function Replay() {
         <GridSkeleton cards={2} label="Replay yükleniyor" />
       ) : (
       <main className="grid">
+        <div className="zone-head">Canlı Hat</div>
+        <LineStrip
+          timeline={timelineQ.data ?? null}
+          targetTo={snap?.to ?? null}
+          tickMs={200 / speed}
+          running={running}
+        />
+
         <div className="zone-head">Canlı Durum</div>
         <ReplayHero snap={snap} progress={progress} running={running} done={done} />
 

@@ -36,6 +36,15 @@ export const CATEGORY_LABEL: Record<string, string> = {
 /** Kategori kodunu Türkçe etikete çevir; bilinmeyen kodda ham koda düş (güvenli). */
 export const catLabel = (code: string): string => CATEGORY_LABEL[code] ?? code
 
+// Duruş neden kodu → Türkçe etiket (canlı hat şeridi). CATEGORY_LABEL deseniyle aynı;
+// backend ham kod döndürür, jargon kullanıcıya gösterilmez. Bilinmeyen kodda ham koda düş.
+export const REASON_LABEL: Record<string, string> = {
+  hoist_ariza: 'Vinç arızası',
+  rectifier_ariza: 'Redresör arızası',
+  furnace_ariza: 'Fırın arızası',
+}
+export const reasonLabel = (code: string): string => REASON_LABEL[code] ?? code
+
 /** Tek ondalıklı Türkçe sayı (ondalık virgül): 60.1 → "60,1". */
 export const num1 = (x: number): string =>
   x.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })

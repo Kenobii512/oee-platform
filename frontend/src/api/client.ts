@@ -7,6 +7,7 @@ import type {
   Oee,
   Range,
   Recommendations,
+  ReplayTimeline,
   ScenarioCatalog,
   TrendPoint,
   WhatIfReductions,
@@ -44,6 +45,8 @@ export const api = {
   },
   dataQuality: () => getJSON<DataQuality>('/data-quality/summary'),
   scenarios: () => getJSON<ScenarioCatalog>('/scenarios'),
+  replayTimeline: (scenario: string) =>
+    getJSON<ReplayTimeline>(`/replay/timeline?scenario=${encodeURIComponent(scenario)}`),
   whatif: (red: WhatIfReductions, range?: Range) => {
     const r = qs(range)
     const p = new URLSearchParams(r ? r.slice(1) : '')
