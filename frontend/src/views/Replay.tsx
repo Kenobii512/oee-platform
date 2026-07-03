@@ -69,6 +69,15 @@ export default function Replay() {
   // Bileşen söküldüğünde akışı kapat.
   useEffect(() => () => stop(), [])
 
+  // Senaryo değişince önceki koşunun kalıntıları temizlenir — LineStrip yeni senaryonun
+  // timeline'ını eski koşunun sanal saatiyle birleştirip yanıltıcı bir an göstermesin.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSnap(null)
+    setSeries([])
+    setDone(false)
+  }, [scenario])
+
   const progress = Math.round((series.length / STEPS) * 100)
 
   const lineData: ChartData<'line'> = {
