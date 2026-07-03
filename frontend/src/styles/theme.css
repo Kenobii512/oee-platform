@@ -20,6 +20,7 @@
   --good: #237a5c;          /* veri: kullanılabilirlik / görünür */
   --inferred: #535f8a;      /* veri: performans / çıkarımsal */
   --loss: #a8443a;          /* veri: kalite / kayıp */
+  --redo: #b25a35;          /* veri: redo mercanı — duruş kırmızısından (loss) ayırt edilir */
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
   /* Sayısal göstergeler için sistem-mono (sıfır indirme) — instrument hissi. */
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
@@ -642,12 +643,12 @@ canvas { max-height: 268px; }
 .ls-counters strong {
   color: var(--ink); font-family: var(--mono); font-variant-numeric: tabular-nums;
 }
-.ls-cnt-redo strong { color: #b25a35; }
+.ls-cnt-redo strong { color: var(--redo); }
 .ls-scroll { overflow-x: auto; }
 .ls-svg { display: block; width: 100%; min-width: 900px; height: auto; }
 .ls-paused { opacity: 0.85; }
 .ls-rail { stroke: var(--line-strong, #cdd4dc); stroke-width: 2; }
-.ls-return { stroke: #b25a35; stroke-width: 1; stroke-dasharray: 4 4; opacity: 0.55; }
+.ls-return { stroke: var(--redo); stroke-width: 1; stroke-dasharray: 4 4; opacity: 0.55; }
 .ls-cap rect { fill: var(--bg-3); stroke: var(--line); }
 .ls-cap text, .ls-tankname {
   font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
@@ -657,23 +658,26 @@ canvas { max-height: 268px; }
 .ls-liquid { fill: var(--steel); transition: fill 150ms linear; }
 .ls-tank-isliyor .ls-liquid { fill: #dbe7f4; } /* accent-soft tonu: işlem sürüyor */
 .ls-tank-bekliyor .ls-liquid { fill: #f2e8d5; } /* threshold-amber tonu: vinç bekleniyor */
-.ls-tank-durus .ls-vessel { stroke: #a8443a; }
+.ls-tank-durus .ls-vessel { stroke: var(--loss); }
 .ls-tank-durus .ls-liquid { fill: #f0dcd9; }
 .ls-reason {
-  font-size: 10px; font-weight: 700; fill: #a8443a; text-anchor: middle;
+  font-size: 10px; font-weight: 700; fill: var(--loss); text-anchor: middle;
   letter-spacing: 0.04em;
 }
 .ls-flash { animation: lsFlash 0.6s ease-in-out infinite alternate; }
 @keyframes lsFlash { from { opacity: 1; } to { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) {
+  .ls-flash { animation: none; }
+}
 .ls-trolley { fill: var(--ink); }
-.ls-trolley-durus { fill: #a8443a; }
+.ls-trolley-durus { fill: var(--loss); }
 .ls-chip rect { fill: var(--ink); }
 .ls-chip text {
   font-family: var(--mono); font-size: 9px; fill: #fff; text-anchor: middle;
   font-variant-numeric: tabular-nums;
 }
 .ls-chip-bekliyor rect { stroke: #b5832f; stroke-width: 1.5; }
-.ls-chip-redo rect { fill: #b25a35; }
+.ls-chip-redo rect { fill: var(--redo); }
 @media (max-width: 768px) {
   .ls-head { flex-direction: column; gap: 6px; align-items: flex-start; }
 }

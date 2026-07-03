@@ -21,6 +21,7 @@ interface Props {
   targetTo: string | null // son SSE snapshot'ının `to` damgası
   tickMs: number // snapshot'lar arası gerçek süre (200/speed)
   running: boolean
+  error?: boolean // timeline sorgusu düştü — bekleme metniyle karışmasın
 }
 
 // SVG geometrisi (viewBox birimleri; 7 tanka göre ölçülü, tank sayısına uyarlanır).
@@ -34,9 +35,20 @@ const VESSEL_H = 66
 const CHIP_W = 40
 const CHIP_H = 22
 
-export default function LineStrip({ timeline, targetTo, tickMs, running }: Props) {
+export default function LineStrip({ timeline, targetTo, tickMs, running, error }: Props) {
   const tl = useMemo(() => (timeline ? buildTimeline(timeline) : null), [timeline])
   const clock = useVirtualClock(targetTo ? tsMs(targetTo) : null, tickMs)
+
+  if (error) {
+    return (
+      <Card eyebrow="Vinç Rayı ve Tanklar" className="card-wide ls-card">
+        <p className="muted">
+          Hat verisi yüklenemedi — SSE akışı çalışsa da şerit çizilemez. Senaryoyu yeniden
+          seçin ya da sayfayı yenileyin.
+        </p>
+      </Card>
+    )
+  }
 
   if (!tl || clock == null) {
     return (
@@ -54,13 +66,19 @@ export default function LineStrip({ timeline, targetTo, tickMs, running }: Props
   const W = CAP_W * 2 + 40 + n * (TANK_W + TANK_GAP)
   const tankX = (i: number) => CAP_W + 20 + i * (TANK_W + TANK_GAP)
   const idxOf = new Map(state.tanks.map((t, i) => [t.id, i]))
+  const loadX = CAP_W / 2 + 4
+  const exitX = W - CAP_W / 2 - 4
   // İstasyon → çip merkez x'i (pseudo-istasyonlar uç kapaklara düşer).
-  const cx = (station: string): number => {
-    if (station === YUKLEME) return CAP_W / 2 + 4
-    if (station === CIKIS) return W - CAP_W / 2 - 4
-    const i = idxOf.get(station) ?? 0
-    return tankX(i) + TANK_W / 2
+  // Hat tanımında olmayan istasyon (config sapması/kirli veri) → null: sessizce
+  // ilk tanka çizmek yerine hiç çizilmez.
+  const cx = (station: string): number | null => {
+    if (station === YUKLEME) return loadX
+    if (station === CIKIS) return exitX
+    const i = idxOf.get(station)
+    return i == null ? null : tankX(i) + TANK_W / 2
   }
+  const hoistA = state.hoist.from != null ? cx(state.hoist.from) : null
+  const hoistB = state.hoist.to != null ? cx(state.hoist.to) : null
 
   const clockLabel = new Date(clock).toLocaleTimeString('tr-TR', {
     hour: '2-digit',
@@ -73,14 +91,19 @@ export default function LineStrip({ timeline, targetTo, tickMs, running }: Props
     let x: number
     let y: number
     if (p.kind === 'tankta' || p.kind === 'bekliyor') {
-      x = cx(p.station)
+      const sx = cx(p.station)
+      if (sx == null) return null
+      x = sx
       y = VESSEL_Y + 32
     } else if (p.kind === 'tasiniyor') {
-      x = cx(p.from) + (cx(p.to) - cx(p.from)) * p.progress
+      const a = cx(p.from)
+      const b = cx(p.to)
+      if (a == null || b == null) return null
+      x = a + (b - a) * p.progress
       y = RAIL_Y + 8
     } else if (p.kind === 'strip') {
       // Söküm/geri dönüş: çıkıştan yüklemeye, alttaki kesikli dönüş yolunda.
-      x = cx(CIKIS) + (cx(YUKLEME) - cx(CIKIS)) * p.progress
+      x = exitX + (loadX - exitX) * p.progress
       y = H - 14
     } else {
       return null
@@ -120,7 +143,7 @@ export default function LineStrip({ timeline, targetTo, tickMs, running }: Props
           aria-label="Canlı hat şeridi"
         >
           {/* Vinç rayı */}
-          <line className="ls-rail" x1={cx(YUKLEME)} y1={RAIL_Y} x2={cx(CIKIS)} y2={RAIL_Y} />
+          <line className="ls-rail" x1={loadX} y1={RAIL_Y} x2={exitX} y2={RAIL_Y} />
           {state.hoist.durum === 'durus' && (
             <text className="ls-reason ls-hoist-reason" x={W / 2} y={RAIL_Y - 10}>
               {reasonLabel(state.hoist.reason ?? '')}
@@ -140,13 +163,7 @@ export default function LineStrip({ timeline, targetTo, tickMs, running }: Props
             </text>
           </g>
           {/* Dönüş yolu (redo) — kesikli */}
-          <line
-            className="ls-return"
-            x1={cx(CIKIS)}
-            y1={H - 14}
-            x2={cx(YUKLEME)}
-            y2={H - 14}
-          />
+          <line className="ls-return" x1={exitX} y1={H - 14} x2={loadX} y2={H - 14} />
           {/* Tanklar */}
           {state.tanks.map((tk, i) => (
             <g key={tk.id} transform={`translate(${tankX(i)}, 0)`}>
@@ -173,14 +190,10 @@ export default function LineStrip({ timeline, targetTo, tickMs, running }: Props
             </g>
           ))}
           {/* Vinç troleyi */}
-          {state.hoist.durum === 'tasiyor' && state.hoist.from && state.hoist.to && (
+          {state.hoist.durum === 'tasiyor' && hoistA != null && hoistB != null && (
             <rect
               className="ls-trolley"
-              x={
-                cx(state.hoist.from) +
-                (cx(state.hoist.to) - cx(state.hoist.from)) * (state.hoist.progress ?? 0) -
-                10
-              }
+              x={hoistA + (hoistB - hoistA) * (state.hoist.progress ?? 0) - 10}
               y={RAIL_Y - 5}
               width={20}
               height={10}

@@ -45,6 +45,11 @@ describe('tsMs', () => {
   it('backend damgasını epoch ms yapar', () => {
     expect(tsMs('2026-01-05 06:01:00.000')).toBe(T0 + 60_000)
   })
+
+  it('Python 6 haneli mikrosaniyeyi 3 haneye kırpar (impl-defined ayrıştırma tuzağı)', () => {
+    expect(tsMs('2026-01-05 06:00:00.500000')).toBe(T0 + 500)
+    expect(tsMs('2026-01-05 06:00:00.123456')).toBe(T0 + 123)
+  })
 })
 
 describe('lineStateAt — askı konumları', () => {
