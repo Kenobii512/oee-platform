@@ -5,8 +5,11 @@ import { CIKIS, YUKLEME, buildTimeline, lineStateAt, tsMs } from './replayLine'
 
 // Kurgu hat: 2 tank. Zaman eksenini okunur tutmak için dakika ofsetli damga üretici.
 const T0 = Date.parse('2026-01-05T06:00:00.000')
-const at = (min: number): string =>
-  new Date(T0 + min * 60_000).toISOString().slice(0, 23).replace('T', ' ')
+const at = (min: number): string => {
+  const d = new Date(T0 + min * 60_000)
+  const p = (n: number, w = 2) => String(n).padStart(w, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}.${p(d.getMilliseconds(), 3)}`
+}
 const ev = (
   min: number, type: string, opts: Partial<TimelineEvent> = {},
 ): TimelineEvent => ({
