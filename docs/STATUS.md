@@ -1,6 +1,6 @@
 # OEE Platform — Proje Durumu (planlama özeti)
 
-**Güncelleme:** 2026-07-02 · **Repo:** `Kenobii512/oee-platform` · **Test:** backend 279/279 + frontend vitest 13/13 + simülatör 115/115 yeşil
+**Güncelleme:** 2026-07-03 · **Repo:** `Kenobii512/oee-platform` · **Test:** backend 282/282 + frontend vitest 38/38 + simülatör 115/115 yeşil
 **Yığın:** Python 3.11 · FastAPI · DuckDB · Docker · **pano: React 19 + Vite (SPA)** (eski Jinja `/legacy`'de) · SSE replay
 
 Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıyor, sırada ne var"
@@ -41,13 +41,16 @@ Bu doküman, bir sonraki planlama oturumu için "ne bitti, ne nasıl çalışıy
 | **Pilot B** | Pilot doctor CLI (`backend/tools/pilot_doctor.py`): Faz 0–1 GO/NO-GO kapısı otomasyonu — hat doğrulama + adaptör + smoke ingest (geçici DuckDB) + OEE + H3 yeterlilik + red oranı; `python -m tools.pilot_doctor <dizin> [--adapter] [--json]`, exit 0/1/2, `make doctor` | ✓ |
 | **What-if** | Analitik what-if: `analytics/whatif.py` + `GET /whatif` (azaltım oranları → önce/sonra A/P/Q/OEE + TL kazanç bantlı; oee.py yardımcılarıyla, formül kopyası yok) + pano Detay'da slider paneli ("Önerilen değerler" = recommend oranları; 300ms debounce; örtüşme çekincesi) | ✓ |
 | **Pilot C** | Showcase: `backend/tools/pilot_report.py` Faz 3 pilot raporu (tek dosya HTML + satır içi SVG: OEE, TL Pareto bantlı, öneri aralıkları, trend, güven notu, 3 kriter tablosu otomatik ✓/✗ + elle alanlar; `--generated-at` ile bayt-eş üretim); örnek rapor `docs/showcase/ornek-pilot-raporu.html` (speed_bottleneck); landing `docs/showcase/landing.html` + public `GET /tanitim` | ✓ |
+| **Künye** | Vardiya Künyesi (PR #11): `/oee` yanıtına bağlam alanları (`loaded_qty/good_count/redo_count/span_min`, default'lu — Trend/Replay etkilenmez); pano Detay'da yalın künye kartı (`ShiftSummary`: gözlem penceresi + Yüklenen / İyi(ilk-geçiş)=loaded−redo / Redo; veri yoksa render yok). Bayat PR #4 kapatıldı, fikri buradan yaşıyor | ✓ |
+| **Canlı Hat** | Canlı hat animasyonu (PR #12): `GET /replay/timeline` (ham olay dökümü + hat tanımı; SSE değişmedi, izolasyon aynı) + saf indirgeyici `frontend/src/replay/replayLine.ts` (`lineStateAt`: tankta/taşınıyor/bekliyor/strip; DOWNTIME>MICROSTOP>bekliyor>işliyor önceliği) + `useVirtualClock` (SSE `to` hedefine rAF lineer; yalnız şerit render olur) + `LineStrip` SVG (tanklar, vinç rayı, çipler, kesikli redo dönüş yolu, Türkçe arıza etiketleri). Redo gerçeği: UNLOAD→QC→STRIP→yeniden LOAD | ✓ |
+| **Cila+GIF** | Hijyen + vitrin (PR #13): renk token'ları (`--loss`/`--redo`), `prefers-reduced-motion`, `tsMs` mikrosaniye kırpma, bilinmeyen istasyon çizilmez, `LineStrip` error dalı; `docs/media/demo.gif` animasyonlu şeritle yenilendi (960×630, 10 kare) | ✓ |
 
 ## API yüzeyi (mevcut)
 
 ```
 GET  /health                          -> {"status":"ok"}
 POST /ingest        {"path": "...", "adapter": "<profil>"|null}  -> LoadReport (kabul/ret/atlanan + ilk N hata)
-GET  /oee?from=&to=                    -> {availability, performance, quality(=ilk-geçiş), oee, utilization, planned_downtime_min, final_yield, calendar_min}
+GET  /oee?from=&to=                    -> {availability, performance, quality(=ilk-geçiş), oee, utilization, planned_downtime_min, final_yield, calendar_min, loaded_qty, good_count, redo_count, span_min}
 GET  /loss-tree?from=&to=              -> {categories:[{category, axis, value, kind}]}  (5 kategori; no-scrap)
 GET  /loss-tree/cost?from=&to=         -> {categories:[{category, axis, value, tl, tl_low, tl_high, confidence, low_confidence, kind}], total_tl}  (5 kategori, TL azalan)
 GET  /recommendations?from=&to=        -> {recommendations:[{category, tl, estimated_gain_tl, estimated_gain_tl_low, estimated_gain_tl_high, title, action, assumption, ...}], total_estimated_gain_tl}
@@ -56,6 +59,7 @@ GET  /data-quality/summary             -> {microstop_entry_coverage, event_count
 GET  /scenarios                        -> {scenarios:[{id, title, description, expected_top_loss, data_dir, narrative, highlight}]}  (6 demo)
 POST /scenarios/{id}/activate          -> {activated, ingest}  (repo.reset() + o senaryoyu ingest)
 GET  /replay/stream?scenario=&speed=&steps=  -> SSE: büyüyen 'şimdiye kadar' snapshot'ları (oee, cost, gain, event_count)
+GET  /replay/timeline?scenario=        -> {line:[{id,name}], events:[...]}  (ham döküm; canlı hat şeridi beslemesi)
 POST /line/validate  {hat-tanımı dict}  -> {valid: bool, errors: [str]}
 GET  /whatif?downtime=&microstop=&speed_loss=&quality_redo=&fill_loss=[&from&to]
                                        -> {baseline, adjusted, gain}  (azaltım oranı 0..1; analitik what-if)
@@ -127,7 +131,7 @@ Bozuk tarih/parametre (from/to/bucket) → 400 {detail} (H9).
 - **H9 — Ops:** loglama (`logging_setup` + timing middleware), tutarlı 400 (`_params` + global handler),
   perf smoke (~12 hafta < 2s), `docs/deployment.md`. Yan düzeltme: `fetch_events` tarih filtresi CAST.
 
-**Sırada:** **saha denemesi / Render deploy**. Olası ileri işler: simülatör destekli what-if (GainEstimator arayüzü hazır), çok-hatlı destek, pilot_report HTTP modu (canlı sunucudan çekme).
+**Sırada:** **⑤ Render-öncesi UX/görsel düzeltme turu** (impeccable critique 27/40 — 4 P1: replay ~12sn→60-90sn+koşu-ortası hız, hata dili+dropdown kaybı, senaryo amnezisi+URL durumu, a11y/dokunma/kontrast paketi; kararlar: replay=enstrüman, Render açılışı=/tanitim + canlı demo CTA) → **Render deploy**. Olası ileri işler: simülatör destekli what-if (GainEstimator arayüzü hazır), çok-hatlı destek, pilot_report HTTP modu (canlı sunucudan çekme).
 **Pilot Kiti A + B + C TAMAM:**
 - **A (doküman paketi):** `docs/pilot-kit/` — 6 dosya (değer önermesi, demo, veri-onboarding, runbook, başarı kriterleri, README).
 - **B (pilot doctor CLI):** `backend/tools/pilot_doctor.py` — Faz 0–1 kapısı tek komut; in-process + geçici DuckDB; eşikler `--min-sufficiency 0.6` / `--max-reject 0.05` (`confidence.yaml` 0.5 pano rozetidir, ayrı amaç).
@@ -152,10 +156,10 @@ Yerelde backend kapısı: `make ci`.
 ```
 docker compose up --build          # http://localhost:8000  (React SPA, açılışta baseline yüklü)
                                    #   /legacy = eski Jinja pano
-# backend testleri:  cd backend && pytest -q          (279 test)
+# backend testleri:  cd backend && pytest -q          (282 test)
 # pilot doctor:       make doctor                      (Faz 0-1 GO/NO-GO; DATA=<dizin> ile)
 # frontend dev:      cd frontend && npm run dev        (Vite, backend'e proxy)
-# frontend testleri: cd frontend && npm run test       (vitest 13)
+# frontend testleri: cd frontend && npm run test       (vitest 38)
 ```
 
 ## Deploy (başkalarının erişmesi için)
