@@ -46,8 +46,11 @@ export interface LineState {
   redo: number
 }
 
-/** Backend "YYYY-MM-DD HH:MM:SS.sss" → epoch ms (tüm damgalar aynı biçim/saat dilimi). */
-export const tsMs = (s: string): number => new Date(s.replace(' ', 'T')).getTime()
+/** Backend "YYYY-MM-DD HH:MM:SS[.ffffff]" → epoch ms (tüm damgalar aynı saat dilimi).
+ *  Python str(datetime) 6 haneli mikrosaniye yazabilir; Date için >3 kesir hanesi
+ *  implementation-defined → kesir 3 haneye kırpılır. */
+export const tsMs = (s: string): number =>
+  new Date(s.replace(' ', 'T').replace(/(\.\d{3})\d+$/, '$1')).getTime()
 
 interface Ev {
   t0: number

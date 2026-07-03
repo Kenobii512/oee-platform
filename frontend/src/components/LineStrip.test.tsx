@@ -34,11 +34,39 @@ describe('LineStrip', () => {
     expect(screen.getByText('Tank A')).toBeInTheDocument()
   })
 
-  it('sayaçları gösterir (yüklenen/çıkan/redo)', () => {
+  it('sayaç etiketlerini VE değerlerini gösterir (yüklenen/çıkan/redo)', () => {
     render(
       <LineStrip timeline={TL} targetTo="2026-01-05 06:02:00.000" tickMs={200} running={true} />,
     )
     expect(screen.getByText('Yüklenen')).toBeInTheDocument()
+    expect(screen.getByText('Çıkan')).toBeInTheDocument()
     expect(screen.getByText('Redo')).toBeInTheDocument()
+    // Kurgu: 1 LOAD, 0 UNLOAD, 0 STRIP → değerler indirgeyiciden birebir akar.
+    const values = Array.from(document.querySelectorAll('.ls-counters strong')).map(
+      (el) => el.textContent,
+    )
+    expect(values).toEqual(['1', '0', '0'])
+  })
+
+  it('error verildiğinde hata metni gösterir (bekleme metniyle karışmaz)', () => {
+    render(<LineStrip timeline={null} targetTo={null} tickMs={200} running={false} error />)
+    expect(screen.getByText(/yüklenemedi/)).toBeInTheDocument()
+    expect(screen.queryByText(/Oynat'a basın/)).toBeNull()
+  })
+
+  it('hat tanımında olmayan istasyondaki askı çizilmez (kirli veri)', () => {
+    const dirty: ReplayTimeline = {
+      line: LINE,
+      events: [
+        ...TL.events,
+        { timestamp: '2026-01-05 06:00:30.000', carrier_id: 'CAR-0002', station_id: null, event_type: 'LOAD', duration: 0, reason_code: null },
+        { timestamp: '2026-01-05 06:00:40.000', carrier_id: 'CAR-0002', station_id: 'hayalet_tank', event_type: 'PROCESS', duration: 5, reason_code: null },
+      ],
+    }
+    render(
+      <LineStrip timeline={dirty} targetTo="2026-01-05 06:02:00.000" tickMs={200} running={true} />,
+    )
+    // CAR-0001 tankA'da çizilir; hayalet istasyondaki CAR-0002 sessizce atlanır.
+    expect(document.querySelectorAll('.ls-chip').length).toBe(1)
   })
 })

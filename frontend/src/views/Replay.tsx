@@ -144,6 +144,7 @@ export default function Replay() {
           targetTo={snap?.to ?? null}
           tickMs={200 / speed}
           running={running}
+          error={timelineQ.isError}
         />
 
         <div className="zone-head">Canlı Durum</div>
