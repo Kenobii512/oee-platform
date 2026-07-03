@@ -34,6 +34,11 @@ class OeeResult:
     utilization: float
     planned_downtime_min: float
     final_yield: float = 1.0  # Σ good / Σ loaded (no-scrap → ≈%100)
+    # Vardiya künyesi bağlamı: ham toplamlar + gözlem penceresi (dk).
+    loaded_qty: float = 0.0
+    good_count: float = 0.0
+    redo_count: float = 0.0
+    span_min: float = 0.0
 
 
 def _clamp01(x: float) -> float:
@@ -107,19 +112,20 @@ def _performance(events: list[dict], num_carriers: int, line: LineDefinition) ->
     return _clamp01(ideal / actual) if actual > 0 else 0.0
 
 
-def _quality_metrics(production: list[dict]) -> tuple[float, float]:
-    """(first_pass, final_yield) döndürür (no-scrap modeli).
+def _quality_metrics(production: list[dict]) -> tuple[float, float, float, float, float]:
+    """(first_pass, final_yield, loaded, redo, good) döndürür (no-scrap modeli).
 
     first_pass = (Σ loaded − Σ redo) / Σ loaded → ilk geçişte iyi oranı (OEE'nin Q'su;
     redo'dan geçen parça cezalandırılır). final_yield = Σ good / Σ loaded → nihai verim
     (no-scrap → ≈%100). Doluluk kaybı Q'da değil; ayrı FILL_LOSS kanalındadır.
+    Ham toplamlar vardiya künyesi için yüzeye çıkar (OeeResult bağlam alanları).
     """
     loaded = sum(p["loaded_qty"] for p in production)
     redo = sum(p["redo_count"] for p in production)
     good = sum(p["good_count"] for p in production)
     if loaded <= 0:
-        return 0.0, 0.0
-    return _clamp01((loaded - redo) / loaded), _clamp01(good / loaded)
+        return 0.0, 0.0, loaded, redo, good
+    return _clamp01((loaded - redo) / loaded), _clamp01(good / loaded), loaded, redo, good
 
 
 def compute_oee(
@@ -136,7 +142,7 @@ def compute_oee(
         return OeeResult(0.0, 0.0, 0.0, 0.0, 0.0, planned_downtime_min, 0.0)
     avail, span, _dt = availability_from_events(events)
     perf = _performance(events, len(production), line)
-    qual, final_yield = _quality_metrics(production)
+    qual, final_yield, loaded, redo, good = _quality_metrics(production)
     oee = avail * perf * qual
     operating = span * avail
     if calendar_min is not None and calendar_min > 0:
@@ -145,5 +151,7 @@ def compute_oee(
         calendar = span + planned_downtime_min
         utilization = _clamp01(operating / calendar) if calendar > 0 else 0.0
     return OeeResult(
-        avail, perf, qual, oee, utilization, planned_downtime_min, final_yield
+        avail, perf, qual, oee, utilization, planned_downtime_min, final_yield,
+        loaded_qty=float(loaded), good_count=float(good), redo_count=float(redo),
+        span_min=float(span),
     )
