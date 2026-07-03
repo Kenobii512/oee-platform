@@ -153,3 +153,18 @@ export type WhatIfReductions = {
   quality_redo: number
   fill_loss: number
 }
+
+// Canlı hat animasyonu (GET /replay/timeline): hat tanımı + ham olay dökümü.
+export interface TimelineEvent {
+  timestamp: string // "YYYY-MM-DD HH:MM:SS.sss"
+  carrier_id: string | null
+  station_id: string | null // tank id | "HOIST" | null (LOAD/UNLOAD/QC/STRIP)
+  event_type: string // LOAD|MOVE|PROCESS|OVER_RESIDENCE|UNLOAD|QC|STRIP|DOWNTIME|MICROSTOP
+  duration: number // dakika
+  reason_code: string | null
+}
+
+export interface ReplayTimeline {
+  line: { id: string; name: string }[]
+  events: TimelineEvent[]
+}
